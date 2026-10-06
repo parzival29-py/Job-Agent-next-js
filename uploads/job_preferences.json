@@ -1,0 +1,14 @@
+{
+  "opportunity_type": "internship",
+  "work_mode": "remote",
+  "domains": [
+    "cloud",
+    "frontend",
+    "backend",
+    "ai",
+    "fullstack"
+  ],
+  "location": "Anywhere",
+  "minimum_stipend": 3500,
+  "experience_level": "Fresher"
+}

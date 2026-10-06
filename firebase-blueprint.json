@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "ResumeProfile": {
+      "title": "Resume Profile",
+      "description": "Parsed candidate resume profile and extracted text",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Candidate full name" },
+        "email": { "type": "string", "description": "Candidate email address" },
+        "phone": { "type": "string", "description": "Candidate phone number" },
+        "headline": { "type": "string", "description": "Professional title or headline" },
+        "summary": { "type": "string", "description": "Professional summary" },
+        "filename": { "type": "string", "description": "Uploaded resume filename" },
+        "extracted_text": { "type": "string", "description": "Raw extracted resume text" },
+        "skills": { "type": "object", "description": "Categorized skill lists" },
+        "experience": { "type": "array", "description": "Work history entries" },
+        "education": { "type": "array", "description": "Education credentials" },
+        "projects": { "type": "array", "description": "Technical project highlights" },
+        "updated_at": { "type": "string", "description": "ISO timestamp of last update" }
+      },
+      "required": ["name", "extracted_text"]
+    },
+    "JobApplication": {
+      "title": "Job Application",
+      "description": "Tracked job application with status, ATS benchmark score, and tailored materials",
+      "type": "object",
+      "properties": {
+        "company": { "type": "string", "description": "Target company name" },
+        "job_title": { "type": "string", "description": "Target job title" },
+        "job_url": { "type": "string", "description": "Link to job posting" },
+        "job_description": { "type": "string", "description": "Full job description text" },
+        "ats_score": { "type": "number", "description": "Composite ATS benchmark score" },
+        "resume_version": { "type": "string", "description": "Targeted tailored resume filename" },
+        "cover_letter": { "type": "string", "description": "Tailored cover letter text" },
+        "status": {
+          "type": "string",
+          "enum": ["Saved", "Ready to Apply", "Applied", "Interview", "Offer", "Rejected"],
+          "description": "Current pipeline status"
+        },
+        "notes": { "type": "string", "description": "Candidate notes and recruiter context" },
+        "created_at": { "type": "string", "description": "ISO timestamp created" },
+        "updated_at": { "type": "string", "description": "ISO timestamp updated" }
+      },
+      "required": ["company", "job_title", "status"]
+    },
+    "JobPreferences": {
+      "title": "Job Search Preferences",
+      "description": "User preferences for matching internship and full-time tech roles",
+      "type": "object",
+      "properties": {
+        "opportunity_type": { "type": "string", "description": "internship, full-time, contract, any" },
+        "work_mode": { "type": "string", "description": "remote, hybrid, on-site, any" },
+        "domains": { "type": "array", "description": "Target tech domains" },
+        "location": { "type": "string", "description": "Desired geographical location" },
+        "minimum_stipend": { "type": "number", "description": "Minimum monthly stipend or salary threshold" },
+        "experience_level": { "type": "string", "description": "Experience level requirement" },
+        "updated_at": { "type": "string", "description": "ISO timestamp of last update" }
+      },
+      "required": ["opportunity_type", "work_mode"]
+    }
+  },
+  "firestore": {
+    "/resume_profiles/{profileId}": {
+      "schema": "ResumeProfile",
+      "description": "Candidate resume profiles and parsed assets"
+    },
+    "/applications/{applicationId}": {
+      "schema": "JobApplication",
+      "description": "Tracked job applications in the pipeline"
+    },
+    "/preferences/{preferenceId}": {
+      "schema": "JobPreferences",
+      "description": "Candidate job search preferences"
+    }
+  }
+}

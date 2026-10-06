@@ -1,0 +1,40 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+PROFESSIONAL SUMMARY
+Aspiring Software Engineer with a strong foundation in high-throughput microservices architecture and backend development. Proficient in Go, TypeScript, and database management, with a proven ability to leverage Docker for scalable containerization. Currently pursuing B.Tech in Electronics & Communication (AIML), eager to contribute technical expertise in Go and PostgreSQL to optimize software performance at Apex Cloud Systems.
+
+TECHNICAL SKILLS
+• Programming Languages: Go, TypeScript, Python, JavaScript, C++
+• Backend & Databases: PostgreSQL, Microservices Architecture, REST APIs
+• Tools & Platforms: Docker, Git & GitHub, VS Code, Linux
+• Core Concepts: Software Development Life Cycle (SDLC), Data Structures, Algorithms, Containerization
+
+PROJECTS
+High-Performance Microservices API (Learning Project)
+• Designed and implemented a modular microservice using Go to handle high-throughput request processing.
+• Utilized PostgreSQL for efficient data persistence and relational schema design, improving query response times.
+• Containerized the application using Docker to ensure consistent environment parity and streamlined deployment workflows.
+
+Full-Stack Attendance System
+• Engineered a robust attendance tracker integrating TypeScript for type-safe backend logic and frontend interactions.
+• Deployed the application using Docker containers, resulting in a 30% reduction in environment setup time.
+• Optimized database operations in PostgreSQL to manage large datasets of user records with high availability.
+
+AI-Driven Portfolio Platform
+• Developed a responsive portfolio using TypeScript and JavaScript, focusing on clean architecture and maintainability.
+• Integrated RESTful APIs to showcase technical projects, emphasizing performance-oriented web development practices.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+LEADERSHIP & ACTIVITIES
+• Active participant in collaborative coding environments, focusing on agile development and clean code practices.
+• Lead coordinator for college-level technical events, facilitating communication across cross-functional teams.
+
+CERTIFICATIONS
+• Go Programming & Microservices Essentials
+• Docker & Containerization Fundamentals
+• PostgreSQL Database Management
+• Python & Web Development Proficiency

@@ -1,0 +1,30 @@
+Aryaman Dewangan
+Full-Stack Software Engineer & AI Systems Developer
+Email: aryamanharshdewangan@gmail.com | Phone: +1 (555) 234-5678 | San Francisco, CA
+LinkedIn: linkedin.com/in/aryamandewangan | GitHub: github.com/aryamandewangan | Portfolio: aryamandewangan.dev
+
+PROFESSIONAL SUMMARY
+Results-driven Software Engineer with extensive experience developing full-stack web applications, microservices, and AI-enabled agentic systems using Python, TypeScript, React, Go, and PostgreSQL. Experienced in distributed architectures, automated ATS optimization pipelines, REST APIs, and modern cloud deployment.
+
+TECHNICAL SKILLS
+• Languages: Python, TypeScript, JavaScript, Go, SQL, HTML/CSS, C++
+• Frameworks & Libraries: React 19, FastAPI, Express.js, Next.js, Node.js, TailwindCSS, Django, PyTorch
+• Cloud & DevOps: Docker, Kubernetes, AWS, Google Cloud Platform (GCP), GitHub Actions CI/CD, Linux
+• Databases & Tools: PostgreSQL, Redis, MongoDB, Git, RESTful APIs, Vite, GraphQL
+
+EXPERIENCE
+Software Engineering Intern | CloudScale Technologies
+May 2025 – August 2025 | Remote
+• Architected high-throughput REST APIs using Python FastAPI and Node.js microservices, decreasing latency by 32%.
+• Designed scalable PostgreSQL relational database schemas, handling over 250,000 requests/day with sub-50ms query response times.
+• Automated continuous integration and deployment pipelines using Docker and GitHub Actions for zero-downtime releases.
+
+PROJECTS
+Job Application Autonomous Agent
+• Engineered an AI agent using Gemini 3.8 and TypeScript to parse resumes, benchmark ATS match rates, and optimize resumes to 90%+ scores.
+• Automated personalized cover letter generation and structured question answering based on contextual job descriptions.
+• Built an interactive full-stack dashboard with real-time status tracking and multi-stage workflow pipeline execution.
+
+EDUCATION
+Bachelor of Science in Computer Science | 2022 - 2026
+GPA: 3.85 / 4.00 | Relevant Coursework: Data Structures & Algorithms, Distributed Systems, Cloud Computing, Database Design

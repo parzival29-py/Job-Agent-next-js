@@ -1,0 +1,34 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+PROFESSIONAL SUMMARY
+Detail-oriented Software Engineer specializing in Backend Systems, with a focus on designing Scalable Cloud Services. Proficient in Go, Java, and Python with a strong foundation in building distributed architectures and Microservices. Passionate about optimizing backend performance and deploying robust Cloud Computing solutions for high-traffic environments.
+
+TECHNICAL SKILLS
+• Languages: Go, Java, Python, C++
+• Backend & Architecture: Microservices, RESTful APIs, System Design, Scalable Backend Systems
+• Cloud & DevOps: Cloud Computing, Cloud Services (AWS/GCP), Docker, Git
+• Tools & Databases: Git, VS Code, SQL, Data Structures & Algorithms
+
+PROJECTS
+Scalable Cloud-Based Attendance System
+• Developed a high-performance backend system using Go and Python, reducing manual attendance tracking time by 60% through automated Cloud Services.
+• Engineered a scalable architecture utilizing Microservices to handle concurrent data requests from 500+ users with 95% system uptime.
+• Implemented robust API endpoints that improved query throughput by 35% compared to monolithic alternatives.
+
+Backend Infrastructure for Portfolio Management
+• Architected a responsive backend service for web applications using Java and Go, achieving a 40% reduction in container startup times.
+• Optimized database connectivity and implemented caching mechanisms to improve overall system latency by 25%.
+• Maintained 90%+ test coverage through rigorous unit and integration testing protocols for all backend components.
+
+AI-Driven Predictive Data Analytics Engine
+• Built a data-intensive backend processing module using Python to perform real-time model training and predictive analysis.
+• Optimized data preprocessing pipelines to handle large-scale datasets, improving model training efficiency by 30%.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML) | Expected Graduation: 2027
+
+CERTIFICATIONS
+• Python Programming Fundamentals
+• Backend Systems Development (Certifying Authority)
+• Basics of Artificial Intelligence & Machine Learning

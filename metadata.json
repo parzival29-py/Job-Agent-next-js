@@ -1,0 +1,8 @@
+{
+  "name": "Aryaman's Job Application Agent",
+  "description": "Personal AI-powered job application assistant for resume analysis, ATS optimization, cover letter generation, and application tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

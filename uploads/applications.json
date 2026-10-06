@@ -1,0 +1,44 @@
+[
+  {
+    "id": "app_1791275515823_36ohr",
+    "company": "Apex Cloud Systems",
+    "job_title": "Software Engineering Intern",
+    "job_url": "",
+    "job_description": "Software Engineering Intern at Apex Cloud Systems. Building high-throughput microservices in Go, TypeScript, Docker, and PostgreSQL.",
+    "ats_score": 92,
+    "resume_version": "Tailored_Resume_ATS92_1791275511135.docx",
+    "cover_letter": "**Aryaman Dewangan**\naryamanharshdewangan@gmail.com | +1 (555) 234-5678 | [LinkedIn Profile Link] | [GitHub Profile Link]\n\n[Date]\n\nHiring Manager\nApex Cloud Systems\n[Company Address]\n\nDear Hiring Manager,\n\nThe evolution of cloud-native infrastructure relies on the seamless orchestration of high-throughput services, a challenge that sits at the intersection of my technical expertise and professional curiosity. Having followed Apex Cloud Systems’ recent advancements in scaling distributed systems, I am eager to contribute to your engineering team as a Software Engineering Intern. My background in building robust, performant backends using Go and TypeScript aligns directly with the architectural goals of your microservices team.\n\nIn my recent projects, I have focused on optimizing data-intensive applications and reducing latency through efficient system design. For instance, I architected a high-concurrency microservice utilizing Go and PostgreSQL, where I implemented connection pooling and optimized complex SQL queries to handle a 40% increase in request throughput. Beyond the backend, I leverage a deep understanding of containerization with Docker and Kubernetes to ensure that the services I build are not only performant but also highly available and deployment-ready. By bridging the gap between clean code and reliable infrastructure, I have successfully reduced CI/CD pipeline bottlenecks, leading to a 20% improvement in deployment frequency.\n\nWhat draws me to Apex Cloud Systems is your uncompromising approach to building resilient, scalable systems that serve millions. I am particularly excited about the prospect of working within your current stack, as I have spent considerable time refining my ability to manage state in complex distributed environments using Node.js, FastAPI, and Go. I thrive in environments that prioritize rigorous testing and clean, maintainable architecture, and I am prepared to bring that same level of rigor to your engineering projects from day one.\n\nI am confident that my technical proficiency and proactive problem-solving approach would make me a valuable addition to your team. Thank you for your time and consideration; I look forward to the possibility of discussing how my experience with cloud-native technologies can support the mission at Apex Cloud Systems.\n\nBest regards,\n\nAryaman Dewangan",
+    "status": "Ready to Apply",
+    "notes": "Automated E2E pipeline completed.",
+    "created_at": "2026-10-06T08:31:55.823Z",
+    "updated_at": "2026-10-06T08:31:55.823Z"
+  },
+  {
+    "id": "app_demo_1",
+    "company": "Apex Cloud Systems",
+    "job_title": "Software Engineering Intern",
+    "job_url": "https://careers.google.com",
+    "job_description": "Building microservices, Go, TypeScript, Docker, Kubernetes, and GCP distributed architectures.",
+    "ats_score": 92.5,
+    "resume_version": "Tailored_Resume_ATS93_ApexCloud.docx",
+    "cover_letter": "Dear Apex Cloud Systems Hiring Team,\n\nI am writing to express my strong enthusiasm for the Software Engineering Intern position. With proven experience in TypeScript, Go, distributed microservices, and Docker CI/CD pipelines, I am eager to contribute to your core platform initiatives...",
+    "status": "Ready to Apply",
+    "notes": "Automated E2E pipeline completed with 92.5% ATS score.",
+    "created_at": "2026-10-06T00:30:00.000Z",
+    "updated_at": "2026-10-06T00:30:00.000Z"
+  },
+  {
+    "id": "app_demo_2",
+    "company": "Veloce AI",
+    "job_title": "Frontend Developer Intern",
+    "job_url": "https://veloce.ai/careers",
+    "job_description": "React 19, TypeScript, TailwindCSS, high performance frontend components.",
+    "ats_score": 88,
+    "resume_version": "Tailored_Resume_ATS88_Veloce.docx",
+    "cover_letter": "Dear Veloce AI Team,\n\nI am excited to submit my application for the Frontend Developer Intern role...",
+    "status": "Applied",
+    "notes": "Applied on company portal.",
+    "created_at": "2026-10-05T14:15:00.000Z",
+    "updated_at": "2026-10-05T14:15:00.000Z"
+  }
+]

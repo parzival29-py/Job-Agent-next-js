@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidProfile(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.extracted_text is string && data.extracted_text.size() > 0;
+    }
+
+    function isValidApplication(data) {
+      return data.company is string && data.company.size() > 0 &&
+             data.job_title is string && data.job_title.size() > 0 &&
+             data.status in ['Saved', 'Ready to Apply', 'Applied', 'Interview', 'Offer', 'Rejected'];
+    }
+
+    function isValidPreferences(data) {
+      return data.opportunity_type is string &&
+             data.work_mode is string;
+    }
+
+    match /resume_profiles/{profileId} {
+      allow read: if true;
+      allow create, update: if isValidProfile(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /applications/{applicationId} {
+      allow read: if true;
+      allow create, update: if isValidApplication(request.resource.data);
+      allow delete: if true;
+    }
+
+    match /preferences/{preferenceId} {
+      allow read: if true;
+      allow create, update: if isValidPreferences(request.resource.data);
+      allow delete: if true;
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

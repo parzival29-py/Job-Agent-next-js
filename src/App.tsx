@@ -37,6 +37,7 @@ export default function App() {
 
   const [aiConnected, setAiConnected] = useState<boolean | null>(null);
   const [testingAi, setTestingAi] = useState(false);
+  const [aiStatusMsg, setAiStatusMsg] = useState<string>('');
   const [e2eRunning, setE2eRunning] = useState(false);
   const [e2eMessage, setE2eMessage] = useState<string | null>(null);
 
@@ -54,11 +55,21 @@ Requirements:
   const checkAiHealth = async () => {
     setTestingAi(true);
     try {
-      const res = await fetch('/ai/test');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 35000);
+      const res = await fetch('/ai/test', { signal: controller.signal });
+      clearTimeout(timeoutId);
       const data = await res.json();
-      setAiConnected(Boolean(data.success));
-    } catch {
+      if (data.success) {
+        setAiConnected(true);
+        setAiStatusMsg(data.message || 'Gemini 3.1 Flash active');
+      } else {
+        setAiConnected(false);
+        setAiStatusMsg(data.error || 'Connection failed');
+      }
+    } catch (e: any) {
       setAiConnected(false);
+      setAiStatusMsg(e.name === 'AbortError' ? 'Timeout' : 'Network error');
     } finally {
       setTestingAi(false);
     }
@@ -142,19 +153,49 @@ Requirements:
             <button
               onClick={checkAiHealth}
               disabled={testingAi}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                aiConnected === true
-                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300'
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition shadow-sm ${
+                testingAi
+                  ? 'bg-slate-900 border-indigo-700/60 text-indigo-300'
+                  : aiConnected === true
+                  ? 'bg-emerald-950/70 border-emerald-800 text-emerald-300 hover:bg-emerald-900/60 hover:border-emerald-700'
                   : aiConnected === false
-                  ? 'bg-rose-950/60 border-rose-800 text-rose-300'
+                  ? 'bg-rose-950/70 border-rose-800 text-rose-300 hover:bg-rose-900/60 hover:border-rose-700'
                   : 'bg-slate-900 border-slate-800 text-slate-400'
               }`}
-              title="Click to re-verify Gemini AI connection (Test 24)"
+              title={
+                aiConnected === true
+                  ? `AI Agent Online & Connected (${aiStatusMsg || 'Gemini 3.1 / 3.8 active'}). Click to re-ping.`
+                  : aiConnected === false
+                  ? `AI Connection Issue: ${aiStatusMsg || 'Service unavailable'}. Click to reconnect.`
+                  : 'Testing Gemini AI connection...'
+              }
             >
-              <Activity className={`w-3.5 h-3.5 ${testingAi ? 'animate-spin' : ''}`} />
+              {testingAi ? (
+                <Activity className="w-3.5 h-3.5 animate-spin text-indigo-400 shrink-0" />
+              ) : aiConnected === true ? (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              ) : aiConnected === false ? (
+                <Activity className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400 shrink-0" />
+              )}
               <span>
-                {testingAi ? 'Testing...' : aiConnected === true ? 'AI Agent Connected' : 'AI Offline'}
+                {testingAi
+                  ? 'Connecting AI Agent...'
+                  : aiConnected === true
+                  ? 'AI Agent Connected'
+                  : aiConnected === false
+                  ? 'AI Offline (Click to Reconnect)'
+                  : 'Checking AI Agent...'}
               </span>
+              {aiConnected === true && (
+                <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.2 rounded bg-emerald-900/70 text-emerald-200 border border-emerald-700 font-mono font-normal">
+                  Gemini
+                </span>
+              )}
             </button>
 
             {/* Run Test 25 E2E Pipeline */}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, TrendingUp, FileCheck, FileText } from 'lucide-react';
+import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, TrendingUp, FileCheck, FileText, Layout, Code } from 'lucide-react';
+import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 
 interface OptimizerSectionProps {
   jobDescription: string;
@@ -13,12 +14,36 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
   const [docxResult, setDocxResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<'executive' | 'raw'>('executive');
+  const [selectedFormat, setSelectedFormat] = useState<string>('cobalt-split');
+
+  const DEFAULT_JOB_DESCRIPTION = `Apex Cloud Systems is looking for a Software Engineering Intern to join our distributed infrastructure team.
+Requirements:
+- Strong foundations in data structures, algorithms, and system design.
+- Hands-on proficiency with TypeScript, Go, or Python.
+- Experience with Docker containers, Kubernetes, and cloud platforms (AWS or GCP).
+- Experience building RESTful APIs and PostgreSQL databases.
+- Automated testing (unit & integration tests) and CI/CD pipelines.`;
+
+  const effectiveJobDescription = jobDescription?.trim() ? jobDescription : DEFAULT_JOB_DESCRIPTION;
+
+  const rotateToNextFormat = () => {
+    const formats = [
+      'cobalt-split',
+      'executive-monolith',
+      'minimalist-two-col',
+      'editorial-grid',
+      'tech-engineering',
+      'modern-nordic',
+      'ivy-executive',
+      'cyber-matrix',
+    ];
+    const currentIndex = formats.indexOf(selectedFormat);
+    const next = formats[(currentIndex + 1) % formats.length];
+    setSelectedFormat(next);
+  };
 
   const handleOptimize = async () => {
-    if (!jobDescription.trim()) {
-      setError('Please provide a job description in the ATS tab or paste one here.');
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -26,13 +51,21 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          job_description: jobDescription,
+          job_description: effectiveJobDescription,
           max_iterations: maxIterations,
         }),
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(`Server returned unexpected format (${res.status}). Please retry.`);
+      }
+
       const data = await res.json();
       if (data.success) {
         setResult(data.optimization);
+        setError(null);
       } else {
         setError(data.message || 'Optimization failed.');
       }
@@ -44,10 +77,6 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
   };
 
   const handleGenerateDocx = async () => {
-    if (!jobDescription.trim()) {
-      setError('Please provide a job description.');
-      return;
-    }
     setGeneratingDocx(true);
     setError(null);
     try {
@@ -55,16 +84,25 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          job_description: jobDescription,
+          job_description: effectiveJobDescription,
           max_iterations: maxIterations,
+          resume_format: selectedFormat,
         }),
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        throw new Error(`Server returned unexpected format (${res.status}). Please retry.`);
+      }
+
       const data = await res.json();
       if (data.success) {
         setDocxResult(data.resume);
         if (data.optimization) {
           setResult(data.optimization);
         }
+        setError(null);
       } else {
         setError(data.message || 'Document generation failed.');
       }
@@ -114,7 +152,33 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
+              <span className="text-slate-400">Format:</span>
+              <select
+                value={selectedFormat}
+                onChange={(e) => setSelectedFormat(e.target.value)}
+                className="bg-transparent text-indigo-400 font-semibold focus:outline-none cursor-pointer"
+              >
+                <option value="cobalt-split" className="bg-slate-900 text-white">Cobalt Modern Split</option>
+                <option value="executive-monolith" className="bg-slate-900 text-white">Executive Monolith</option>
+                <option value="minimalist-two-col" className="bg-slate-900 text-white">Minimalist Two-Col</option>
+                <option value="editorial-grid" className="bg-slate-900 text-white">Editorial Grid</option>
+                <option value="tech-engineering" className="bg-slate-900 text-white">Silicon Valley Tech</option>
+                <option value="modern-nordic" className="bg-slate-900 text-white">Modern Nordic Minimalist</option>
+                <option value="ivy-executive" className="bg-slate-900 text-white">Ivy League Executive</option>
+                <option value="cyber-matrix" className="bg-slate-900 text-white">Cyber Matrix Systems</option>
+              </select>
+              <button
+                type="button"
+                onClick={rotateToNextFormat}
+                className="ml-1 text-slate-400 hover:text-white"
+                title="Rotate to next format"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </button>
+            </div>
+
             <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
               <span className="text-slate-400">Max Iterations:</span>
               <select
@@ -132,9 +196,18 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-rose-950/60 border border-rose-800/60 text-rose-300 text-sm rounded-lg flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+          <div className="mt-4 p-3 bg-rose-950/60 border border-rose-800/60 text-rose-300 text-sm rounded-lg flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="text-xs px-2.5 py-1 rounded bg-rose-900/70 hover:bg-rose-800 text-rose-200 font-medium transition cursor-pointer"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -142,18 +215,26 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
           <button
             onClick={handleOptimize}
             disabled={loading || generatingDocx}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-sm shadow-md disabled:opacity-50 transition"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-sm shadow-md disabled:opacity-50 transition cursor-pointer"
           >
-            <Zap className="w-4 h-4" />
+            {loading ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Zap className="w-4 h-4" />
+            )}
             {loading ? 'Optimizing Resume Iteratively...' : 'Run Optimization Pipeline'}
           </button>
 
           <button
             onClick={handleGenerateDocx}
             disabled={loading || generatingDocx}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm shadow-md disabled:opacity-50 transition"
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm shadow-md disabled:opacity-50 transition cursor-pointer"
           >
-            <Download className="w-4 h-4" />
+            {generatingDocx ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-indigo-200" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
             {generatingDocx ? 'Generating Tailored .DOCX...' : 'Generate & Download Tailored .DOCX'}
           </button>
         </div>
@@ -263,24 +344,64 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
           </div>
 
           {/* Optimized Resume Preview */}
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-indigo-400" />
-                Optimized Resume Content
-              </h3>
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPreviewMode('executive')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    previewMode === 'executive'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-950 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Layout className="w-3.5 h-3.5" />
+                  Executive Designer View (Matching Image Template)
+                </button>
+                <button
+                  onClick={() => setPreviewMode('raw')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    previewMode === 'raw'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-950 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Code className="w-3.5 h-3.5" />
+                  Raw ATS Text
+                </button>
+              </div>
+
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition"
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition self-start sm:self-auto"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'Copied!' : 'Copy Text'}
               </button>
             </div>
 
-            <div className="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-200 overflow-y-auto max-h-[500px] whitespace-pre-wrap leading-relaxed">
-              {result.optimized_resume}
-            </div>
+            {previewMode === 'executive' ? (
+              <ExecutiveResumeView
+                optimizedText={result.optimized_resume}
+                initialFormat={selectedFormat}
+                onDownloadDocx={handleGenerateDocx}
+                onDownloadTxt={() => {
+                  const blob = new Blob([result.optimized_resume], { type: 'text/plain;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'Tailored_Resume_ATS90.txt';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              />
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+                <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-200 overflow-y-auto max-h-[500px] whitespace-pre-wrap leading-relaxed">
+                  {result.optimized_resume}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

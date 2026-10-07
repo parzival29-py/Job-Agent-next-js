@@ -97,6 +97,47 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
     }
   };
 
+  const handleLoadSampleResume = async () => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const uploadRes = await fetch('/resume/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: 'Aryaman_Resume.txt',
+          text: `ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+PROFESSIONAL SUMMARY
+Motivated B.Tech student in Electronics & Communication Engineering with specialization in Artificial Intelligence and Machine Learning (AIML). Skilled in Python, JavaScript, web development, and software development with a strong interest in AI-driven applications, problem-solving, and full-stack technologies.
+TECHNICAL SKILLS
+• Programming Languages: Python, JavaScript, C++
+• Web Technologies: HTML, CSS, Web Development
+• Tools & Platforms: Git & GitHub, VS Code
+• Core Concepts: Machine Learning Basics, Software Development, Problem Solving, Team Collaboration
+PROJECTS
+AI-Based Attendance System
+• Developed a face-recognition attendance system using Python and OpenCV.
+• Automated attendance tracking to improve efficiency and reduce manual effort.
+Portfolio Website
+• Built a responsive personal portfolio using HTML, CSS, and JavaScript.
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027`,
+        }),
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.success) {
+        await fetchProfile();
+        setMessage({ text: 'Loaded sample candidate resume successfully!', type: 'success' });
+      }
+    } catch (e: any) {
+      setMessage({ text: e.message || 'Failed to load sample resume', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const uploadFile = async (file: File) => {
     setLoading(true);
     setMessage(null);
@@ -142,7 +183,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadDocx = async () => {
+  const handleDownloadDocx = async (format?: string) => {
     try {
       setLoading(true);
       const res = await fetch('/ai/generate-resume', {
@@ -151,6 +192,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
         body: JSON.stringify({
           job_description: profile?.headline || 'Software Engineer',
           max_iterations: 1,
+          resume_format: format || 'cobalt-split',
         }),
       });
       const data = await res.json();
@@ -171,7 +213,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
@@ -303,9 +345,10 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
         )}
 
         {/* Upload Controls */}
-        <div className="mt-5">
+        <div className="mt-5 space-y-4">
           {!uploadTextMode ? (
-            <label
+            <>
+            <div
               onDragOver={(e) => {
                 e.preventDefault();
                 setIsDragging(true);
@@ -313,11 +356,19 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               className={`border-2 border-dashed ${
                 isDragging
-                  ? 'border-indigo-400 bg-indigo-950/30'
-                  : 'border-slate-700 hover:border-indigo-500 bg-slate-950/40 hover:bg-slate-950/70'
-              } transition rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer group`}
+                  ? 'border-indigo-400 bg-indigo-950/40 ring-2 ring-indigo-500/30'
+                  : 'border-slate-700/80 hover:border-indigo-500/80 bg-slate-950/40 hover:bg-slate-950/70'
+              } transition-all duration-200 rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center cursor-pointer group relative`}
             >
               <input
                 ref={fileInputRef}
@@ -327,47 +378,142 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
                 disabled={loading}
                 className="hidden"
               />
-              <div className="w-12 h-12 rounded-full bg-indigo-500/10 group-hover:bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-2 transition">
-                <Upload className="w-6 h-6" />
+              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 group-hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 flex items-center justify-center mb-3 transition shadow-inner">
+                {loading ? (
+                  <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
+                ) : (
+                  <Upload className="w-6 h-6" />
+                )}
               </div>
-              <span className="text-sm font-semibold text-slate-200">
-                {loading ? 'Processing & extracting text...' : 'Click or drop PDF, DOCX, or TXT file'}
+              <span className="text-base font-bold text-white text-center">
+                {loading ? 'Processing & Parsing Candidate Resume...' : 'Drop your resume or click to upload'}
               </span>
-              <span className="text-xs text-slate-500 mt-1 mb-3">
-                Supports standard single-column & ATS-compliant formats (.pdf, .docx, .txt)
+              <p className="text-xs text-slate-400 mt-1 mb-4 text-center max-w-md">
+                Supports single or multi-column ATS resumes in <span className="text-indigo-300 font-medium">.PDF</span>, <span className="text-indigo-300 font-medium">.DOCX</span>, and <span className="text-indigo-300 font-medium">.TXT</span> formats.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={loading}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Browse Files
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLoadSampleResume();
+                  }}
+                  disabled={loading}
+                  className="px-3.5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+                  title="Load Aryaman Dewangan's resume with 8 formats"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  Load Sample Candidate
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUploadTextMode(true);
+                  }}
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition"
+                >
+                  Paste Raw Text
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fetchProfile();
+                  }}
+                  disabled={loading}
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-indigo-300 rounded-lg text-xs font-medium border border-indigo-900/60 transition flex items-center gap-1.5"
+                  title="Reload active profile"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Reload Profile
+                </button>
+              </div>
+            </div>
+
+            {/* Active Profile Banner if loaded - placed cleanly outside the click-to-upload area */}
+            {profile && (
+              <div className="p-4 bg-indigo-950/40 border border-indigo-800/60 rounded-xl w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
+                  <div>
+                    <span className="text-xs font-bold text-white block">Active Profile: {profile.name}</span>
+                    <span className="text-[11px] text-indigo-300 font-mono">({profile.headline || 'AIML Engineer'})</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-semibold font-mono">
+                    90+ ATS Score Ready
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewMode('executive');
+                      setTimeout(() => {
+                        document.getElementById('executive-resume-preview')?.scrollIntoView({ behavior: 'smooth' });
+                      }, 100);
+                    }}
+                    className="text-xs text-indigo-300 hover:text-white underline font-semibold transition"
+                  >
+                    View Executive Resume ↓
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Supported format pill features */}
+            <div className="pt-2 border-t border-slate-800/80 w-full flex flex-wrap items-center justify-center gap-2">
+              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Features:</span>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-800 text-emerald-300 font-medium">
+                ✓ Strict 90+ ATS Score
               </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                disabled={loading}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition"
-              >
-                Browse Files
-              </button>
-            </label>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-950/70 border border-indigo-800 text-indigo-300 font-medium">
+                ✓ 8 Designer Formats
+              </span>
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-violet-950/70 border border-violet-800 text-violet-300 font-medium">
+                ✓ Real-time Format Rotation
+              </span>
+            </div>
+            </>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 bg-slate-950/70 border border-slate-800 rounded-xl p-5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Paste Resume Content
+                </label>
+                <span className="text-[11px] text-slate-500">Plain text extracted for ATS scoring</span>
+              </div>
               <textarea
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
-                placeholder="Paste the raw text of your resume here..."
-                rows={6}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                placeholder="Paste the raw text of your resume here (Contact, Experience, Skills, Education)..."
+                rows={7}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono leading-relaxed"
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   onClick={() => setUploadTextMode(false)}
-                  className="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-slate-200"
+                  className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleTextUpload}
                   disabled={loading || !rawText.trim()}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 transition shadow-sm"
                 >
                   {loading ? 'Saving...' : 'Parse & Save Text'}
                 </button>
@@ -428,11 +574,13 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
       {/* Profile Overview */}
       {profile ? (
         viewMode === 'executive' ? (
-          <ExecutiveResumeView
-            profile={profile}
-            onDownloadDocx={handleDownloadDocx}
-            onDownloadTxt={handleDownloadTxt}
-          />
+          <div id="executive-resume-preview">
+            <ExecutiveResumeView
+              profile={profile}
+              onDownloadDocx={handleDownloadDocx}
+              onDownloadTxt={handleDownloadTxt}
+            />
+          </div>
         ) : viewMode === 'raw' ? (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">

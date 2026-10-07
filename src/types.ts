@@ -78,6 +78,10 @@ export interface ApplicationRecord {
   job_description?: string;
   ats_score?: number | null;
   resume_version?: string;
+  resume_format?: string;
+  custom_resume_text?: string;
+  custom_docx_url?: string;
+  custom_txt_url?: string;
   cover_letter?: string;
   status: string;
   notes?: string;

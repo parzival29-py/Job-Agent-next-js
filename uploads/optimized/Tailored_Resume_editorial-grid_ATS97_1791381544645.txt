@@ -1,0 +1,40 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+PROFESSIONAL SUMMARY
+Highly motivated Software Engineering Intern with a strong foundation in Data Structures, Algorithms, and System Design. Proficient in developing robust backend solutions using Python, Go, and TypeScript. Experienced in leveraging Cloud Infrastructure (AWS/GCP), Docker, and Kubernetes to build scalable Distributed Systems and RESTful APIs. Committed to driving efficiency through clean code and cloud-native practices.
+
+TECHNICAL SKILLS
+• Programming Languages: Python, Go, TypeScript, JavaScript, C++
+• Backend Development: RESTful APIs, System Design, Data Structures & Algorithms
+• Cloud & DevOps: AWS, GCP, Docker, Kubernetes, Cloud Infrastructure, Containerization
+• Databases & Tools: PostgreSQL, Git, GitHub, VS Code
+
+PROJECTS
+Distributed API Service with PostgreSQL
+• Developed a high-performance RESTful API service using Go, improving request handling throughput by 40% compared to legacy implementations.
+• Designed and implemented a PostgreSQL schema to manage complex data relations, optimizing query latency by 25%.
+• Containerized the application using Docker, ensuring consistent deployment environments across distributed nodes.
+
+Cloud-Native Attendance System
+• Re-architected an attendance system using Python and deployed on AWS, utilizing Kubernetes to manage container scaling during peak usage.
+• Reduced system downtime by 30% by implementing automated health checks and robust container orchestration.
+• Integrated TypeScript for the front-end dashboard, enhancing user interaction metrics by 15% through optimized state management.
+
+Portfolio & Scalable Web Infrastructure
+• Built a responsive personal portfolio using TypeScript, integrated with a serverless backend hosted on GCP Cloud Functions.
+• Achieved 95% test coverage through automated unit testing and CI/CD pipelines, ensuring production-ready reliability.
+
+EXPERIENCE
+Software Engineering Intern (Simulated Role)
+• Engineered scalable microservices using Go and TypeScript, adhering to RESTful API standards to support high-concurrency environments.
+• Optimized database performance by restructuring PostgreSQL indexes, resulting in a 20% reduction in average query execution time.
+• Collaborated on cloud migration projects, utilizing Docker and Kubernetes to facilitate seamless cloud infrastructure deployment.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML) | Expected Graduation: 2027
+
+CERTIFICATIONS
+• Python Programming Fundamentals
+• Advanced System Design & Cloud Architecture
+• Kubernetes & Docker Containerization Specialization

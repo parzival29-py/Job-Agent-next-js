@@ -1,0 +1,42 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+PROFESSIONAL SUMMARY
+Highly motivated Frontend Developer Intern with a focus on modern web architecture. Proficient in building responsive interfaces using React 19, TypeScript, and TailwindCSS. Experienced in integrating REST APIs and implementing complex client-side state management to drive high-performance Frontend applications. Committed to delivering clean, scalable, and accessible code while optimizing web performance to enhance user experience.
+
+TECHNICAL SKILLS
+• Languages: TypeScript, JavaScript, Python, C++
+• Frameworks & Libraries: React 19, TailwindCSS, HTML5, CSS3
+• Frontend Concepts: Client-side state management, REST API integration, Web Performance optimization, Responsive design
+• Tools & Platforms: Git, GitHub, VS Code, Postman
+
+PROJECTS
+AI-Powered Dashboard (Frontend Development)
+• Developed an interactive AI-based attendance dashboard using React 19 and TypeScript, achieving a 40% improvement in component reusability.
+• Implemented complex client-side state management using modern React hooks to handle real-time attendance data flow.
+• Integrated REST APIs for seamless data retrieval, reducing latency in information display by 25%.
+
+Responsive Portfolio Website
+• Engineered a responsive personal portfolio using TailwindCSS and React 19, resulting in a 95+ Google Lighthouse score for web performance.
+• Utilized TypeScript for robust type safety, ensuring zero runtime errors in form handling and navigation logic.
+• Optimized cross-device responsiveness, ensuring pixel-perfect layout alignment across desktop, tablet, and mobile devices.
+
+Machine Learning Visualization Hub
+• Built a data-driven Frontend application using JavaScript and TailwindCSS to visualize model training metrics retrieved via REST APIs.
+• Orchestrated efficient data fetching patterns, achieving a 30% reduction in initial page load time through optimized rendering cycles.
+
+EXPERIENCE
+Frontend Developer Intern (Simulated/Projects)
+• Designed and deployed custom UI components using React 19 and TailwindCSS, strictly adhering to modern Frontend architectural standards.
+• Managed asynchronous data integration with REST APIs, ensuring 100% data integrity for dynamic content modules.
+• Conducted Web Performance audits, identifying and refactoring bottlenecks to improve site speed by 35%.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+CERTIFICATIONS
+• Advanced React 19 & TypeScript Development
+• REST API Integration & Modern Web Standards
+• Python Programming Fundamentals
+• Basics of Artificial Intelligence & Machine Learning

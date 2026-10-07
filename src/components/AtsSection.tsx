@@ -327,6 +327,27 @@ Requirements:
                   </ul>
                 </div>
               )}
+
+              {onSendToOptimizer && (
+                <div className="mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800/80">
+                  <div>
+                    <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      Target 90+ ATS Guarantee & Multi-Format Engine
+                    </h4>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Automatically weaves missing keywords into technical skills & bullet points with distinct rotating formats.
+                    </p>
+                  </div>
+                  <button
+                    onClick={onSendToOptimizer}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-xs shadow transition"
+                  >
+                    <span>Launch 90+ Optimizer & DOCX</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

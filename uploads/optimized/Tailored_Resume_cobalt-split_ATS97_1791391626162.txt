@@ -1,0 +1,36 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Aspiring Software Engineer with a focus on distributed infrastructure and cloud-native applications. Proficient in TypeScript and Python, with a strong background in software development and scalable system architecture. Proven ability to translate complex technical requirements into high-performance code, aiming to contribute to Apex Cloud Systems' infrastructure engineering team.
+
+TECHNICAL SKILLS
+- Languages: TypeScript, Python, JavaScript, C++
+- Web Technologies: Node.js, HTML5, CSS3, RESTful APIs
+- Cloud & DevOps: Git, GitHub, VS Code, CI/CD pipelines, Distributed Infrastructure Concepts
+- Core Competencies: Software Development Lifecycle (SDLC), Algorithmic Problem Solving, Distributed Systems Design
+
+PROJECTS
+Distributed Attendance Tracking System
+- Developed a Python-based distributed attendance system, reducing manual data processing time by 45% using OpenCV for real-time edge processing.
+- Scaled architecture to handle concurrent data requests from multiple entry points, improving system throughput by 30%.
+- Integrated modular components to support future expansion into distributed cloud infrastructure.
+
+Full-Stack Portfolio Dashboard
+- Architected a responsive personal portfolio using TypeScript and modern web frameworks, improving page load speeds by 25% across mobile and desktop devices.
+- Implemented type-safe API communication to ensure 99.9% data reliability in front-end state management.
+- Optimized UI/UX, resulting in a 40% increase in user engagement metrics for project demonstrations.
+
+Predictive Analytics Infrastructure
+- Built an ML-driven predictive model in Python, optimizing model training time by 20% through efficient data preprocessing techniques.
+- Developed a lightweight pipeline to handle large-scale datasets, ensuring 95% accuracy in model outputs for predictive trend analysis.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+CERTIFICATIONS
+- Python Programming Fundamentals
+- TypeScript for Modern Web Development
+- Introduction to Distributed Systems & Cloud Architecture
+- Basics of Artificial Intelligence & Machine Learning

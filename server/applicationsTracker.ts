@@ -9,11 +9,30 @@ export interface ApplicationRecord {
   job_description?: string;
   ats_score?: number | null;
   resume_version?: string;
+  resume_format?: string;
+  custom_resume_text?: string;
+  custom_docx_url?: string;
+  custom_txt_url?: string;
   cover_letter?: string;
   status: string; // 'Saved' | 'Ready to Apply' | 'Applied' | 'Interview' | 'Offer' | 'Rejected'
   notes?: string;
   created_at: string;
   updated_at: string;
+}
+
+export const RESUME_FORMATS = [
+  'cobalt-split',
+  'executive-monolith',
+  'minimalist-two-col',
+  'editorial-grid',
+  'tech-engineering',
+  'modern-nordic',
+  'ivy-executive',
+  'cyber-matrix',
+];
+
+export function getNextResumeFormat(existingCount: number): string {
+  return RESUME_FORMATS[existingCount % RESUME_FORMATS.length];
 }
 
 const APPLICATIONS_FILE = path.resolve(process.cwd(), 'uploads', 'applications.json');
@@ -45,12 +64,17 @@ export function createApplication(params: {
   job_description?: string;
   ats_score?: number | null;
   resume_version?: string;
+  resume_format?: string;
+  custom_resume_text?: string;
+  custom_docx_url?: string;
+  custom_txt_url?: string;
   cover_letter?: string;
   status?: string;
   notes?: string;
 }): ApplicationRecord {
   const apps = readApplications();
   const now = new Date().toISOString();
+  const assignedFormat = params.resume_format || getNextResumeFormat(apps.length);
   const newApp: ApplicationRecord = {
     id: 'app_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
     company: params.company,
@@ -59,6 +83,10 @@ export function createApplication(params: {
     job_description: params.job_description || '',
     ats_score: params.ats_score != null ? Number(params.ats_score) : null,
     resume_version: params.resume_version || '',
+    resume_format: assignedFormat,
+    custom_resume_text: params.custom_resume_text || '',
+    custom_docx_url: params.custom_docx_url || '',
+    custom_txt_url: params.custom_txt_url || '',
     cover_letter: params.cover_letter || '',
     status: params.status || 'Saved',
     notes: params.notes || '',

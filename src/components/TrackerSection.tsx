@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers } from 'lucide-react';
 import type { ApplicationRecord, ResumeProfile } from '../types.ts';
+import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 
 export const TrackerSection: React.FC = () => {
@@ -63,17 +64,8 @@ export const TrackerSection: React.FC = () => {
   const handleRegenerateNextFormat = async (app: ApplicationRecord) => {
     setRegeneratingId(app.id);
     try {
-      const formats = [
-        'cobalt-split',
-        'executive-monolith',
-        'minimalist-two-col',
-        'editorial-grid',
-        'tech-engineering',
-        'modern-nordic',
-        'ivy-executive',
-        'cyber-matrix',
-      ];
-      const currentIndex = formats.indexOf(app.resume_format || 'cobalt-split');
+      const formats = RESUME_FORMATS_LIST.map((f) => f.id);
+      const currentIndex = formats.indexOf(app.resume_format || 'tech-engineering');
       const nextFormat = formats[(currentIndex + 1) % formats.length];
 
       const res = await fetch('/jobs/tailor-resume', {
@@ -98,6 +90,64 @@ export const TrackerSection: React.FC = () => {
       alert(`Error rotating format: ${e.message}`);
     } finally {
       setRegeneratingId(null);
+    }
+  };
+
+  const handleDownloadPdfForApp = async (app: ApplicationRecord, fmt?: string) => {
+    const chosenFormat = fmt || app.resume_format || 'tech-engineering';
+    try {
+      // 1. Try fast dedicated format renderer
+      try {
+        const renderRes = await fetch('/ai/render-resume-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resume_text: app.custom_resume_text,
+            resume_format: chosenFormat,
+            job_description: app.job_description || `${app.job_title} at ${app.company}`,
+            ats_score: app.ats_score || 95,
+          }),
+        });
+        const renderData = await renderRes.json();
+        if (renderData.success && renderData.pdf_download_url) {
+          const a = document.createElement('a');
+          a.href = renderData.pdf_download_url;
+          a.download = renderData.pdf_filename || `Tailored_Resume_${chosenFormat}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+      } catch (renderErr) {
+        console.warn('Fast render fallback:', renderErr);
+      }
+
+      // 2. Fallback
+      const res = await fetch('/ai/generate-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume_text: app.custom_resume_text,
+          job_description: app.job_description || `${app.job_title} at ${app.company}`,
+          resume_format: chosenFormat,
+        }),
+      });
+      const data = await res.json();
+      if (data.resume?.pdf_download_url) {
+        const a = document.createElement('a');
+        a.href = data.resume.pdf_download_url;
+        a.download = data.resume.pdf_filename || `Tailored_Resume_${chosenFormat}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else if (app.custom_pdf_url) {
+        window.location.href = app.custom_pdf_url;
+      }
+    } catch (e) {
+      console.error(e);
+      if (app.custom_pdf_url) {
+        window.location.href = app.custom_pdf_url;
+      }
     }
   };
 
@@ -365,17 +415,26 @@ export const TrackerSection: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                {selectedApp.custom_docx_url ? (
+                {(selectedApp.custom_pdf_url || selectedApp.custom_docx_url) ? (
+                  <a
+                    href={selectedApp.custom_pdf_url || selectedApp.custom_docx_url?.replace(/\.docx$/i, '.pdf')}
+                    download
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition"
+                    title="Download high-fidelity PDF format resume"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download PDF (.pdf)
+                  </a>
+                ) : null}
+                {selectedApp.custom_docx_url && (
                   <a
                     href={selectedApp.custom_docx_url}
                     download
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition"
+                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Download .docx
+                    Word (.docx)
                   </a>
-                ) : (
-                  <span className="text-xs text-slate-500 font-mono">Word doc generated upon tailor</span>
                 )}
                 {selectedApp.custom_txt_url && (
                   <a
@@ -400,6 +459,8 @@ export const TrackerSection: React.FC = () => {
                   targetCompany={selectedApp.company}
                   targetJobTitle={selectedApp.job_title}
                   atsScore={selectedApp.ats_score || 95}
+                  pdfUrl={selectedApp.custom_pdf_url || selectedApp.custom_docx_url?.replace(/\.docx$/i, '.pdf')}
+                  onDownloadPdf={(fmt) => handleDownloadPdfForApp(selectedApp, fmt)}
                   onDownloadDocx={() => {
                     if (selectedApp.custom_docx_url) {
                       window.location.href = selectedApp.custom_docx_url;

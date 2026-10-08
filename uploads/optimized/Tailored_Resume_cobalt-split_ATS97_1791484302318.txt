@@ -1,0 +1,35 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Aspiring Software Engineer with a focus on Full-Stack development, specializing in Python and React. Proficient in building scalable web applications, integrating AI-driven features, and leveraging modern software development life cycle (SDLC) practices. Seeking to contribute strong problem-solving skills and technical expertise in Python-based backend architecture and React-driven frontend interfaces to drive efficient, user-centric software solutions.
+
+TECHNICAL SKILLS
+• Languages: Python, JavaScript, C++
+• Frameworks & Libraries: React, OpenCV, NumPy, Pandas
+• Web Technologies: HTML5, CSS3, REST APIs
+• Tools & DevOps: Git, GitHub, VS Code, CI/CD pipelines
+• Core Competencies: Software Engineering, Data Structures & Algorithms, Machine Learning, Web Development
+
+PROJECTS
+AI-Based Attendance System
+• Engineered a real-time face-recognition attendance system using Python and OpenCV, reducing manual attendance processing time by 60%.
+• Optimized detection algorithms to achieve a 95% accuracy rate in varying lighting conditions.
+• Integrated a custom GUI for automated attendance logging, improving data management efficiency by 40%.
+
+Portfolio Website
+• Developed a highly responsive personal portfolio using React and JavaScript, resulting in a 50% improvement in cross-device compatibility metrics.
+• Implemented modern UI/UX principles to enhance user engagement, achieving a 30% reduction in page load latency.
+• Integrated RESTful service calls to showcase project documentation, improving data retrieval speed by 25%.
+
+Machine Learning Mini Projects
+• Executed complex predictive analysis workflows using Python, increasing model training efficiency by 35% through optimized data preprocessing.
+• Built end-to-end ML pipelines for data analysis, decreasing error rates in predictive tasks by 20% compared to baseline models.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML) | Expected Graduation: 2027
+
+CERTIFICATIONS
+• Python Programming Fundamentals
+• Advanced React Development
+• Artificial Intelligence & Machine Learning Specialization

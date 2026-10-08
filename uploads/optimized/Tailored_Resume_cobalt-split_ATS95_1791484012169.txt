@@ -1,0 +1,45 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+PROFESSIONAL SUMMARY
+Motivated B.Tech student in Electronics & Communication Engineering with specialization in Artificial
+Intelligence and Machine Learning (AIML). Skilled in Python, JavaScript, web development, and software
+development with a strong interest in AI-driven applications, problem-solving, and full-stack technologies. Quick
+learner with experience in teamwork, leadership, and event coordination, capable of adapting effectively in
+dynamic environments.
+TECHNICAL SKILLS
+• Programming Languages: Python, JavaScript, C++
+• Web Technologies: HTML, CSS, Web Development
+• Tools & Platforms: Git & GitHub, VS Code
+• Core Concepts: Machine Learning Basics, Software Development, Problem Solving, Team
+Collaboration
+PROJECTS
+AI-Based Attendance System
+• Developed a face-recognition attendance system using Python and OpenCV.
+• Automated attendance tracking to improve efficiency and reduce manual effort.
+• Applied computer vision concepts for real-time face detection and recognition.
+Portfolio Website
+• Built a responsive personal portfolio using HTML, CSS, and JavaScript.
+• Showcased projects, technical skills, and personal achievements through an interactive interface.
+• Optimized the design for compatibility across multiple devices and screen sizes.
+Machine Learning Mini Projects
+• Worked on beginner-level machine learning projects using Python libraries.
+• Explored concepts such as data preprocessing, model training, and predictive analysis.
+• Gained hands-on experience in implementing basic ML workflows.
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+
+
+Higher Secondary Education
+Completed 12th Standard with Science Stream.
+Secondary Education
+Completed 10th Standard.
+LEADERSHIP & ACTIVITIES
+• Participated actively in sports and team-based activities during school and college.
+• Developed teamwork, coordination, and communication skills through collaborative environments.
+• Strong interest in calisthenics, football, and continuous self-development.
+CERTIFICATIONS
+• Python Programming Fundamentals
+• Introduction to Web Development
+• Basics of Artificial Intelligence & Machine Learning

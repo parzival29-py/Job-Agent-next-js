@@ -24,7 +24,7 @@ import {
   generateApplicationAnswer,
   generateApplicationAnswers,
 } from './server/applicationAi.js';
-import { generateTailoredResume } from './server/resumeGenerator.js';
+import { generateTailoredResume, detectRecommendedFormat, generateResumePdf } from './server/resumeGenerator.js';
 import { getAllJobs, filterJobs } from './server/jobScraper.js';
 import {
   createApplication,
@@ -236,6 +236,8 @@ app.get(['/download/:filename', '/api/download/:filename'], (req, res) => {
   const ext = path.extname(safeFilename).toLowerCase();
   if (ext === '.docx') {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  } else if (ext === '.pdf') {
+    res.setHeader('Content-Type', 'application/pdf');
   } else if (ext === '.txt') {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   }
@@ -478,7 +480,65 @@ app.post(['/ai/optimize-resume', '/api/ai/optimize-resume'], async (req, res) =>
 });
 
 // ============================================================
-// GENERATE TAILORED DOCX
+// FORMAT RECOMMENDATION ENGINE
+// ============================================================
+
+app.post(['/ai/recommend-format', '/api/ai/recommend-format'], (req, res) => {
+  const jobDescription = req.body?.job_description || '';
+  const resumeText = req.body?.resume_text || loadResumeText() || '';
+  const recommendation = detectRecommendedFormat(jobDescription, resumeText);
+  return res.json({
+    success: true,
+    recommendation,
+  });
+});
+
+// ============================================================
+// DEDICATED DIRECT PDF RENDERER (FAST & EXACT CHOSEN FORMAT)
+// ============================================================
+
+app.post(['/ai/render-resume-pdf', '/api/ai/render-resume-pdf'], async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const rawText = req.body?.resume_text || loadResumeText();
+    if (!rawText || !rawText.trim()) {
+      return res.status(200).json({
+        success: false,
+        message: 'No resume content available to render. Please upload or optimize a resume first.',
+      });
+    }
+
+    const jobDescription = req.body?.job_description || '';
+    const userFormat = req.body?.resume_format || req.body?.formatType || req.body?.format;
+    let chosenFormat = userFormat;
+    if (!chosenFormat || chosenFormat === 'auto') {
+      const rec = detectRecommendedFormat(jobDescription, rawText);
+      chosenFormat = rec.formatId;
+    }
+
+    const atsScore = Number(req.body?.ats_score) || 95;
+    const pdfResult = await generateResumePdf(rawText, atsScore, 90, chosenFormat);
+
+    return res.json({
+      success: true,
+      message: `Resume PDF successfully rendered in ${chosenFormat} format!`,
+      format: chosenFormat,
+      filename: pdfResult.filename,
+      pdf_filename: pdfResult.filename,
+      pdf_download_url: pdfResult.download_url,
+      download_url: pdfResult.download_url,
+      ats_score: atsScore,
+    });
+  } catch (error: any) {
+    return res.status(200).json({
+      success: false,
+      message: error?.message || 'Failed to render PDF in selected format.',
+    });
+  }
+});
+
+// ============================================================
+// GENERATE TAILORED DOCX & PDF
 // ============================================================
 
 app.post(['/ai/generate-resume', '/api/ai/generate-resume'], async (req, res) => {
@@ -511,7 +571,12 @@ app.post(['/ai/generate-resume', '/api/ai/generate-resume'], async (req, res) =>
 
     const atsResult = optimization.final_ats || optimization.final_score;
     const atsScoreVal = atsResult?.ats_score || 94;
-    const chosenFormat = req.body?.resume_format || req.body?.formatType || 'cobalt-split';
+    const userFormat = req.body?.resume_format || req.body?.formatType || req.body?.format;
+    let chosenFormat = userFormat;
+    if (!chosenFormat || chosenFormat === 'auto') {
+      const rec = detectRecommendedFormat(jobDescription, optimizedResume);
+      chosenFormat = rec.formatId;
+    }
     const document = await generateTailoredResume(optimizedResume, atsScoreVal, 90, chosenFormat);
 
     return res.json({
@@ -520,6 +585,7 @@ app.post(['/ai/generate-resume', '/api/ai/generate-resume'], async (req, res) =>
       resume: document,
       optimization,
       ats: atsResult,
+      format_used: chosenFormat,
     });
   } catch (error: any) {
     return res.status(200).json({
@@ -570,9 +636,12 @@ app.post(['/ai/tailor-for-job', '/api/ai/tailor-for-job', '/jobs/tailor-resume',
     const optimizedResumeText = optimization.optimized_resume || resumeText;
     const finalScore = Math.max(93, optimization.final_score?.ats_score ?? 93);
 
-    // 4. Auto-rotate format so each job gets a distinct template format
-    const existingApps = getApplications();
-    const assignedFormat = preferredFormat || getNextResumeFormat(existingApps.length);
+    // 4. Resolve format: if preferred is provided and not 'auto', use it; otherwise use AI recommendation based on JD
+    let assignedFormat = preferredFormat;
+    if (!assignedFormat || assignedFormat === 'auto') {
+      const rec = detectRecommendedFormat(jobDescription, optimizedResumeText);
+      assignedFormat = rec.formatId;
+    }
 
     // 5. Generate formatted Word Document (.docx) in the assigned format
     const documentResult = await generateTailoredResume(optimizedResumeText, finalScore, 90, assignedFormat);
@@ -592,10 +661,11 @@ app.post(['/ai/tailor-for-job', '/api/ai/tailor-for-job', '/jobs/tailor-resume',
       job_url: jobUrl,
       job_description: jobDescription,
       ats_score: Number(finalScore),
-      resume_version: documentResult.filename || 'tailored_resume.docx',
+      resume_version: documentResult.pdf_filename || documentResult.filename || 'tailored_resume.pdf',
       resume_format: assignedFormat,
       custom_resume_text: optimizedResumeText,
       custom_docx_url: documentResult.download_url || '',
+      custom_pdf_url: documentResult.pdf_download_url || '',
       custom_txt_url: documentResult.text_download_url || '',
       cover_letter: coverLetterText,
       status: 'Ready to Apply',
@@ -611,6 +681,7 @@ app.post(['/ai/tailor-for-job', '/api/ai/tailor-for-job', '/jobs/tailor-resume',
       initial_ats_score: initialAts.ats_score,
       resume_format: assignedFormat,
       download_url: documentResult.download_url,
+      pdf_download_url: documentResult.pdf_download_url,
       text_download_url: documentResult.text_download_url,
     });
   } catch (error: any) {
@@ -1214,6 +1285,7 @@ app.post(['/workflow/e2e-test', '/api/workflow/e2e-test'], async (req, res) => {
         target_reached: optimization.target_reached,
         generated_docx: documentResult.filename || '',
         download_url: documentResult.download_url || '',
+        pdf_download_url: documentResult.pdf_download_url || '',
         cover_letter_generated: Boolean(coverLetterText),
         application_id: createdApp ? createdApp.id : null,
       },

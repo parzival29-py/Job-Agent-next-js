@@ -81,6 +81,7 @@ export interface ApplicationRecord {
   resume_format?: string;
   custom_resume_text?: string;
   custom_docx_url?: string;
+  custom_pdf_url?: string;
   custom_txt_url?: string;
   cover_letter?: string;
   status: string;

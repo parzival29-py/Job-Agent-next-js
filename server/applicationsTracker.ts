@@ -12,6 +12,7 @@ export interface ApplicationRecord {
   resume_format?: string;
   custom_resume_text?: string;
   custom_docx_url?: string;
+  custom_pdf_url?: string;
   custom_txt_url?: string;
   cover_letter?: string;
   status: string; // 'Saved' | 'Ready to Apply' | 'Applied' | 'Interview' | 'Offer' | 'Rejected'
@@ -21,14 +22,27 @@ export interface ApplicationRecord {
 }
 
 export const RESUME_FORMATS = [
-  'cobalt-split',
+  'tech-engineering',
+  'datascience-ai',
   'executive-monolith',
+  'product-leader',
+  'startup-founder',
+  'ivy-executive',
+  'fintech-quant',
+  'consulting-mckinsey',
+  'cobalt-split',
+  'creative-director',
   'minimalist-two-col',
   'editorial-grid',
-  'tech-engineering',
   'modern-nordic',
-  'ivy-executive',
-  'cyber-matrix',
+  'healthcare-clinical',
+  'corporate-legal',
+  'sales-enterprise',
+  'federal-gov',
+  'academic-scholar',
+  'international-hybrid',
+  'marketing-growth',
+  'operations-scrum',
 ];
 
 export function getNextResumeFormat(existingCount: number): string {
@@ -67,6 +81,7 @@ export function createApplication(params: {
   resume_format?: string;
   custom_resume_text?: string;
   custom_docx_url?: string;
+  custom_pdf_url?: string;
   custom_txt_url?: string;
   cover_letter?: string;
   status?: string;
@@ -86,6 +101,7 @@ export function createApplication(params: {
     resume_format: assignedFormat,
     custom_resume_text: params.custom_resume_text || '',
     custom_docx_url: params.custom_docx_url || '',
+    custom_pdf_url: params.custom_pdf_url || (params.custom_docx_url ? params.custom_docx_url.replace(/\.docx$/i, '.pdf') : ''),
     custom_txt_url: params.custom_txt_url || '',
     cover_letter: params.cover_letter || '',
     status: params.status || 'Saved',

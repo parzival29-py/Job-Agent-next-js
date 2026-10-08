@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Sliders, Briefcase, MapPin, DollarSign, ExternalLink, ArrowRight, Check, CheckCircle2, Zap, Download, FileText, X, Sparkles, RefreshCw } from 'lucide-react';
 import type { JobItem, JobPreferences, ResumeProfile } from '../types.ts';
+import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 
 interface JobSearchSectionProps {
@@ -404,32 +405,44 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
             {/* Quick Actions Bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-semibold">Try Different Format:</span>
+                <span className="text-xs text-slate-400 font-semibold">Switch Format:</span>
                 <select
                   value={customResumeModal.data.resume_format}
                   onChange={(e) => handleTailorCustomResume(customResumeModal.job, e.target.value)}
-                  className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none cursor-pointer"
+                  className="bg-slate-900 border border-slate-700 text-indigo-400 font-semibold rounded-lg px-2.5 py-1 text-xs focus:outline-none cursor-pointer max-w-[240px]"
                 >
-                  <option value="cobalt-split">Cobalt Modern Split</option>
-                  <option value="executive-monolith">Executive Monolith</option>
-                  <option value="minimalist-two-col">Minimalist Two-Col</option>
-                  <option value="editorial-grid">Editorial Grid</option>
-                  <option value="tech-engineering">Silicon Valley Tech</option>
-                  <option value="modern-nordic">Modern Nordic Minimalist</option>
-                  <option value="ivy-executive">Ivy League Executive</option>
-                  <option value="cyber-matrix">Cyber Matrix Systems</option>
+                  {RESUME_FORMATS_LIST.map((fmt) => (
+                    <option key={fmt.id} value={fmt.id} className="bg-slate-900 text-white">
+                      {fmt.name} ({fmt.tag})
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {(customResumeModal.data.pdf_download_url || customResumeModal.data.download_url) && (
+                  <a
+                    href={
+                      customResumeModal.data.pdf_download_url ||
+                      customResumeModal.data.download_url.replace(/\.docx$/i, '.pdf')
+                    }
+                    download
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition"
+                    title="Download high-fidelity PDF format resume"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download PDF (.pdf)
+                  </a>
+                )}
                 {customResumeModal.data.download_url && (
                   <a
                     href={customResumeModal.data.download_url}
                     download
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition"
+                    title="Download Microsoft Word document (.docx)"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Download Word (.docx)
+                    Word (.docx)
                   </a>
                 )}
                 {customResumeModal.data.text_download_url && (
@@ -454,6 +467,42 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                 targetCompany={customResumeModal.job.company}
                 targetJobTitle={customResumeModal.job.title}
                 atsScore={customResumeModal.data.final_ats_score}
+                pdfUrl={
+                  customResumeModal.data.pdf_download_url ||
+                  customResumeModal.data.download_url?.replace(/\.docx$/i, '.pdf')
+                }
+                onDownloadPdf={async (fmt) => {
+                  const formatToUse = fmt || customResumeModal.data.resume_format;
+                  try {
+                    const res = await fetch('/ai/render-resume-pdf', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        resume_text: customResumeModal.data.application?.custom_resume_text,
+                        resume_format: formatToUse,
+                        ats_score: customResumeModal.data.final_ats_score || 95,
+                      }),
+                    });
+                    const d = await res.json();
+                    if (d.success && d.pdf_download_url) {
+                      const a = document.createElement('a');
+                      a.href = d.pdf_download_url;
+                      a.download = d.filename || `Tailored_Resume_${formatToUse}.pdf`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      return;
+                    }
+                  } catch (e) {
+                    console.warn('PDF download failed:', e);
+                  }
+                  const pdfLink =
+                    customResumeModal.data.pdf_download_url ||
+                    customResumeModal.data.download_url?.replace(/\.docx$/i, '.pdf');
+                  if (pdfLink) {
+                    window.location.href = pdfLink;
+                  }
+                }}
                 onDownloadDocx={() => {
                   if (customResumeModal.data.download_url) {
                     window.location.href = customResumeModal.data.download_url;

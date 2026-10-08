@@ -20,8 +20,8 @@
     width: 100% !important;
   }
   @page {
-    size: A4 portrait;
-    margin: 15mm 15mm 15mm 15mm;
+    size: letter portrait;
+    margin: 8mm;
   }
 }
 

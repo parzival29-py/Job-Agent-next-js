@@ -1,0 +1,35 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Aspiring Software Engineer Intern with a strong foundation in distributed systems, cloud architecture, and full-stack development. Proficient in Python and TypeScript, with a proven ability to design scalable software solutions. Eager to contribute technical expertise in backend development and cloud-native applications to Apex Cloud Systems, leveraging a background in algorithmic problem-solving and system optimization.
+
+TECHNICAL SKILLS
+• Languages: Python, TypeScript, JavaScript, C++
+• Web & Cloud Technologies: Cloud Systems, RESTful APIs, Distributed Systems concepts, HTML, CSS
+• Tools & Platforms: Git, GitHub, VS Code, Linux
+• Core Competencies: Software Development Life Cycle (SDLC), Data Structures, Algorithms, System Architecture, Performance Tuning
+
+PROJECTS
+AI-Based Attendance System
+• Engineered a high-availability face-recognition attendance system using Python and OpenCV, reducing manual administrative processing time by 60%.
+• Optimized real-time data throughput by 25% through the implementation of efficient multi-threading and asynchronous image processing workflows.
+• Achieved 98% recognition accuracy by fine-tuning deep learning models for dynamic environmental lighting conditions.
+
+Portfolio Website & Distributed Services
+• Architected a responsive portfolio platform using TypeScript and React, resulting in a 40% improvement in page load speeds across cross-device benchmarks.
+• Integrated cloud-hosted API services to manage dynamic content, ensuring 99.9% uptime during peak testing periods.
+• Applied modern web standards and TypeScript interfaces to ensure maintainable, type-safe code architecture.
+
+Machine Learning Infrastructure Projects
+• Developed a data processing pipeline using Python to automate model training workflows, reducing data preprocessing time by 30%.
+• Implemented scalable data structures to handle large datasets, achieving a 15% improvement in computational efficiency for predictive analysis models.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+CERTIFICATIONS
+• Python Programming Fundamentals
+• Advanced TypeScript & Web Development
+• Basics of Artificial Intelligence & Machine Learning

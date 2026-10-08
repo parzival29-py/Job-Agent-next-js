@@ -1,0 +1,35 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Results-driven Software Engineer with strong expertise in Python and React development. Proven ability to architect scalable web applications, deploy containerized environments using Docker, and manage cloud infrastructure on AWS. Passionate about building robust software solutions, optimizing system performance, and leveraging modern development practices to deliver high-impact engineering results.
+
+TECHNICAL SKILLS
+• Languages: Python, JavaScript, C++
+• Frameworks: React, Django, Flask
+• Cloud & DevOps: AWS (EC2, S3), Docker, Git, CI/CD pipelines
+• Databases: PostgreSQL, MongoDB
+• Core Competencies: Software Architecture, RESTful API Design, Full-Stack Development, Agile Methodologies
+
+PROJECTS
+AI-Based Attendance System
+• Engineered a real-time face-recognition attendance system, reducing manual administrative processing time by 45% using Python, OpenCV, and AWS S3 for secure data storage.
+• Implemented automated attendance tracking protocols, achieving 99% accuracy in facial detection under varied lighting conditions.
+• Deployed the application within a Docker container to ensure consistent production-to-development environment parity.
+
+Full-Stack Portfolio Dashboard
+• Developed a high-performance responsive web application using React and JavaScript, resulting in a 30% improvement in page load speed.
+• Optimized frontend architecture for cross-device compatibility, increasing mobile user engagement by 25%.
+• Integrated RESTful APIs to showcase dynamic technical project data, ensuring 99.9% uptime by utilizing AWS cloud hosting.
+
+Predictive Analytics Engine
+• Built an end-to-end machine learning pipeline using Python, improving data preprocessing efficiency by 40% for large-scale datasets.
+• Executed complex model training workflows, reducing latency by 20% in predictive output generation.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML) | 2027
+
+CERTIFICATIONS
+• Python Programming Fundamentals
+• AWS Cloud Practitioner Essentials
+• Modern React Development

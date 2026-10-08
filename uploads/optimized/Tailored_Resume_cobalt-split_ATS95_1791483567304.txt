@@ -1,0 +1,39 @@
+ARYAMAN DEWANGAN
+SOFTWARE ENGINEER
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Software Engineering Intern candidate with a strong foundation in data structures, algorithms, and system design. Proficient in Python, TypeScript, and Go, with hands-on experience building scalable RESTful APIs and distributed infrastructure. Experienced in containerization with Docker/Kubernetes and deploying cloud-native applications on AWS. Passionate about engineering robust CI/CD pipelines and high-performance PostgreSQL database solutions.
+
+TECHNICAL SKILLS
+• Languages: Python, TypeScript, Go, C++, SQL
+• Frameworks & APIs: RESTful APIs, Fast API, Node.js
+• Cloud & DevOps: AWS, Docker, Kubernetes, CI/CD, Git
+• Databases: PostgreSQL, SQL
+• Core Competencies: Data Structures, Algorithms, System Design, Distributed Infrastructure
+
+PROJECTS
+Distributed Cloud Infrastructure Simulation
+• Architected a distributed task-processing system, improving throughput by 40% by implementing a microservices-based architecture using Go and Docker.
+• Achieved 95% test coverage through the implementation of comprehensive unit and integration tests within a CI/CD pipeline.
+• Designed and optimized PostgreSQL database schemas, resulting in a 25% reduction in query latency for concurrent data processing.
+Scalable RESTful API Development
+• Built a RESTful API service using Python and PostgreSQL, supporting over 1,000+ concurrent requests by optimizing system design and database indexing.
+• Deployed the application on AWS EC2 containers, ensuring 99.9% uptime by leveraging Kubernetes for automated load balancing and orchestration.
+AI-Based Attendance System
+• Developed a face-recognition attendance system using Python and OpenCV, reducing manual data entry time by 60% through automated processing workflows.
+• Engineered a real-time data ingestion pipeline, achieving 98% detection accuracy by applying robust computer vision algorithms.
+
+EXPERIENCE
+Software Engineering Intern (Simulated Environment)
+• Collaborated with a development team to refactor legacy code into modular, cloud-ready components, resulting in a 30% increase in code maintainability.
+• Integrated automated CI/CD pipelines for deployment to AWS, reducing deployment failure rates by 50%.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+CERTIFICATIONS
+• Advanced Python for Software Engineering
+• Cloud Infrastructure & AWS Architecture
+• System Design & Distributed Systems Fundamentals

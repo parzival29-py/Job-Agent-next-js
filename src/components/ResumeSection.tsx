@@ -4,6 +4,7 @@ import type { ResumeProfile } from '../types.ts';
 import { db, testFirestoreConnection } from '../firebase.ts';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
+import { detectRecommendedFormat, RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 
 interface ResumeSectionProps {
   onProfileLoaded?: (profile: ResumeProfile) => void;
@@ -21,6 +22,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
   const [firestoreStatus, setFirestoreStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [syncingFirestore, setSyncingFirestore] = useState(false);
   const [viewMode, setViewMode] = useState<'executive' | 'audit' | 'raw'>('executive');
+  const [resumeFormat, setResumeFormat] = useState<string>('tech-engineering');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const fetchProfile = async () => {
@@ -186,13 +188,15 @@ Expected Graduation: 2027`,
   const handleDownloadDocx = async (format?: string) => {
     try {
       setLoading(true);
+      const recommended = detectRecommendedFormat('', profile?.headline || 'Software Engineer');
+      const resolvedFormat = format && format !== 'auto' ? format : recommended.formatId;
       const res = await fetch('/ai/generate-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           job_description: profile?.headline || 'Software Engineer',
           max_iterations: 1,
-          resume_format: format || 'cobalt-split',
+          resume_format: resolvedFormat,
         }),
       });
       const data = await res.json();
@@ -201,6 +205,65 @@ Expected Graduation: 2027`,
       }
     } catch (e: any) {
       console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async (format?: string) => {
+    try {
+      setLoading(true);
+      const recommended = detectRecommendedFormat('', profile?.headline || 'Software Engineer');
+      const resolvedFormat = format && format !== 'auto' ? format : resumeFormat || recommended.formatId;
+
+      // 1. Try fast dedicated format renderer first
+      try {
+        const renderRes = await fetch('/ai/render-resume-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resume_text: profile?.raw_text || '',
+            resume_format: resolvedFormat,
+            ats_score: 95,
+          }),
+        });
+        const renderData = await renderRes.json();
+        if (renderData.success && renderData.pdf_download_url) {
+          const a = document.createElement('a');
+          a.href = renderData.pdf_download_url;
+          a.download = renderData.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${resolvedFormat}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+      } catch (fastErr) {
+        console.warn('Fast render fallback:', fastErr);
+      }
+
+      // 2. Fallback pipeline
+      const res = await fetch('/ai/generate-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_description: profile?.headline || 'Software Engineer',
+          max_iterations: 1,
+          resume_format: resolvedFormat,
+        }),
+      });
+      const data = await res.json();
+      if (data.resume?.pdf_download_url) {
+        const a = document.createElement('a');
+        a.href = data.resume.pdf_download_url;
+        a.download = data.resume.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else if (data.resume?.download_url) {
+        window.location.href = data.resume.download_url;
+      }
+    } catch (e: any) {
+      console.error('Failed to download PDF:', e);
     } finally {
       setLoading(false);
     }
@@ -562,11 +625,28 @@ Expected Graduation: 2027`,
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="inline-flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              Executive Template Active
-            </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleDownloadPdf(resumeFormat)}
+              disabled={loading}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer disabled:opacity-50"
+              title={`Download PDF in ${RESUME_FORMATS_LIST.find((f) => f.id === resumeFormat)?.name || resumeFormat} format`}
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download PDF:</span>
+              <span className="bg-black/25 px-1.5 py-0.2 rounded font-black text-white border border-white/20">
+                {RESUME_FORMATS_LIST.find((f) => f.id === resumeFormat)?.name || resumeFormat}
+              </span>
+            </button>
+            <button
+              onClick={() => handleDownloadDocx()}
+              disabled={loading}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+              title="Download editable Microsoft Word document (.docx)"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Word (.docx)
+            </button>
           </div>
         </div>
       )}
@@ -577,6 +657,10 @@ Expected Graduation: 2027`,
           <div id="executive-resume-preview">
             <ExecutiveResumeView
               profile={profile}
+              initialFormat={resumeFormat}
+              targetJobTitle={profile.headline || 'Software Engineer'}
+              onFormatChange={(fmt) => setResumeFormat(fmt)}
+              onDownloadPdf={(fmt) => handleDownloadPdf(fmt || resumeFormat)}
               onDownloadDocx={handleDownloadDocx}
               onDownloadTxt={handleDownloadTxt}
             />

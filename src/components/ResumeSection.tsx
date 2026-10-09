@@ -5,6 +5,7 @@ import { db, testFirestoreConnection } from '../firebase.ts';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { detectRecommendedFormat, RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
+import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload } from '../utils/pdfExport.ts';
 
 interface ResumeSectionProps {
   onProfileLoaded?: (profile: ResumeProfile) => void;
@@ -177,12 +178,7 @@ Expected Graduation: 2027`,
   const handleDownloadTxt = () => {
     if (!profile?.raw_text) return;
     const blob = new Blob([profile.raw_text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(profile.name || 'Resume').replace(/\s+/g, '_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    triggerBlobDownload(blob, `${(profile.name || 'Resume').replace(/\s+/g, '_')}.txt`);
   };
 
   const handleDownloadDocx = async (format?: string) => {
@@ -201,7 +197,7 @@ Expected Graduation: 2027`,
       });
       const data = await res.json();
       if (data.resume?.download_url) {
-        window.location.href = data.resume.download_url;
+        await triggerUrlDownload(data.resume.download_url, data.resume.filename || `Tailored_Resume_${resolvedFormat}.docx`);
       }
     } catch (e: any) {
       console.error(e);
@@ -216,7 +212,20 @@ Expected Graduation: 2027`,
       const recommended = detectRecommendedFormat('', profile?.headline || 'Software Engineer');
       const resolvedFormat = format && format !== 'auto' ? format : resumeFormat || recommended.formatId;
 
-      // 1. Try fast dedicated format renderer first
+      // 1. Try DOM high-resolution capture first (100% exact replica of what shows in the agent)
+      const domSuccess = await exportResumeToPdf({
+        elementId: 'executive-resume-sheet',
+        format: resolvedFormat,
+        atsScore: 95,
+        candidateName: profile?.name || 'Resume',
+        fallbackData: profile,
+      });
+      if (domSuccess) {
+        setLoading(false);
+        return;
+      }
+
+      // 2. Try fast dedicated format renderer with rich candidate data
       try {
         const renderRes = await fetch('/ai/render-resume-pdf', {
           method: 'POST',
@@ -225,23 +234,20 @@ Expected Graduation: 2027`,
             resume_text: profile?.raw_text || '',
             resume_format: resolvedFormat,
             ats_score: 95,
+            resume_data: profile,
           }),
         });
         const renderData = await renderRes.json();
         if (renderData.success && renderData.pdf_download_url) {
-          const a = document.createElement('a');
-          a.href = renderData.pdf_download_url;
-          a.download = renderData.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${resolvedFormat}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          const outName = renderData.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${resolvedFormat}.pdf`;
+          await triggerUrlDownload(renderData.pdf_download_url, outName);
           return;
         }
       } catch (fastErr) {
         console.warn('Fast render fallback:', fastErr);
       }
 
-      // 2. Fallback pipeline
+      // 3. Fallback pipeline
       const res = await fetch('/ai/generate-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -253,14 +259,10 @@ Expected Graduation: 2027`,
       });
       const data = await res.json();
       if (data.resume?.pdf_download_url) {
-        const a = document.createElement('a');
-        a.href = data.resume.pdf_download_url;
-        a.download = data.resume.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const outName = data.resume.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}.pdf`;
+        await triggerUrlDownload(data.resume.pdf_download_url, outName);
       } else if (data.resume?.download_url) {
-        window.location.href = data.resume.download_url;
+        await triggerUrlDownload(data.resume.download_url, data.resume.filename || 'Tailored_Resume.docx');
       }
     } catch (e: any) {
       console.error('Failed to download PDF:', e);

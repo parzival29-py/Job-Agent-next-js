@@ -3,6 +3,7 @@ import { Search, Sliders, Briefcase, MapPin, DollarSign, ExternalLink, ArrowRigh
 import type { JobItem, JobPreferences, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
+import { triggerUrlDownload } from '../utils/pdfExport.ts';
 
 interface JobSearchSectionProps {
   onSelectJob: (job: JobItem) => void;
@@ -485,12 +486,7 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                     });
                     const d = await res.json();
                     if (d.success && d.pdf_download_url) {
-                      const a = document.createElement('a');
-                      a.href = d.pdf_download_url;
-                      a.download = d.filename || `Tailored_Resume_${formatToUse}.pdf`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
+                      await triggerUrlDownload(d.pdf_download_url, d.filename || `Tailored_Resume_${formatToUse}.pdf`);
                       return;
                     }
                   } catch (e) {
@@ -500,17 +496,17 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                     customResumeModal.data.pdf_download_url ||
                     customResumeModal.data.download_url?.replace(/\.docx$/i, '.pdf');
                   if (pdfLink) {
-                    window.location.href = pdfLink;
+                    await triggerUrlDownload(pdfLink, `Tailored_Resume_${formatToUse}.pdf`);
                   }
                 }}
-                onDownloadDocx={() => {
+                onDownloadDocx={async () => {
                   if (customResumeModal.data.download_url) {
-                    window.location.href = customResumeModal.data.download_url;
+                    await triggerUrlDownload(customResumeModal.data.download_url, 'Tailored_Resume.docx');
                   }
                 }}
-                onDownloadTxt={() => {
+                onDownloadTxt={async () => {
                   if (customResumeModal.data.text_download_url) {
-                    window.location.href = customResumeModal.data.text_download_url;
+                    await triggerUrlDownload(customResumeModal.data.text_download_url, 'Tailored_Resume.txt');
                   }
                 }}
               />

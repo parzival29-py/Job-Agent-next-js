@@ -3,6 +3,7 @@ import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileTe
 import type { ApplicationRecord, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
+import { triggerUrlDownload } from '../utils/pdfExport.ts';
 
 export const TrackerSection: React.FC = () => {
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
@@ -110,12 +111,8 @@ export const TrackerSection: React.FC = () => {
         });
         const renderData = await renderRes.json();
         if (renderData.success && renderData.pdf_download_url) {
-          const a = document.createElement('a');
-          a.href = renderData.pdf_download_url;
-          a.download = renderData.pdf_filename || `Tailored_Resume_${chosenFormat}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          const outName = renderData.pdf_filename || `Tailored_Resume_${chosenFormat}.pdf`;
+          await triggerUrlDownload(renderData.pdf_download_url, outName);
           return;
         }
       } catch (renderErr) {
@@ -134,14 +131,10 @@ export const TrackerSection: React.FC = () => {
       });
       const data = await res.json();
       if (data.resume?.pdf_download_url) {
-        const a = document.createElement('a');
-        a.href = data.resume.pdf_download_url;
-        a.download = data.resume.pdf_filename || `Tailored_Resume_${chosenFormat}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const outName = data.resume.pdf_filename || `Tailored_Resume_${chosenFormat}.pdf`;
+        await triggerUrlDownload(data.resume.pdf_download_url, outName);
       } else if (app.custom_pdf_url) {
-        window.location.href = app.custom_pdf_url;
+        await triggerUrlDownload(app.custom_pdf_url, `Tailored_Resume_${chosenFormat}.pdf`);
       }
     } catch (e) {
       console.error(e);

@@ -562,10 +562,15 @@ function parseResumeContent(resumeText: string): ParsedResume {
         line.includes('github') ||
         line.includes('linkedin') ||
         line.includes('|') ||
-        line.includes('•')
+        line.includes('•') ||
+        /\b\d{10}\b/.test(line)
       ) {
         const parts = line.split(/[|•]/).map((p) => p.trim()).filter(Boolean);
-        parsed.contacts.push(...parts);
+        for (const p of parts) {
+          if (!parsed.contacts.includes(p)) {
+            parsed.contacts.push(p);
+          }
+        }
       } else if (!parsed.headline || parsed.headline === 'SOFTWARE ENGINEER | FULL-STACK & SYSTEMS') {
         parsed.headline = line.toUpperCase();
       }
@@ -591,7 +596,7 @@ function parseResumeContent(resumeText: string): ParsedResume {
         const parts = line.split(/[|–—]/).map((p) => p.trim()).filter(Boolean);
         currentExp = {
           role: parts[0] || line,
-          company: parts[1] || 'Enterprise Corp',
+          company: parts[1] || 'Technical Experience',
           duration: parts[2] || '2023 - Present',
           bullets: [],
         };
@@ -614,8 +619,8 @@ function parseResumeContent(resumeText: string): ParsedResume {
       const parts = line.split(/[|–—]/).map((p) => p.trim()).filter(Boolean);
       currentEdu = {
         degree: parts[0] || line,
-        institution: parts[1] || 'University',
-        duration: parts[2] || '2020 - 2024',
+        institution: parts[1] || 'University Institute',
+        duration: parts[2] || 'Expected 2027',
         details: parts[3] || '',
       };
       parsed.education.push(currentEdu);
@@ -624,18 +629,29 @@ function parseResumeContent(resumeText: string): ParsedResume {
     }
   }
 
+  // If no traditional experience was found, promote projects into experience so all templates have rich content!
+  if (parsed.experience.length === 0 && parsed.projects.length > 0) {
+    parsed.experience = parsed.projects.map((p) => ({
+      role: p.title,
+      company: p.subtitle || 'Software & AI Project',
+      duration: '2024 - Present',
+      bullets: p.bullets.length > 0 ? p.bullets : ['Engineered end-to-end full-stack software application.'],
+    }));
+  }
+
   if (parsed.contacts.length === 0) {
-    parsed.contacts = ['dewanganaryaman9@gmail.com', '+91 7470435552', 'India', 'linkedin.com/in/aryaman', 'github.com/aryaman'];
+    parsed.contacts = ['dewanganaryaman9@gmail.com', '+91 7470435552', 'India', 'linkedin.com/in/aryamandewangan', 'github.com/aryamandewangan'];
   }
   if (!parsed.summary) {
-    parsed.summary = 'Senior technical specialist and full-stack software engineer with extensive track record architecting high-throughput distributed architectures, reliable cloud infrastructure, and 90+ ATS optimized benchmark performance.';
+    parsed.summary = 'Motivated Software Engineer and B.Tech student in Electronics & Communication Engineering (AIML) with hands-on experience building full-stack applications, intelligent AI systems, and scalable backend services with Python, JavaScript, and C++.';
   }
   if (parsed.skillsList.length === 0) {
-    parsed.skillsList = ['Python', 'TypeScript', 'React 19', 'Go', 'Docker', 'Kubernetes', 'PostgreSQL', 'Redis', 'AWS', 'System Design'];
+    parsed.skillsList = ['Python', 'JavaScript', 'C++', 'HTML/CSS', 'Git & GitHub', 'VS Code', 'Machine Learning', 'Problem Solving'];
     parsed.skills = [
-      { category: 'Languages', items: ['Python', 'TypeScript', 'Go', 'SQL'] },
-      { category: 'Frameworks', items: ['React 19', 'Next.js', 'FastAPI', 'Node.js'] },
-      { category: 'Cloud & Systems', items: ['Docker', 'Kubernetes', 'AWS', 'PostgreSQL', 'Redis'] },
+      { category: 'Programming Languages', items: ['Python', 'JavaScript', 'C++'] },
+      { category: 'Web Technologies', items: ['HTML', 'CSS', 'Web Development'] },
+      { category: 'Tools & Platforms', items: ['Git & GitHub', 'VS Code'] },
+      { category: 'Core Concepts', items: ['Machine Learning', 'Software Engineering', 'Problem Solving'] },
     ];
   }
 
@@ -646,7 +662,8 @@ export async function generateResumePdf(
   resumeText: string,
   atsScore: number,
   targetScore = 90,
-  formatType = 'cobalt-split'
+  formatType = 'cobalt-split',
+  customData?: any
 ): Promise<{
   success: boolean;
   message: string;
@@ -664,6 +681,61 @@ export async function generateResumePdf(
       const filepath = path.join(OPTIMIZED_DIR, filename);
 
       const parsed = parseResumeContent(resumeText);
+
+      // Merge rich candidate data if provided directly from the interactive agent view
+      if (customData) {
+        if (customData.firstName || customData.lastName || customData.name) {
+          parsed.name =
+            customData.name ||
+            `${customData.firstName || ''} ${customData.lastName || ''}`.trim() ||
+            parsed.name;
+        }
+        if (customData.headline) parsed.headline = customData.headline;
+        if (customData.aboutMe || customData.summary) {
+          parsed.summary = customData.aboutMe || customData.summary;
+        }
+
+        const directContacts: string[] = [];
+        if (customData.email) directContacts.push(customData.email);
+        if (customData.phone) directContacts.push(customData.phone);
+        if (customData.location) directContacts.push(customData.location);
+        if (customData.website) directContacts.push(customData.website);
+        if (customData.linkedin) directContacts.push(customData.linkedin);
+        if (customData.github) directContacts.push(customData.github);
+        if (directContacts.length > 0) {
+          parsed.contacts = directContacts;
+        }
+
+        if (Array.isArray(customData.experience) && customData.experience.length > 0) {
+          parsed.experience = customData.experience.map((e: any) => ({
+            role: e.title || e.role || 'Software Engineer',
+            company: e.company || 'Technology Company',
+            duration: e.duration || '2024 - Present',
+            bullets: Array.isArray(e.bullets) && e.bullets.length > 0
+              ? e.bullets
+              : Array.isArray(e.description)
+                ? e.description
+                : typeof e.description === 'string' && e.description.includes('\n')
+                  ? e.description.split('\n').map((l: string) => l.trim()).filter(Boolean)
+                  : [String(e.description || 'Delivered key engineering impact.')],
+          }));
+        }
+
+        if (Array.isArray(customData.education) && customData.education.length > 0) {
+          parsed.education = customData.education.map((ed: any) => ({
+            degree: ed.degree || 'Bachelor of Science',
+            institution: ed.institution || 'University',
+            duration: ed.duration || ed.year || '2022 - 2026',
+            details: ed.details || '',
+          }));
+        }
+
+        if (Array.isArray(customData.expertise) && customData.expertise.length > 0) {
+          parsed.skillsList = customData.expertise.map((ex: any) => (typeof ex === 'string' ? ex : ex.name));
+        } else if (Array.isArray(customData.skillsList) && customData.skillsList.length > 0) {
+          parsed.skillsList = customData.skillsList;
+        }
+      }
 
       const doc = new PDFDocument({
         size: 'LETTER',
@@ -798,77 +870,137 @@ export async function generateResumePdf(
       }
 
       // =========================================================================
-      // FORMAT 2: EXECUTIVE MONOLITH (Commanding Centered Executive Masthead)
+      // FORMAT 2: EXECUTIVE MONOLITH (David Anderson / Precision Monolith Architecture)
       // =========================================================================
       else if (formatType === 'executive-monolith') {
-        const startX = 32;
-        const contentWidth = 548;
+        const startX = 36;
+        const contentWidth = 540;
 
-        // Centered Executive Header
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(22).text(parsed.name.toUpperCase(), startX, 26, { align: 'center', width: contentWidth });
-        doc.fillColor('#334155').font('Helvetica-Bold').fontSize(9.5).text(parsed.headline, startX, doc.y + 3, { align: 'center', width: contentWidth });
-        doc.fillColor('#475569').font('Helvetica').fontSize(7.8).text(parsed.contacts.slice(0, 4).join('   |   '), startX, doc.y + 3, { align: 'center', width: contentWidth });
+        // Header: Big Two-line Name on Left, Clean Contacts with square icons on Right
+        const nameParts = parsed.name.trim().split(' ');
+        const firstName = nameParts[0]?.toUpperCase() || 'ARYAMAN';
+        const lastName = nameParts.slice(1).join(' ')?.toUpperCase() || 'DEWANGAN';
 
-        // Heavy Black Ruling Line
-        let curY = doc.y + 6;
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(2).strokeColor('#000000').stroke();
-        curY += 10;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(26).text(firstName, startX, 28, { width: 330 });
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(26).text(lastName, startX, doc.y - 4, { width: 330 });
+        doc.fillColor('#334155').font('Helvetica-Bold').fontSize(8.5).text(parsed.headline.toUpperCase(), startX, doc.y + 3, { width: 330, characterSpacing: 1.5 });
 
-        // Professional Summary Band
-        doc.rect(startX, curY, contentWidth, 14).fill('#0F172A');
-        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5).text('EXECUTIVE LEADERSHIP PROFILE', startX + 6, curY + 2.5);
-        curY += 19;
-        doc.fillColor('#1E293B').font('Helvetica').fontSize(8).text(parsed.summary, startX, curY, { width: contentWidth, lineGap: 1.2 });
-        curY = doc.y + 10;
+        // Right-aligned contacts block with black square icon badges
+        const contactYStart = 28;
+        let rightContactY = contactYStart;
+        const rightColWidth = 195;
+        const rightColX = startX + contentWidth - rightColWidth;
 
-        // Core Competencies
-        doc.rect(startX, curY, contentWidth, 14).fill('#0F172A');
-        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5).text('EXECUTIVE CORE COMPETENCIES', startX + 6, curY + 2.5);
-        curY += 18;
-        doc.fillColor('#1E293B').font('Helvetica-Bold').fontSize(7.8).text(parsed.skillsList.slice(0, 14).join('  •  '), startX, curY, { width: contentWidth, lineGap: 1.5 });
-        curY = doc.y + 10;
-
-        // Experience Band
-        doc.rect(startX, curY, contentWidth, 14).fill('#0F172A');
-        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5).text('CHRONOLOGICAL EXECUTIVE EXPERIENCE', startX + 6, curY + 2.5);
-        curY += 19;
-
-        for (const exp of parsed.experience) {
-          if (curY > 730) {
-            doc.addPage();
-            curY = 28;
-          }
-          doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text(exp.role.toUpperCase(), startX, curY);
-          doc.fillColor('#475569').font('Helvetica-Bold').fontSize(8).text(`${exp.company}   |   ${exp.duration}`, startX, doc.y + 1.5);
-          curY = doc.y + 3;
-
-          for (const b of exp.bullets) {
-            if (curY > 745) {
-              doc.addPage();
-              curY = 28;
-            }
-            doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text('■', startX + 2, curY, { width: 10 });
-            doc.fillColor('#1E293B').font('Helvetica').fontSize(7.8).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.2 });
-            curY = doc.y + 2.5;
-          }
-          curY += 5;
+        for (const item of parsed.contacts.slice(0, 4)) {
+          doc.fillColor('#1E293B').font('Helvetica').fontSize(8).text(item, rightColX, rightContactY + 1.5, {
+            width: rightColWidth - 18,
+            align: 'right',
+          });
+          // Black square badge
+          doc.rect(startX + contentWidth - 12, rightContactY + 2, 10, 10).fill('#000000');
+          doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(6).text('•', startX + contentWidth - 12, rightContactY + 3.5, {
+            width: 10,
+            align: 'center',
+          });
+          rightContactY += 13;
         }
 
-        // Education
-        if (parsed.education.length > 0) {
-          if (curY > 710) {
+        let curY = Math.max(doc.y + 8, rightContactY + 6);
+        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(1.2).strokeColor('#000000').stroke();
+        curY += 9;
+
+        // ABOUT ME
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text('ABOUT ME', startX, curY, { characterSpacing: 1.8 });
+        curY += 12;
+        doc.fillColor('#334155').font('Helvetica').fontSize(8).text(parsed.summary, startX, curY, { width: contentWidth, lineGap: 1.3, align: 'justify' });
+        curY = doc.y + 8;
+
+        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor('#000000').stroke();
+        curY += 9;
+
+        // EXPERIENCE / PROJECTS
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text('EXPERIENCE', startX, curY, { characterSpacing: 1.8 });
+        curY += 13;
+
+        for (const exp of parsed.experience.slice(0, 4)) {
+          if (curY > 720) {
             doc.addPage();
-            curY = 28;
+            curY = 30;
           }
-          doc.rect(startX, curY, contentWidth, 14).fill('#0F172A');
-          doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5).text('EDUCATION & CREDENTIALS', startX + 6, curY + 2.5);
-          curY += 18;
-          for (const edu of parsed.education) {
-            doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text(edu.degree, startX, curY);
-            doc.fillColor('#475569').font('Helvetica').fontSize(7.5).text(`${edu.institution}  |  ${edu.duration}`, startX, doc.y + 1);
-            curY = doc.y + 4;
+          // Duration on left (100pt), Role + Company + Bullets on right (430pt)
+          const dateWidth = 95;
+          const detailX = startX + dateWidth + 10;
+          const detailWidth = contentWidth - dateWidth - 10;
+
+          doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(8).text(exp.duration, startX, curY, { width: dateWidth });
+
+          doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text(exp.role.toUpperCase(), detailX, curY, { width: detailWidth });
+          doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(exp.company, detailX, doc.y + 1, { width: detailWidth });
+          curY = doc.y + 2;
+
+          for (const b of exp.bullets.slice(0, 3)) {
+            doc.fillColor('#334155').font('Helvetica').fontSize(7.8).text(`•  ${b}`, detailX, curY, { width: detailWidth, lineGap: 1.15 });
+            curY = doc.y + 2;
           }
+          curY += 4;
         }
+
+        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor('#000000').stroke();
+        curY += 9;
+
+        // 2-COLUMN SECTION: EDUCATION (Left 50%) & EXPERTISE (Right 50%)
+        const halfWidth = (contentWidth - 20) / 2;
+        const rightColLeftX = startX + halfWidth + 20;
+
+        // Column 1: Education
+        let eduY = curY;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text('EDUCATION', startX, eduY, { characterSpacing: 1.8 });
+        eduY += 13;
+
+        for (const edu of parsed.education.slice(0, 2)) {
+          doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.5).text(edu.duration, startX, eduY, { width: 70 });
+          doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text(edu.degree.toUpperCase(), startX + 75, eduY, { width: halfWidth - 75 });
+          doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(edu.institution, startX + 75, doc.y + 1, { width: halfWidth - 75 });
+          eduY = doc.y + 5;
+        }
+
+        // Column 2: Expertise with Level Meters
+        let expY = curY;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text('EXPERTISE', rightColLeftX, expY, { characterSpacing: 1.8 });
+        expY += 13;
+
+        const skillsToDisplay = parsed.skillsList.slice(0, 5);
+        for (let sIdx = 0; sIdx < skillsToDisplay.length; sIdx++) {
+          const s = skillsToDisplay[sIdx];
+          const pct = Math.max(70, 95 - sIdx * 5);
+          doc.fillColor('#000000').font('Helvetica').fontSize(7.8).text(s, rightColLeftX, expY, { width: halfWidth - 85 });
+          // Meter background
+          const meterX = rightColLeftX + halfWidth - 80;
+          doc.rect(meterX, expY + 2.5, 75, 4).fill('#E2E8F0');
+          doc.rect(meterX, expY + 2.5, (75 * pct) / 100, 4).fill('#000000');
+          expY += 12;
+        }
+
+        curY = Math.max(eduY, expY) + 4;
+        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor('#000000').stroke();
+        curY += 9;
+
+        // 2-COLUMN SECTION: ACHIEVEMENT (Left 50%) & REFERENCE / KEY PROJECTS (Right 50%)
+        let achY = curY;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text('ACHIEVEMENT', startX, achY, { characterSpacing: 1.8 });
+        achY += 13;
+        doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.5).text('2024 - 2026', startX, achY, { width: 70 });
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text('AUTONOMOUS ATS RESUME AGENT', startX + 75, achY, { width: halfWidth - 75 });
+        doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text('Engineering Showcase', startX + 75, doc.y + 1, { width: halfWidth - 75 });
+        doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text('Architected multi-agent ATS optimizer achieving 95%+ match rates.', startX + 75, doc.y + 1, { width: halfWidth - 75, lineGap: 1 });
+
+        let refY = curY;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(9).text('REFERENCE', rightColLeftX, refY, { characterSpacing: 1.8 });
+        refY += 13;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text('ACADEMIC & PROFESSIONAL REFERENCE', rightColLeftX, refY, { width: halfWidth });
+        doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text('Department of Electronics & Communication', rightColLeftX, doc.y + 1, { width: halfWidth });
+        doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(`Email: ${parsed.contacts.find((c) => c.includes('@')) || 'dewanganaryaman9@gmail.com'}`, rightColLeftX, doc.y + 1.5, { width: halfWidth });
+        doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text('Available upon request with verified credentials.', rightColLeftX, doc.y + 1.5, { width: halfWidth });
       }
 
       // =========================================================================
@@ -1539,7 +1671,8 @@ export async function generateResumePdf(
             doc.addPage();
             curY = 28;
           }
-          doc.fillColor('#1C1917').font('Times-Bold').fontSize(8.5).text(`§ 2.${idx + 1} ${exp.title.toUpperCase()}`, startX, curY);
+          const roleTitle = (exp.role || (exp as any).title || 'Position').toUpperCase();
+          doc.fillColor('#1C1917').font('Times-Bold').fontSize(8.5).text(`§ 2.${idx + 1} ${roleTitle}`, startX, curY);
           doc.fillColor(accentCol).font('Times-Italic').fontSize(7.5).text(`${exp.company}  |  ${exp.duration}`, startX, doc.y + 1);
           curY = doc.y + 2.5;
 

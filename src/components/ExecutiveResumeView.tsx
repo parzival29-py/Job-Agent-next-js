@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import type { ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat, type ResumeFormatDefinition } from '../utils/formatUtils.ts';
+import { exportResumeToPdf } from '../utils/pdfExport.ts';
 
 export type ResumeFormatType =
   | 'tech-engineering'
@@ -312,8 +313,40 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
     setData(mode === 'mockup' ? mockupData : candidateData);
   };
 
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdfAction = async () => {
+    setIsExportingPdf(true);
+    try {
+      const candidateFullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || profile?.name || 'Resume';
+      const success = await exportResumeToPdf({
+        elementId: 'executive-resume-sheet',
+        format: selectedFormat,
+        atsScore: atsScore || 95,
+        candidateName: candidateFullName,
+        fallbackData: {
+          ...data,
+          raw_text: optimizedText || profile?.raw_text,
+        },
+      });
+
+      if (!success && onDownloadPdf) {
+        onDownloadPdf(selectedFormat);
+      }
+    } catch (err) {
+      console.warn('PDF export encounter error, falling back:', err);
+      if (onDownloadPdf) {
+        onDownloadPdf(selectedFormat);
+      } else {
+        handlePrint();
+      }
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -379,47 +412,15 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
             </button>
 
             <button
-              onClick={async () => {
-                if (onDownloadPdf) {
-                  onDownloadPdf(selectedFormat);
-                  return;
-                }
-                try {
-                  const textToUse =
-                    optimizedText ||
-                    `${data.firstName} ${data.lastName}\n${data.headline}\n${data.email} | ${data.phone} | ${data.location}\n\nSUMMARY\n${data.aboutMe}\n\nEXPERIENCE\n` +
-                      data.experience
-                        .map((e: any) => `${e.title || e.role} | ${e.company} | ${e.duration}\n${e.description}`)
-                        .join('\n');
-                  const res = await fetch('/ai/render-resume-pdf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      resume_text: textToUse,
-                      resume_format: selectedFormat,
-                      ats_score: atsScore || 95,
-                    }),
-                  });
-                  const d = await res.json();
-                  if (d.success && d.pdf_download_url) {
-                    const a = document.createElement('a');
-                    a.href = d.pdf_download_url;
-                    a.download = d.filename || `Tailored_Resume_${selectedFormat}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    return;
-                  }
-                } catch (err) {
-                  console.warn('PDF download failed:', err);
-                }
-                handlePrint();
-              }}
-              className="px-3.5 py-1.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-              title={`Download verified PDF formatted in ${RESUME_FORMATS_LIST.find((f) => f.id === selectedFormat)?.name || selectedFormat}`}
+              onClick={handleDownloadPdfAction}
+              disabled={isExportingPdf}
+              className={`px-3.5 py-1.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition ${
+                isExportingPdf ? 'opacity-80 cursor-wait' : 'cursor-pointer'
+              }`}
+              title={`Download verified high-fidelity PDF formatted in ${RESUME_FORMATS_LIST.find((f) => f.id === selectedFormat)?.name || selectedFormat}`}
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download PDF:</span>
+              <Download className={`w-3.5 h-3.5 ${isExportingPdf ? 'animate-bounce' : ''}`} />
+              <span>{isExportingPdf ? 'Generating PDF...' : 'Download PDF:'}</span>
               <span className="bg-black/25 px-1.5 py-0.2 rounded font-black text-white border border-white/20">
                 {RESUME_FORMATS_LIST.find((f) => f.id === selectedFormat)?.name || selectedFormat}
               </span>

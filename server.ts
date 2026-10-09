@@ -516,8 +516,9 @@ app.post(['/ai/render-resume-pdf', '/api/ai/render-resume-pdf'], async (req, res
       chosenFormat = rec.formatId;
     }
 
+    const customData = req.body?.resume_data || req.body?.data || null;
     const atsScore = Number(req.body?.ats_score) || 95;
-    const pdfResult = await generateResumePdf(rawText, atsScore, 90, chosenFormat);
+    const pdfResult = await generateResumePdf(rawText, atsScore, 90, chosenFormat, customData);
 
     return res.json({
       success: true,

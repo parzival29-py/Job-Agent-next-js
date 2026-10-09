@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, TrendingUp, FileCheck, FileText, Layout, Code, Sparkles, Layers } from 'lucide-react';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
+import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload } from '../utils/pdfExport.ts';
 
 interface OptimizerSectionProps {
   jobDescription: string;
@@ -93,39 +94,54 @@ Requirements:
     }
 
     try {
+      // 1. Try DOM high-resolution capture first if sheet is mounted
+      const domSuccess = await exportResumeToPdf({
+        elementId: 'executive-resume-sheet',
+        format: formatToUse,
+        atsScore: result?.final_score?.ats_score || 95,
+        candidateName: profile?.name || 'Resume',
+        fallbackData: profile,
+      });
+      if (domSuccess) {
+        setDocxResult((prev: any) => ({
+          ...prev,
+          pdf_filename: `Tailored_Resume_${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${formatToUse}_ATS95.pdf`,
+          format_used: formatToUse,
+        }));
+        setGeneratingDocx(false);
+        return;
+      }
+
       const textToRender =
         result?.optimized_resume ||
         profile?.raw_text ||
         profile?.extracted_text ||
         '';
 
-      // 1. If we have resume text, directly generate the PDF in the chosen format
-      if (textToRender && textToRender.trim()) {
-        const renderRes = await fetch('/ai/render-resume-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            resume_text: textToRender,
-            resume_format: formatToUse,
-            job_description: effectiveJobDescription,
-            ats_score: result?.final_score?.ats_score || 95,
-          }),
-        });
-        const renderData = await renderRes.json();
-        if (renderData.success && renderData.pdf_download_url) {
-          downloadFile(
-            renderData.pdf_download_url,
-            renderData.pdf_filename || renderData.filename || `Tailored_Resume_${formatToUse}.pdf`
-          );
-          setDocxResult((prev: any) => ({
-            ...prev,
-            pdf_download_url: renderData.pdf_download_url,
-            pdf_filename: renderData.pdf_filename || renderData.filename,
-            format_used: formatToUse,
-          }));
-          setGeneratingDocx(false);
-          return;
-        }
+      // 2. Fast dedicated PDF renderer using rich candidate data
+      const renderRes = await fetch('/ai/render-resume-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume_text: textToRender,
+          resume_format: formatToUse,
+          job_description: effectiveJobDescription,
+          ats_score: result?.final_score?.ats_score || 95,
+          resume_data: profile,
+        }),
+      });
+      const renderData = await renderRes.json();
+      if (renderData.success && renderData.pdf_download_url) {
+        const outFilename = renderData.pdf_filename || renderData.filename || `Tailored_Resume_${formatToUse}.pdf`;
+        await downloadFile(renderData.pdf_download_url, outFilename);
+        setDocxResult((prev: any) => ({
+          ...prev,
+          pdf_download_url: renderData.pdf_download_url,
+          pdf_filename: outFilename,
+          format_used: formatToUse,
+        }));
+        setGeneratingDocx(false);
+        return;
       }
 
       // 2. Fallback to full pipeline
@@ -179,20 +195,7 @@ Requirements:
   };
 
   const downloadFile = async (url: string, filename: string) => {
-    try {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(blobUrl);
-      document.body.removeChild(a);
-    } catch {
-      window.location.href = url;
-    }
+    await triggerUrlDownload(url, filename);
   };
 
   // Group formats by category
@@ -471,10 +474,10 @@ Requirements:
         </div>
       )}
 
-      {/* Results Overview */}
-      {result && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Iteration Progress Chart */}
+      {/* Results Overview & Live Executive Resume View */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {result ? (
+          /* Iteration Progress Chart */
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-6">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -521,76 +524,97 @@ Requirements:
               </p>
             </div>
           </div>
-
-          {/* Optimized Resume Preview */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-3">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPreviewMode('executive')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    previewMode === 'executive'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-slate-950 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Layout className="w-3.5 h-3.5" />
-                  Executive Designer View (Matching Image Template)
-                </button>
-                <button
-                  onClick={() => setPreviewMode('raw')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                    previewMode === 'raw'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-slate-950 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Code className="w-3.5 h-3.5" />
-                  Raw ATS Text
-                </button>
-              </div>
-
+        ) : (
+          /* Pre-optimization format guide */
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-sm font-bold text-white">Interactive Resume Preview</h3>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Viewing active candidate resume in <span className="text-amber-300 font-bold">{currentFormatObj.name}</span> architecture. You can rotate through all 21 formats above or run the iterative optimizer to customize achievements to this job description.
+            </p>
+            <div className="p-4 bg-indigo-950/40 border border-indigo-800/50 rounded-xl text-xs space-y-3">
+              <span className="font-semibold text-indigo-200 block">Instant Actions:</span>
               <button
-                onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition self-start sm:self-auto"
+                type="button"
+                onClick={() => handleGenerateResume()}
+                disabled={generatingDocx}
+                className="w-full py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied!' : 'Copy Text'}
+                <Download className="w-4 h-4" />
+                {generatingDocx ? 'Generating PDF...' : `Download ${currentFormatObj.name} PDF`}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Live Resume Preview (Always mounted for instant 1:1 PDF capture) */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPreviewMode('executive')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  previewMode === 'executive'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-950 text-slate-400 hover:text-white'
+                }`}
+              >
+                <Layout className="w-3.5 h-3.5" />
+                Executive Designer View (Matching Image Template)
+              </button>
+              <button
+                onClick={() => setPreviewMode('raw')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  previewMode === 'raw'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-950 text-slate-400 hover:text-white'
+                }`}
+              >
+                <Code className="w-3.5 h-3.5" />
+                Raw ATS Text
               </button>
             </div>
 
-            {previewMode === 'executive' ? (
-              <ExecutiveResumeView
-                optimizedText={result.optimized_resume}
-                initialFormat={effectiveFormat}
-                targetJobTitle={effectiveJobDescription.split('\n')[0]?.slice(0, 40)}
-                onFormatChange={(fmt) => setSelectedFormat(fmt)}
-                onDownloadPdf={async (format) => {
-                  await handleGenerateResume(format);
-                }}
-                onDownloadDocx={async (format) => {
-                  await handleGenerateResume(format);
-                }}
-                onDownloadTxt={() => {
-                  const blob = new Blob([result.optimized_resume], { type: 'text/plain;charset=utf-8' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'Tailored_Resume_ATS90.txt';
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
-              />
-            ) : (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-200 overflow-y-auto max-h-[500px] whitespace-pre-wrap leading-relaxed">
-                  {result.optimized_resume}
-                </div>
-              </div>
-            )}
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition self-start sm:self-auto"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? 'Copied!' : 'Copy Text'}
+            </button>
           </div>
+
+          {previewMode === 'executive' ? (
+            <ExecutiveResumeView
+              profile={profile}
+              optimizedText={result?.optimized_resume || profile?.raw_text}
+              initialFormat={effectiveFormat}
+              targetJobTitle={effectiveJobDescription.split('\n')[0]?.slice(0, 40)}
+              atsScore={result?.final_score?.ats_score || 95}
+              onFormatChange={(fmt) => setSelectedFormat(fmt)}
+              onDownloadPdf={async (format) => {
+                await handleGenerateResume(format);
+              }}
+              onDownloadDocx={async (format) => {
+                await handleGenerateResume(format);
+              }}
+              onDownloadTxt={() => {
+                const text = result?.optimized_resume || profile?.raw_text || '';
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                triggerBlobDownload(blob, 'Tailored_Resume_ATS90.txt');
+              }}
+            />
+          ) : (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+              <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-200 overflow-y-auto max-h-[500px] whitespace-pre-wrap leading-relaxed">
+                {result?.optimized_resume || profile?.raw_text || 'No resume content available.'}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

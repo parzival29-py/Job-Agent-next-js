@@ -21,6 +21,8 @@ export const TrackerSection: React.FC = () => {
   const [newStatus, setNewStatus] = useState('Saved');
   const [newAtsScore, setNewAtsScore] = useState<number | ''>('');
   const [newNotes, setNewNotes] = useState('');
+  const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [appToDelete, setAppToDelete] = useState<string | null>(null);
 
   const statusOptions = ['Saved', 'Ready to Apply', 'Applied', 'Interview', 'Offer', 'Rejected'];
 
@@ -86,9 +88,10 @@ export const TrackerSection: React.FC = () => {
         if (data.application) {
           setSelectedApp(data.application);
         }
+        setToastMsg({ text: `Switched resume format to ${nextFormat}`, type: 'success' });
       }
     } catch (e: any) {
-      alert(`Error rotating format: ${e.message}`);
+      setToastMsg({ text: `Error rotating format: ${e.message}`, type: 'error' });
     } finally {
       setRegeneratingId(null);
     }
@@ -157,23 +160,27 @@ export const TrackerSection: React.FC = () => {
         if (selectedApp?.id === appId) {
           setSelectedApp(data.application);
         }
+        setToastMsg({ text: `Status updated to ${newStatusVal}`, type: 'success' });
       }
     } catch (e) {
       console.error(e);
+      setToastMsg({ text: 'Failed to update status', type: 'error' });
     }
   };
 
   const handleDelete = async (appId: string) => {
-    if (!confirm('Are you sure you want to delete this tracked application?')) return;
     try {
       const res = await fetch(`/applications/${appId}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         await fetchData();
         if (selectedApp?.id === appId) setSelectedApp(null);
+        setAppToDelete(null);
+        setToastMsg({ text: 'Application removed successfully', type: 'success' });
       }
     } catch (e) {
       console.error(e);
+      setToastMsg({ text: 'Failed to delete application', type: 'error' });
     }
   };
 
@@ -226,6 +233,55 @@ export const TrackerSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div
+          className={`p-3 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 shadow-lg transition-all animate-in fade-in slide-in-from-top-2 ${
+            toastMsg.type === 'success'
+              ? 'bg-emerald-950/90 text-emerald-200 border border-emerald-800'
+              : 'bg-rose-950/90 text-rose-200 border border-rose-800'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            {toastMsg.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            ) : (
+              <X className="w-4 h-4 text-rose-400" />
+            )}
+            {toastMsg.text}
+          </span>
+          <button onClick={() => setToastMsg(null)} className="p-0.5 hover:opacity-75">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {appToDelete && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <h4 className="text-sm font-bold text-white">Remove Tracked Application?</h4>
+            <p className="text-xs text-slate-300">
+              Are you sure you want to remove this job application from your pipeline?
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setAppToDelete(null)}
+                className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(appToDelete)}
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -342,7 +398,7 @@ export const TrackerSection: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
-                        onClick={() => handleDelete(app.id)}
+                        onClick={() => setAppToDelete(app.id)}
                         className="p-1.5 text-slate-500 hover:text-rose-400 transition"
                         title="Delete application"
                       >

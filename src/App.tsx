@@ -18,6 +18,8 @@ import {
   Play,
   RefreshCw,
   ExternalLink,
+  Coins,
+  ChevronDown,
 } from 'lucide-react';
 
 import { ResumeSection } from './components/ResumeSection.tsx';
@@ -27,10 +29,14 @@ import { CoverLetterSection } from './components/CoverLetterSection.tsx';
 import { JobSearchSection } from './components/JobSearchSection.tsx';
 import { TrackerSection } from './components/TrackerSection.tsx';
 import { TestSuiteSection } from './components/TestSuiteSection.tsx';
+import { useCurrency } from './context/CurrencyContext.tsx';
 
 import type { ResumeProfile, JobItem } from './types.ts';
 
 export default function App() {
+  const { currency, setCurrency, currencyInfo, supportedCurrencies } = useCurrency();
+  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState<
     'resume' | 'ats' | 'optimizer' | 'cover_letter' | 'jobs' | 'tracker' | 'tests'
   >('resume');
@@ -148,7 +154,62 @@ Requirements:
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+            {/* Global Currency Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setCurrencyDropdownOpen(!currencyDropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-700/80 hover:border-indigo-500 text-slate-200 hover:text-white transition shadow-sm"
+                title={`Active Currency: ${currencyInfo.name} (${currencyInfo.symbol}). Click to change.`}
+              >
+                <Coins className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-sm leading-none">{currencyInfo.flag}</span>
+                <span className="font-mono font-bold text-white">{currencyInfo.code}</span>
+                <span className="text-indigo-400 font-mono font-bold">({currencyInfo.symbol})</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${currencyDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {currencyDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setCurrencyDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-60 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-50 text-xs">
+                    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-800/80 flex items-center justify-between">
+                      <span>Select Currency</span>
+                      <span className="text-indigo-400 font-mono">{currencyInfo.code} Active</span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto py-1">
+                      {supportedCurrencies.map((c) => {
+                        const isSelected = c.code === currency;
+                        return (
+                          <button
+                            key={c.code}
+                            onClick={() => {
+                              setCurrency(c.code);
+                              setCurrencyDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-left transition hover:bg-slate-800/80 ${
+                              isSelected ? 'bg-indigo-950/70 text-indigo-300 font-bold' : 'text-slate-300'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span className="text-base leading-none">{c.flag}</span>
+                              <span className="truncate">{c.name}</span>
+                            </span>
+                            <span className="font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-[11px] text-amber-400 shrink-0">
+                              {c.symbol} {c.code}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* AI Status Badge */}
             <button
               onClick={checkAiHealth}
@@ -238,6 +299,11 @@ Requirements:
               >
                 <Icon className="w-4 h-4" />
                 <span>{item.label}</span>
+                {item.id === 'jobs' && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-700/80 text-emerald-300 font-mono font-medium">
+                    Live
+                  </span>
+                )}
               </button>
             );
           })}

@@ -60,6 +60,7 @@
         "domains": { "type": "array", "description": "Target tech domains" },
         "location": { "type": "string", "description": "Desired geographical location" },
         "minimum_stipend": { "type": "number", "description": "Minimum monthly stipend or salary threshold" },
+        "currency": { "type": "string", "description": "Preferred currency code like USD, INR, EUR, GBP" },
         "experience_level": { "type": "string", "description": "Experience level requirement" },
         "updated_at": { "type": "string", "description": "ISO timestamp of last update" }
       },

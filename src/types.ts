@@ -68,6 +68,9 @@ export interface JobItem {
   description: string;
   requirements: string[];
   tags: string[];
+  is_live?: boolean;
+  source?: string;
+  salary_raw?: string;
 }
 
 export interface ApplicationRecord {
@@ -96,5 +99,6 @@ export interface JobPreferences {
   domains: string[];
   location: string;
   minimum_stipend: number;
+  currency?: string;
   experience_level: string;
 }

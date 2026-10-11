@@ -49,6 +49,7 @@ service cloud.firestore {
              (!('domains' in data) || (data.domains is list && data.domains.size() <= 50)) &&
              (!('location' in data) || (data.location is string && data.location.size() <= 200)) &&
              (!('minimum_stipend' in data) || data.minimum_stipend is number) &&
+             (!('currency' in data) || (data.currency is string && data.currency.size() <= 10)) &&
              (!('experience_level' in data) || (data.experience_level is string && data.experience_level.size() <= 100)) &&
              (!('updated_at' in data) || (data.updated_at is string && data.updated_at.size() <= 100));
     }

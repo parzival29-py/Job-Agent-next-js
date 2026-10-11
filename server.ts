@@ -738,7 +738,8 @@ app.post(['/preferences', '/api/preferences'], (req, res) => {
       work_mode: req.body?.work_mode || 'remote',
       domains: Array.isArray(req.body?.domains) ? req.body.domains : [],
       location: req.body?.location || 'Anywhere',
-      minimum_stipend: req.body?.minimum_stipend || 0,
+      minimum_stipend: req.body?.minimum_stipend != null ? Number(req.body.minimum_stipend) : 0,
+      currency: req.body?.currency || 'USD',
       experience_level: req.body?.experience_level || 'Fresher',
     };
 
@@ -784,7 +785,7 @@ app.get(['/preferences', '/api/preferences'], (_req, res) => {
 // JOB SEARCH
 // ============================================================
 
-app.get(['/jobs/search', '/api/jobs/search'], (req, res) => {
+app.get(['/jobs/search', '/api/jobs/search'], async (req, res) => {
   let savedPreferences: any = {};
   if (fs.existsSync(PREFERENCES_FILE)) {
     try {
@@ -798,6 +799,8 @@ app.get(['/jobs/search', '/api/jobs/search'], (req, res) => {
   const queryMode = (req.query.work_mode as string) || '';
   const queryLoc = (req.query.location as string) || '';
   const queryDomains = (req.query.domains as string) || '';
+  const querySearch = (req.query.q as string) || (req.query.search as string) || '';
+  const queryCurrency = (req.query.currency as string) || '';
 
   const effective_opportunity_type = queryOpp.trim()
     ? queryOpp.trim().toLowerCase()
@@ -821,17 +824,20 @@ app.get(['/jobs/search', '/api/jobs/search'], (req, res) => {
     effective_domains = savedPreferences.domains || [];
   }
 
+  const effective_currency = queryCurrency.trim() || savedPreferences.currency || 'USD';
+
   const searchPreferences = {
     opportunity_type: effective_opportunity_type,
     work_mode: effective_work_mode,
     domains: effective_domains,
     location: effective_location,
     minimum_stipend: savedPreferences.minimum_stipend || 0,
+    currency: effective_currency,
     experience_level: savedPreferences.experience_level || 'Fresher',
   };
 
   try {
-    const jobs = getAllJobs('', 100);
+    const jobs = await getAllJobs(querySearch, 100);
     const filteredJobs = filterJobs(jobs, searchPreferences);
 
     return res.json({

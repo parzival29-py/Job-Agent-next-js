@@ -1,0 +1,33 @@
+[
+  {
+    "id": "custom-job-1791744812803-w3bao",
+    "title": "Machine Learning Intern",
+    "company": "Krutrim AI",
+    "location": "Bengaluru",
+    "work_mode": "remote",
+    "opportunity_type": "internship",
+    "domain": "fullstack",
+    "experience_level": "Fresher",
+    "stipend_or_salary": "₹40,000/month",
+    "stipend_amount": 400,
+    "salary_raw": "₹40,000/month",
+    "url": "https://internshala.com/internship/detail/ml-intern",
+    "posted_date": "2026-10-11",
+    "description": "Work with Large Multimodal Models in Python and PyTorch.",
+    "requirements": [
+      "Strong problem-solving and software design fundamentals",
+      "Demonstrated hands-on project experience in relevant tech stack",
+      "Familiarity with version control (Git) and automated testing",
+      "Collaborative communication and team-oriented approach"
+    ],
+    "tags": [
+      "Custom Imported",
+      "Direct JD"
+    ],
+    "is_live": true,
+    "source": "Imported (Internshala)",
+    "platform": "Internshala",
+    "ppo_offered": true,
+    "ppo_package": "PPO: ₹15 LPA"
+  }
+]

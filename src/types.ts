@@ -71,6 +71,9 @@ export interface JobItem {
   is_live?: boolean;
   source?: string;
   salary_raw?: string;
+  platform?: 'Internshala' | 'Naukri' | 'Unstop' | 'Wellfound' | 'LinkedIn' | 'Official Portal' | string;
+  ppo_offered?: boolean;
+  ppo_package?: string;
 }
 
 export interface ApplicationRecord {
@@ -100,5 +103,7 @@ export interface JobPreferences {
   location: string;
   minimum_stipend: number;
   currency?: string;
+  platform?: string;
+  ppo_only?: boolean;
   experience_level: string;
 }

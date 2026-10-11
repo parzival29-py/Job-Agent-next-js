@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Search,
   Sliders,
@@ -6,8 +6,6 @@ import {
   MapPin,
   Coins,
   ExternalLink,
-  ArrowRight,
-  Check,
   CheckCircle2,
   Zap,
   Download,
@@ -16,12 +14,17 @@ import {
   Sparkles,
   RefreshCw,
   Globe,
-  Radio,
   Building2,
   ChevronDown,
+  Award,
+  PlusCircle,
+  Eye,
+  Bookmark,
+  BookmarkCheck,
+  Check,
 } from 'lucide-react';
 import type { JobItem, JobPreferences, ResumeProfile } from '../types.ts';
-import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
+import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { triggerUrlDownload } from '../utils/pdfExport.ts';
 import { useCurrency } from '../context/CurrencyContext.tsx';
@@ -35,18 +38,19 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
     currency,
     setCurrency,
     currencyInfo,
-    currencySymbol,
     formatSalary,
     supportedCurrencies,
   } = useCurrency();
 
   const [preferences, setPreferences] = useState<JobPreferences>({
-    opportunity_type: 'internship',
-    work_mode: 'remote',
-    domains: ['cloud', 'frontend', 'backend', 'ai'],
+    opportunity_type: 'any',
+    work_mode: 'any',
+    domains: [],
     location: 'Anywhere',
     minimum_stipend: 0,
     currency: currency,
+    platform: 'all',
+    ppo_only: false,
     experience_level: 'Fresher',
   });
 
@@ -57,12 +61,26 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
   const [activeTab, setActiveTab] = useState<'jobs' | 'preferences'>('jobs');
   const [profile, setProfile] = useState<ResumeProfile | null>(null);
 
-  // Search keyword state
+  // Filter states
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  const [selectedRoleType, setSelectedRoleType] = useState<string>('all');
+  const [selectedWorkMode, setSelectedWorkMode] = useState<string>('all');
+  const [selectedDomain, setSelectedDomain] = useState<string>('all');
+  const [ppoOnly, setPpoOnly] = useState<boolean>(false);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [sortBy, setSortBy] = useState<'default' | 'salary_high' | 'title'>('default');
 
-  // Quick currency dropdown in header bar
+  // Pagination / Load more
+  const [visibleCount, setVisibleCount] = useState<number>(24);
+
+  // Feedback states
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
+  const [trackingJobId, setTrackingJobId] = useState<string | null>(null);
+  const [trackedJobIds, setTrackedJobIds] = useState<Set<string>>(new Set());
+
+  // Quick JD Preview modal
+  const [selectedPreviewJob, setSelectedPreviewJob] = useState<JobItem | null>(null);
 
   // Custom 90+ Resume state per job
   const [tailoringJobId, setTailoringJobId] = useState<string | null>(null);
@@ -71,7 +89,56 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
     data: any;
   } | null>(null);
 
-  const domainOptions = ['frontend', 'backend', 'fullstack', 'ai', 'cloud', 'data', 'mobile'];
+  // Import Job from Internshala/Naukri modal
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importTitle, setImportTitle] = useState('');
+  const [importCompany, setImportCompany] = useState('');
+  const [importPlatform, setImportPlatform] = useState('Internshala');
+  const [importUrl, setImportUrl] = useState('');
+  const [importSalary, setImportSalary] = useState('');
+  const [importLocation, setImportLocation] = useState('Remote');
+  const [importWorkMode, setImportWorkMode] = useState<'remote' | 'hybrid' | 'on-site'>('remote');
+  const [importOppType, setImportOppType] = useState<'internship' | 'full-time'>('internship');
+  const [importDescription, setImportDescription] = useState('');
+
+  const domainOptions = [
+    { id: 'all', label: 'All Domains' },
+    { id: 'fullstack', label: 'Full Stack' },
+    { id: 'frontend', label: 'Frontend' },
+    { id: 'backend', label: 'Backend' },
+    { id: 'ai', label: 'AI & Data' },
+    { id: 'cloud', label: 'Cloud & DevOps' },
+    { id: 'mobile', label: 'Mobile App' },
+  ];
+
+  const roleTypesList = [
+    { id: 'all', label: 'All Roles' },
+    { id: 'internship', label: 'Internships' },
+    { id: 'full-time', label: 'Full-Time' },
+  ];
+
+  const workModesList = [
+    { id: 'all', label: 'All Modes' },
+    { id: 'remote', label: 'Remote' },
+    { id: 'hybrid', label: 'Hybrid' },
+    { id: 'on-site', label: 'On-Site' },
+  ];
+
+  const platformsList = [
+    { id: 'all', label: 'All Portals' },
+    { id: 'Internshala', label: 'Internshala', color: 'text-cyan-400 border-cyan-800 bg-cyan-950/40' },
+    { id: 'Naukri', label: 'Naukri.com', color: 'text-blue-400 border-blue-800 bg-blue-950/40' },
+    { id: 'Instahyre', label: 'Instahyre', color: 'text-emerald-400 border-emerald-800 bg-emerald-950/40' },
+    { id: 'Hirist', label: 'Hirist', color: 'text-orange-400 border-orange-800 bg-orange-950/40' },
+    { id: 'Cutshort', label: 'Cutshort', color: 'text-teal-400 border-teal-800 bg-teal-950/40' },
+    { id: 'Unstop', label: 'Unstop', color: 'text-amber-400 border-amber-800 bg-amber-950/40' },
+    { id: 'Indeed', label: 'Indeed', color: 'text-indigo-400 border-indigo-800 bg-indigo-950/40' },
+    { id: 'Glassdoor', label: 'Glassdoor', color: 'text-lime-400 border-lime-800 bg-lime-950/40' },
+    { id: 'Wellfound', label: 'Wellfound', color: 'text-violet-400 border-violet-800 bg-violet-950/40' },
+    { id: 'LinkedIn', label: 'LinkedIn', color: 'text-sky-400 border-sky-800 bg-sky-950/40' },
+    { id: 'Official Portal', label: 'Official Portals', color: 'text-pink-400 border-pink-800 bg-pink-950/40' },
+  ];
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
@@ -114,8 +181,9 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       const url = `/jobs/search?${params.toString()}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (data.success && data.jobs) {
+      if (data.success && Array.isArray(data.jobs)) {
         setJobs(data.jobs);
+        setVisibleCount(24);
       }
     } catch (e) {
       console.error(e);
@@ -135,15 +203,120 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
     fetchJobs();
   }, [currency]);
 
+  // Platform job counts
+  const platformCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: jobs.length };
+    for (const job of jobs) {
+      const plat = job.platform || 'Official Portal';
+      counts[plat] = (counts[plat] || 0) + 1;
+    }
+    return counts;
+  }, [jobs]);
+
+  // Client-side filtering & sorting for instant responsiveness
+  const filteredJobs = useMemo(() => {
+    let result = jobs.filter((job) => {
+      // Platform filter
+      if (selectedPlatform !== 'all') {
+        const plat = (job.platform || '').toLowerCase();
+        const sel = selectedPlatform.toLowerCase();
+        if (!plat.includes(sel) && !sel.includes(plat)) return false;
+      }
+
+      // Role type filter
+      if (selectedRoleType !== 'all') {
+        if (job.opportunity_type.toLowerCase() !== selectedRoleType.toLowerCase()) return false;
+      }
+
+      // Work mode filter
+      if (selectedWorkMode !== 'all') {
+        if (job.work_mode.toLowerCase() !== selectedWorkMode.toLowerCase()) return false;
+      }
+
+      // Domain filter
+      if (selectedDomain !== 'all') {
+        const d = selectedDomain.toLowerCase();
+        const match =
+          job.domain.toLowerCase().includes(d) ||
+          job.title.toLowerCase().includes(d) ||
+          job.tags.some((t) => t.toLowerCase().includes(d));
+        if (!match) return false;
+      }
+
+      // PPO only filter
+      if (ppoOnly && !job.ppo_offered) {
+        return false;
+      }
+
+      // Keyword search
+      if (searchKeyword.trim()) {
+        const term = searchKeyword.toLowerCase().trim();
+        const inTitle = job.title.toLowerCase().includes(term);
+        const inCompany = job.company.toLowerCase().includes(term);
+        const inDesc = job.description.toLowerCase().includes(term);
+        const inLoc = job.location.toLowerCase().includes(term);
+        const inTags = job.tags.some((t) => t.toLowerCase().includes(term));
+        const inPlatform = (job.platform || '').toLowerCase().includes(term);
+        if (!inTitle && !inCompany && !inDesc && !inLoc && !inTags && !inPlatform) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Sorting
+    if (sortBy === 'salary_high') {
+      result.sort((a, b) => b.stipend_amount - a.stipend_amount);
+    } else if (sortBy === 'title') {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    return result;
+  }, [jobs, selectedPlatform, selectedRoleType, selectedWorkMode, selectedDomain, ppoOnly, searchKeyword, sortBy]);
+
+  const displayedJobs = useMemo(() => {
+    return filteredJobs.slice(0, visibleCount);
+  }, [filteredJobs, visibleCount]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchJobs();
   };
 
+  const handleAddToTracker = async (job: JobItem) => {
+    setTrackingJobId(job.id);
+    try {
+      const res = await fetch('/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company: job.company,
+          job_title: job.title,
+          job_url: job.url,
+          job_description: `${job.title} at ${job.company}\n\nPlatform: ${job.platform || 'Job Search'}\nCompensation: ${job.salary_raw || job.stipend_or_salary}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`,
+          notes: `Added from ${job.platform || 'Job Search'}. Compensation: ${job.salary_raw || job.stipend_or_salary}. Location: ${job.location}`,
+          status: 'bookmarked',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTrackedJobIds((prev) => new Set([...prev, job.id]));
+        showToast(`Saved "${job.title}" at ${job.company} to Application Tracker!`);
+      } else {
+        showToast(data.message || 'Failed to save to tracker.', 'error');
+      }
+    } catch (err: any) {
+      showToast(`Error: ${err.message}`, 'error');
+    } finally {
+      setTrackingJobId(null);
+    }
+  };
+
   const handleTailorCustomResume = async (job: JobItem, preferredFormat?: string) => {
     setTailoringJobId(job.id);
     try {
-      const jdText = `${job.title} at ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`;
+      const jdText = `${job.title} at ${job.company}\n\nPlatform: ${job.platform || 'Web'}\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`;
       const res = await fetch('/jobs/tailor-resume', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -175,6 +348,8 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       const payload = {
         ...preferences,
         currency,
+        platform: selectedPlatform,
+        ppo_only: ppoOnly,
       };
       const res = await fetch('/preferences', {
         method: 'POST',
@@ -191,24 +366,109 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       }
     } catch (e) {
       console.error(e);
-      showToast('Failed to save preferences.', 'error');
+      showToast('Error saving preferences', 'error');
     } finally {
       setSavingPrefs(false);
     }
   };
 
-  const toggleDomain = (domain: string) => {
-    const exists = preferences.domains.includes(domain);
-    if (exists) {
-      setPreferences({
-        ...preferences,
-        domains: preferences.domains.filter((d) => d !== domain),
+  const handleImportCustomJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importTitle.trim() || !importCompany.trim() || !importDescription.trim()) {
+      showToast('Please provide Job Title, Company Name, and Description.', 'error');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const res = await fetch('/jobs/custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: importTitle,
+          company: importCompany,
+          platform: importPlatform,
+          url: importUrl || (importPlatform === 'Internshala' ? 'https://internshala.com' : 'https://www.naukri.com'),
+          stipend_or_salary: importSalary || '₹40,000/month',
+          location: importLocation,
+          work_mode: importWorkMode,
+          opportunity_type: importOppType,
+          description: importDescription,
+          ppo_offered: importSalary.toLowerCase().includes('ppo'),
+        }),
       });
-    } else {
-      setPreferences({
-        ...preferences,
-        domains: [...preferences.domains, domain],
-      });
+      const data = await res.json();
+      if (data.success && data.job) {
+        showToast(`Job from ${importPlatform} imported successfully!`);
+        setShowImportModal(false);
+        setImportTitle('');
+        setImportCompany('');
+        setImportUrl('');
+        setImportSalary('');
+        setImportDescription('');
+        await fetchJobs();
+      } else {
+        showToast(data.message || 'Failed to import job', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Error importing job', 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const getPlatformBadge = (platform?: string) => {
+    switch (platform) {
+      case 'Internshala':
+        return 'bg-cyan-950/90 text-cyan-300 border-cyan-800';
+      case 'Naukri':
+        return 'bg-blue-950/90 text-blue-300 border-blue-800';
+      case 'Instahyre':
+        return 'bg-emerald-950/90 text-emerald-300 border-emerald-800';
+      case 'Hirist':
+        return 'bg-orange-950/90 text-orange-300 border-orange-800';
+      case 'Cutshort':
+        return 'bg-teal-950/90 text-teal-300 border-teal-800';
+      case 'Unstop':
+        return 'bg-amber-950/90 text-amber-300 border-amber-800';
+      case 'Indeed':
+        return 'bg-indigo-950/90 text-indigo-300 border-indigo-800';
+      case 'Glassdoor':
+        return 'bg-lime-950/90 text-lime-300 border-lime-800';
+      case 'Wellfound':
+        return 'bg-violet-950/90 text-violet-300 border-violet-800';
+      case 'LinkedIn':
+        return 'bg-sky-950/90 text-sky-300 border-sky-800';
+      default:
+        return 'bg-pink-950/90 text-pink-300 border-pink-800';
+    }
+  };
+
+  const getLiveSearchUrl = (portal: string, query: string) => {
+    const q = encodeURIComponent(query.trim() || 'software engineer');
+    switch (portal) {
+      case 'Internshala':
+        return `https://internshala.com/internships/${q}-internship`;
+      case 'Naukri':
+        return `https://www.naukri.com/${q}-jobs`;
+      case 'Instahyre':
+        return `https://www.instahyre.com/jobs-search?skills=${q}`;
+      case 'Hirist':
+        return `https://www.hirist.tech/search?query=${q}`;
+      case 'Cutshort':
+        return `https://cutshort.io/jobs?search=${q}`;
+      case 'Unstop':
+        return `https://unstop.com/internships?search=${q}`;
+      case 'Indeed':
+        return `https://www.indeed.com/jobs?q=${q}`;
+      case 'Glassdoor':
+        return `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${q}`;
+      case 'Wellfound':
+        return `https://wellfound.com/jobs?role=${q}`;
+      case 'LinkedIn':
+        return `https://www.linkedin.com/jobs/search/?keywords=${q}`;
+      default:
+        return `https://careers.google.com/jobs/results/?q=${q}`;
     }
   };
 
@@ -237,27 +497,37 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
         </div>
       )}
 
-      {/* Header Bar */}
+      {/* Top Header Hub */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Search className="w-5 h-5 text-indigo-400" />
-              Real Job Search & Match Engine
+              Internshala, Naukri & Multi-Portal Job Hub
             </h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Live Feed Active
+              {jobs.length} Real Active Listings
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Real active openings from Remotive, Arbeitnow, and official career portals matching your preferred currency, work mode, and stipend threshold.
+            Real software & tech job listings directly from Internshala, Naukri.com, Unstop, Wellfound, and LinkedIn with authentic stipends, LPA packages & PPO offers.
           </p>
         </div>
 
-        {/* Currency & Tab Action Controls */}
+        {/* Currency & Action Controls */}
         <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-          {/* Quick Currency Selector in Job Search */}
+          {/* Import / Paste JD Button */}
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-xs font-bold transition shadow-sm"
+            title="Import or paste any JD from Internshala, Naukri, or LinkedIn"
+          >
+            <PlusCircle className="w-3.5 h-3.5" />
+            <span>Paste Any JD</span>
+          </button>
+
+          {/* Quick Currency Selector */}
           <div className="relative">
             <button
               onClick={() => setCurrencyPickerOpen(!currencyPickerOpen)}
@@ -313,7 +583,7 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               activeTab === 'jobs' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            Live Roles ({jobs.length})
+            All Roles ({filteredJobs.length})
           </button>
 
           <button
@@ -323,54 +593,428 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
             }`}
           >
             <Sliders className="w-3.5 h-3.5" />
-            Edit Preferences
+            Saved Preferences
           </button>
         </div>
       </div>
 
-      {/* Live Search and Filter Bar */}
+      {/* Main Jobs Section */}
       {activeTab === 'jobs' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-center gap-3">
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="Search by role, company, or tech keyword (e.g. Google, Frontend, Go, AI, Intern, Swiggy)..."
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-24 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
-            />
-            {searchKeyword && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchKeyword('');
-                  fetchJobs('');
-                }}
-                className="absolute right-12 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
-              >
-                Clear
-              </button>
-            )}
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[11px] font-semibold transition"
-            >
-              Search
-            </button>
-          </form>
+        <div className="space-y-4">
+          {/* Platform Navigation Tabs Bar */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex items-center gap-1.5 overflow-x-auto">
+            {platformsList.map((plat) => {
+              const isSelected = selectedPlatform === plat.id;
+              const count = platformCounts[plat.id] || 0;
+              return (
+                <button
+                  key={plat.id}
+                  onClick={() => setSelectedPlatform(plat.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition border ${
+                    isSelected
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
+                >
+                  {plat.id === 'all' && <Globe className="w-3.5 h-3.5 text-indigo-300" />}
+                  <span>{plat.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isSelected ? 'bg-indigo-800 text-white' : 'bg-slate-800 text-slate-300'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
 
-          <div className="flex items-center gap-2 shrink-0">
+            {/* PPO Filter Toggle Button */}
             <button
-              onClick={() => fetchJobs()}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold border border-slate-800 transition"
-              title="Refresh live job listings"
+              onClick={() => setPpoOnly(!ppoOnly)}
+              className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition border shrink-0 ${
+                ppoOnly
+                  ? 'bg-amber-950/90 border-amber-500 text-amber-300 shadow-sm'
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title="Filter roles offering Pre-Placement Offers (PPOs)"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-indigo-400' : ''}`} />
-              <span>{loading ? 'Refreshing...' : 'Refresh Live'}</span>
+              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <span>PPO Guaranteed</span>
+              {ppoOnly && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />}
             </button>
           </div>
+
+          {/* Quick Filter Pills Row (Role Type, Work Mode, Domain, Sort) */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            {/* Left Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Role Type Pills */}
+              <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800">
+                {roleTypesList.map((rt) => (
+                  <button
+                    key={rt.id}
+                    onClick={() => setSelectedRoleType(rt.id)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${
+                      selectedRoleType === rt.id
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {rt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Work Mode Pills */}
+              <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800">
+                {workModesList.map((wm) => (
+                  <button
+                    key={wm.id}
+                    onClick={() => setSelectedWorkMode(wm.id)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${
+                      selectedWorkMode === wm.id
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {wm.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Domain Dropdown */}
+              <select
+                value={selectedDomain}
+                onChange={(e) => setSelectedDomain(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1 text-[11px] font-semibold focus:outline-none"
+              >
+                {domainOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id} className="bg-slate-900 text-white">
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Right Sorting & Count */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-400">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-slate-950 border border-slate-800 text-indigo-400 rounded-lg px-2.5 py-1 text-[11px] font-semibold focus:outline-none"
+              >
+                <option value="default">Best Match / Curated</option>
+                <option value="salary_high">Highest Compensation</option>
+                <option value="title">Job Title (A-Z)</option>
+              </select>
+
+              <button
+                onClick={() => {
+                  setSelectedPlatform('all');
+                  setSelectedRoleType('all');
+                  setSelectedWorkMode('all');
+                  setSelectedDomain('all');
+                  setPpoOnly(false);
+                  setSearchKeyword('');
+                  setSortBy('default');
+                }}
+                className="text-[11px] text-slate-400 hover:text-white underline pl-1"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* Search Box & Live Portals Bar */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex flex-col lg:flex-row items-center gap-3">
+            <form onSubmit={handleSearchSubmit} className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="Search Internshala, Naukri, CRED, Zepto, React, Python, Remote, TCS, etc..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-24 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+              />
+              {searchKeyword && (
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword('')}
+                  className="absolute right-12 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs"
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                type="submit"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[11px] font-semibold transition"
+              >
+                Search
+              </button>
+            </form>
+
+            {/* Quick External Platform Search Launchers */}
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0 w-full lg:w-auto justify-end">
+              <span className="text-[11px] text-slate-500 font-semibold mr-1 hidden xl:inline">Live Links:</span>
+              <a
+                href={getLiveSearchUrl('Internshala', searchKeyword)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2.5 py-1 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800 text-cyan-300 rounded text-[11px] font-semibold transition"
+                title="Open live search on Internshala.com in a new tab"
+              >
+                <span>Internshala</span> <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <a
+                href={getLiveSearchUrl('Naukri', searchKeyword)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2.5 py-1 bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800 text-blue-300 rounded text-[11px] font-semibold transition"
+                title="Open live search on Naukri.com in a new tab"
+              >
+                <span>Naukri</span> <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <a
+                href={getLiveSearchUrl('Unstop', searchKeyword)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2.5 py-1 bg-amber-950/60 hover:bg-amber-900/60 border border-amber-800 text-amber-300 rounded text-[11px] font-semibold transition"
+                title="Open live search on Unstop (formerly Dare2Compete) in a new tab"
+              >
+                <span>Unstop</span> <ExternalLink className="w-3 h-3" />
+              </a>
+
+              <button
+                onClick={() => fetchJobs()}
+                disabled={loading}
+                className="flex items-center gap-1 px-2.5 py-1 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded text-[11px] font-semibold border border-slate-800 transition ml-1"
+                title="Refresh jobs feed"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin text-indigo-400' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Results Summary Bar */}
+          <div className="flex items-center justify-between text-xs text-slate-400 px-1">
+            <span>
+              Showing <strong className="text-white">{displayedJobs.length}</strong> of{' '}
+              <strong className="text-white">{filteredJobs.length}</strong> matching roles
+              {selectedPlatform !== 'all' && ` on ${selectedPlatform}`}
+            </span>
+            <span>
+              All salaries converted to <strong className="text-amber-400 font-mono">{currency} ({currencyInfo.symbol})</strong>
+            </span>
+          </div>
+
+          {/* Jobs Grid */}
+          {loading ? (
+            <div className="p-16 text-center text-slate-400 text-sm flex flex-col items-center justify-center gap-3 bg-slate-900 border border-slate-800 rounded-xl">
+              <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
+              <span>Fetching matching roles from Internshala, Naukri, and verified portals...</span>
+            </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 text-sm bg-slate-900 border border-slate-800 rounded-xl space-y-4">
+              <p>No matching jobs found with your current filter criteria.</p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedPlatform('all');
+                    setSelectedRoleType('all');
+                    setSelectedWorkMode('all');
+                    setSelectedDomain('all');
+                    setPpoOnly(false);
+                    setSearchKeyword('');
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold"
+                >
+                  Clear Filters & Show All {jobs.length} Openings
+                </button>
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold"
+                >
+                  + Paste Any Job from Internshala / Naukri
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {displayedJobs.map((job) => {
+                const isTracked = trackedJobIds.has(job.id);
+                return (
+                  <div
+                    key={job.id}
+                    className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-xl p-5 space-y-4 transition flex flex-col justify-between shadow-sm hover:shadow-md"
+                  >
+                    <div className="space-y-2.5">
+                      {/* Header: Platform & Work Mode */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getPlatformBadge(
+                                job.platform
+                              )}`}
+                            >
+                              {job.platform || 'Portal'}
+                            </span>
+                            {job.ppo_offered && (
+                              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800 flex items-center gap-1">
+                                <Award className="w-3 h-3 text-amber-400" />
+                                {job.ppo_package || 'PPO Included'}
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-sm font-bold text-white tracking-tight">{job.title}</h4>
+                          <span className="text-xs font-semibold text-indigo-400 flex items-center gap-1">
+                            <Building2 className="w-3.5 h-3.5 text-indigo-400/80" />
+                            {job.company}
+                          </span>
+                        </div>
+
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono capitalize shrink-0 border border-slate-700/60">
+                          {job.work_mode}
+                        </span>
+                      </div>
+
+                      {/* Metadata Pill Bar */}
+                      <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-400 pt-0.5">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                          <span className="truncate max-w-[170px]">{job.location}</span>
+                        </span>
+
+                        {/* Converted / Native Salary Badge */}
+                        <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 font-mono font-bold">
+                          <Coins className="w-3 h-3 text-amber-400 shrink-0" />
+                          <span>
+                            {currency === 'INR' && job.salary_raw
+                              ? job.salary_raw
+                              : formatSalary(job.stipend_amount, 'month')}
+                          </span>
+                        </span>
+                      </div>
+
+                      {/* Job Description Snippet */}
+                      <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+                        {job.description}
+                      </p>
+
+                      {/* Tech Tags */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {job.tags.slice(0, 5).map((tag, ti) => (
+                          <span
+                            key={ti}
+                            className="text-[10px] px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 rounded font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Actions Footer */}
+                    <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold transition py-1"
+                        >
+                          Apply on {job.platform || 'Portal'} <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+
+                        <button
+                          onClick={() => setSelectedPreviewJob(job)}
+                          className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition px-2 py-1 rounded bg-slate-950 border border-slate-800"
+                          title="Quick preview full job description and requirements"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>Quick View</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Add to Tracker button */}
+                        <button
+                          onClick={() => handleAddToTracker(job)}
+                          disabled={trackingJobId === job.id}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                            isTracked
+                              ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300'
+                              : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
+                          }`}
+                          title="Add this opportunity to your Application Tracker"
+                        >
+                          {isTracked ? (
+                            <>
+                              <BookmarkCheck className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Tracked ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <Bookmark className="w-3.5 h-3.5" />
+                              <span>Track</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => onSelectJob(job)}
+                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
+                          title="Score resume against this real JD in ATS analyzer"
+                        >
+                          Target in ATS
+                        </button>
+
+                        <button
+                          onClick={() => handleTailorCustomResume(job)}
+                          disabled={tailoringJobId === job.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-xs shadow-sm shadow-amber-500/20 disabled:opacity-50 transition"
+                          title="Generate custom tailored resume with rotating format and guaranteed >90 ATS score"
+                        >
+                          {tailoringJobId === job.id ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Tailoring...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="w-3.5 h-3.5" />
+                              <span>Tailor 90+</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Load More Pagination Button */}
+          {filteredJobs.length > visibleCount && (
+            <div className="pt-4 flex justify-center">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 24)}
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-2"
+              >
+                <span>Load More Roles (+24)</span>
+                <span className="text-slate-400 font-mono text-[11px]">
+                  ({filteredJobs.length - visibleCount} remaining)
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -381,24 +1025,51 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-indigo-400" />
-                Target Job Preferences & Currency Settings
+                Target Job Preferences & Multi-Portal Settings
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Configure your search filters and preferred local currency. All stipends and thresholds adapt automatically.
+                Set default parameters used across the automatic resume tailoring and scraper engines.
               </p>
             </div>
             {savedSuccess && (
-              <span className="text-xs text-emerald-400 flex items-center gap-1 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Saved!
+              <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                <Check className="w-4 h-4" /> Preferences saved!
               </span>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-            {/* Preferred Currency */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
             <div>
-              <label className="text-xs text-slate-400 block mb-1 font-semibold flex items-center gap-1">
-                <Coins className="w-3.5 h-3.5 text-amber-400" /> Preferred Currency
+              <label className="text-slate-300 font-semibold block mb-1.5">Opportunity Type</label>
+              <select
+                value={preferences.opportunity_type}
+                onChange={(e) => setPreferences({ ...preferences, opportunity_type: e.target.value as any })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+              >
+                <option value="any">Any (Internships & Full-Time)</option>
+                <option value="internship">Internship Only</option>
+                <option value="full-time">Full-Time Only</option>
+                <option value="contract">Contract Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-slate-300 font-semibold block mb-1.5">Work Mode</label>
+              <select
+                value={preferences.work_mode}
+                onChange={(e) => setPreferences({ ...preferences, work_mode: e.target.value as any })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+              >
+                <option value="any">Any (Remote, Hybrid, On-Site)</option>
+                <option value="remote">Remote Only</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="on-site">On-Site Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-slate-300 font-semibold block mb-1.5">
+                Preferred Currency
               </label>
               <select
                 value={currency}
@@ -406,113 +1077,29 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                   setCurrency(e.target.value);
                   setPreferences({ ...preferences, currency: e.target.value });
                 }}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:border-indigo-500 font-semibold"
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
               >
                 {supportedCurrencies.map((c) => (
                   <option key={c.code} value={c.code}>
-                    {c.flag} {c.name} ({c.symbol} {c.code})
+                    {c.flag} {c.code} - {c.name} ({c.symbol})
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Opportunity Type */}
             <div>
-              <label className="text-xs text-slate-400 block mb-1 font-semibold">Opportunity Type</label>
-              <select
-                value={preferences.opportunity_type}
-                onChange={(e) => setPreferences({ ...preferences, opportunity_type: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:border-indigo-500"
-              >
-                <option value="internship">Internship</option>
-                <option value="full-time">Full-Time</option>
-                <option value="contract">Contract</option>
-                <option value="any">Any Opportunity</option>
-              </select>
-            </div>
-
-            {/* Work Mode */}
-            <div>
-              <label className="text-xs text-slate-400 block mb-1 font-semibold">Work Mode</label>
-              <select
-                value={preferences.work_mode}
-                onChange={(e) => setPreferences({ ...preferences, work_mode: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:border-indigo-500"
-              >
-                <option value="remote">Remote Only</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="on-site">On-Site</option>
-                <option value="any">Any Work Mode</option>
-              </select>
-            </div>
-
-            {/* Minimum Stipend in Selected Currency */}
-            <div>
-              <label className="text-xs text-slate-400 block mb-1 font-semibold">
-                Minimum Stipend ({currencySymbol} / month)
+              <label className="text-slate-300 font-semibold block mb-1.5">
+                Minimum Monthly Compensation ({currencyInfo.symbol})
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-amber-400">
-                  {currencySymbol}
-                </span>
-                <input
-                  type="number"
-                  value={preferences.minimum_stipend || ''}
-                  placeholder={`e.g. ${currency === 'INR' ? '40000' : '3500'}`}
-                  onChange={(e) => setPreferences({ ...preferences, minimum_stipend: Number(e.target.value) || 0 })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-2.5 text-xs text-white focus:border-indigo-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="text-xs text-slate-400 block mb-1 font-semibold">Location Filter</label>
               <input
-                type="text"
-                value={preferences.location}
-                placeholder="e.g. Anywhere, Remote, India, New York, Europe"
-                onChange={(e) => setPreferences({ ...preferences, location: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:border-indigo-500"
+                type="number"
+                value={preferences.minimum_stipend || 0}
+                onChange={(e) =>
+                  setPreferences({ ...preferences, minimum_stipend: parseFloat(e.target.value) || 0 })
+                }
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                placeholder={`e.g. ${currency === 'INR' ? '30000' : '4000'}`}
               />
-            </div>
-
-            <div>
-              <label className="text-xs text-slate-400 block mb-1 font-semibold">Experience Level</label>
-              <select
-                value={preferences.experience_level}
-                onChange={(e) => setPreferences({ ...preferences, experience_level: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:border-indigo-500"
-              >
-                <option value="Fresher">Fresher / Student (Intern)</option>
-                <option value="Entry">Entry Level (0 - 2 Years)</option>
-                <option value="Mid-Level">Mid-Level (2 - 5 Years)</option>
-                <option value="Senior">Senior (5+ Years)</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs text-slate-400 block mb-2 font-semibold">Preferred Tech Domains</label>
-            <div className="flex flex-wrap gap-2">
-              {domainOptions.map((domain) => {
-                const isSelected = preferences.domains.includes(domain);
-                return (
-                  <button
-                    key={domain}
-                    type="button"
-                    onClick={() => toggleDomain(domain)}
-                    className={`text-xs px-3 py-1.5 rounded-lg border font-medium capitalize transition ${
-                      isSelected
-                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {domain}
-                  </button>
-                );
-              })}
             </div>
           </div>
 
@@ -528,148 +1115,286 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               disabled={savingPrefs}
               className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm"
             >
-              {savingPrefs ? 'Saving Preferences...' : 'Save Preferences & Filter Jobs'}
+              {savingPrefs ? 'Saving Preferences...' : 'Save Preferences'}
             </button>
           </div>
         </div>
       )}
 
-      {/* Jobs Grid View */}
-      {activeTab === 'jobs' && (
-        <div className="space-y-4">
-          {loading ? (
-            <div className="p-16 text-center text-slate-400 text-sm flex flex-col items-center justify-center gap-3 bg-slate-900 border border-slate-800 rounded-xl">
-              <RefreshCw className="w-6 h-6 animate-spin text-indigo-400" />
-              <span>Fetching real live openings from Remotive, Arbeitnow & Tech Portals...</span>
+      {/* QUICK VIEW JD MODAL */}
+      {selectedPreviewJob && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span
+                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getPlatformBadge(
+                      selectedPreviewJob.platform
+                    )}`}
+                  >
+                    {selectedPreviewJob.platform || 'Portal'}
+                  </span>
+                  {selectedPreviewJob.ppo_offered && (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800 flex items-center gap-1">
+                      <Award className="w-3 h-3 text-amber-400" />
+                      {selectedPreviewJob.ppo_package || 'PPO Included'}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 capitalize">
+                    {selectedPreviewJob.work_mode} &bull; {selectedPreviewJob.opportunity_type}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-white">{selectedPreviewJob.title}</h3>
+                <p className="text-xs text-indigo-400 font-semibold flex items-center gap-1.5 pt-0.5">
+                  <Building2 className="w-3.5 h-3.5" />
+                  {selectedPreviewJob.company} &bull; {selectedPreviewJob.location}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setSelectedPreviewJob(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          ) : jobs.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 text-sm bg-slate-900 border border-slate-800 rounded-xl space-y-3">
-              <p>No matching jobs found with your current filter criteria.</p>
-              <div className="flex items-center justify-center gap-3">
+
+            {/* Compensation & Highlights */}
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-slate-400 block font-medium">Compensation / Stipend</span>
+                <span className="text-sm font-mono font-bold text-emerald-400">
+                  {currency === 'INR' && selectedPreviewJob.salary_raw
+                    ? selectedPreviewJob.salary_raw
+                    : formatSalary(selectedPreviewJob.stipend_amount, 'month')}
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 font-mono">
+                Posted: {selectedPreviewJob.posted_date}
+              </span>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Role Overview</h4>
+              <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
+                {selectedPreviewJob.description}
+              </p>
+            </div>
+
+            {/* Requirements */}
+            {selectedPreviewJob.requirements && selectedPreviewJob.requirements.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">Key Requirements</h4>
+                <ul className="space-y-1.5 text-xs text-slate-300 list-disc pl-4">
+                  {selectedPreviewJob.requirements.map((req, i) => (
+                    <li key={i}>{req}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Tags */}
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Required Skills</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedPreviewJob.tags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="text-[11px] px-2.5 py-1 bg-slate-950 border border-slate-800 text-slate-300 rounded-md font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <a
+                href={selectedPreviewJob.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow"
+              >
+                Apply on {selectedPreviewJob.platform || 'Portal'} <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleAddToTracker(selectedPreviewJob)}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  <span>Add to Tracker</span>
+                </button>
+
                 <button
                   onClick={() => {
-                    setPreferences({
-                      ...preferences,
-                      opportunity_type: 'any',
-                      work_mode: 'any',
-                      minimum_stipend: 0,
-                    });
-                    fetchJobs('');
+                    onSelectJob(selectedPreviewJob);
+                    setSelectedPreviewJob(null);
                   }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold"
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold"
                 >
-                  Clear Filters & Show All Live Openings
+                  Score in ATS
+                </button>
+
+                <button
+                  onClick={() => {
+                    const j = selectedPreviewJob;
+                    setSelectedPreviewJob(null);
+                    handleTailorCustomResume(j);
+                  }}
+                  className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Tailor 90+ Resume</span>
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {jobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="bg-slate-900 border border-slate-800 hover:border-slate-700/80 rounded-xl p-5 space-y-4 transition flex flex-col justify-between shadow-sm hover:shadow-md"
-                >
-                  <div className="space-y-2.5">
-                    {/* Source & Live Badge Header */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white tracking-tight">{job.title}</h4>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-indigo-400 flex items-center gap-1">
-                            <Building2 className="w-3.5 h-3.5 text-indigo-400/80" />
-                            {job.company}
-                          </span>
-                          {job.source && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800/80 border border-slate-700 text-slate-400 font-mono">
-                              {job.source}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+          </div>
+        </div>
+      )}
 
-                      <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono capitalize shrink-0 border border-slate-700/60">
-                        {job.work_mode}
-                      </span>
-                    </div>
-
-                    {/* Metadata Pill Bar */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-0.5">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span className="truncate max-w-[180px]">{job.location}</span>
-                      </span>
-
-                      {/* Currency Converted Salary Badge */}
-                      <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 font-mono font-bold">
-                        <Coins className="w-3 h-3 text-amber-400" />
-                        <span>{formatSalary(job.stipend_amount, 'month')}</span>
-                      </span>
-                    </div>
-
-                    {/* Job Description Snippet */}
-                    <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
-                      {job.description}
-                    </p>
-
-                    {/* Tech Tags */}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {job.tags.slice(0, 5).map((tag, ti) => (
-                        <span
-                          key={ti}
-                          className="text-[10px] px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 rounded font-medium"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions Footer */}
-                  <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-                    <a
-                      href={job.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold transition py-1"
-                    >
-                      Apply on Portal <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onSelectJob(job)}
-                        className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
-                        title="Score resume against this real JD in ATS analyzer"
-                      >
-                        Target in ATS
-                      </button>
-
-                      <button
-                        onClick={() => handleTailorCustomResume(job)}
-                        disabled={tailoringJobId === job.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-xs shadow-sm shadow-amber-500/20 disabled:opacity-50 transition"
-                        title="Generate custom tailored resume with rotating format and guaranteed >90 ATS score"
-                      >
-                        {tailoringJobId === job.id ? (
-                          <>
-                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            <span>Tailoring 90+ ATS...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-3.5 h-3.5" />
-                            <span>Tailor 90+ Resume</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+      {/* IMPORT / PASTE JOB MODAL */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <PlusCircle className="w-5 h-5 text-indigo-400" />
+                  Paste & Import Job from Internshala, Naukri, or Web
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Paste any job description from Internshala, Naukri.com, Unstop, or LinkedIn to instantly add it to your matching list, calculate ATS score, and generate a tailored resume.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          )}
+
+            <form onSubmit={handleImportCustomJob} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold">Job Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={importTitle}
+                    onChange={(e) => setImportTitle(e.target.value)}
+                    placeholder="e.g. Web Development Intern or SDE-1"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold">Company Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={importCompany}
+                    onChange={(e) => setImportCompany(e.target.value)}
+                    placeholder="e.g. CRED, Zepto, Swiggy, TCS"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold">Source Portal</label>
+                  <select
+                    value={importPlatform}
+                    onChange={(e) => setImportPlatform(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                  >
+                    <option value="Internshala">Internshala</option>
+                    <option value="Naukri">Naukri.com</option>
+                    <option value="Instahyre">Instahyre</option>
+                    <option value="Hirist">Hirist</option>
+                    <option value="Cutshort">Cutshort</option>
+                    <option value="Unstop">Unstop</option>
+                    <option value="Indeed">Indeed</option>
+                    <option value="Glassdoor">Glassdoor</option>
+                    <option value="Wellfound">Wellfound</option>
+                    <option value="LinkedIn">LinkedIn</option>
+                    <option value="Official Portal">Other Career Portal</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold">Stipend / CTC</label>
+                  <input
+                    type="text"
+                    value={importSalary}
+                    onChange={(e) => setImportSalary(e.target.value)}
+                    placeholder="e.g. ₹40,000/month or ₹12 LPA"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block mb-1 font-semibold">Work Mode</label>
+                  <select
+                    value={importWorkMode}
+                    onChange={(e) => setImportWorkMode(e.target.value as any)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                  >
+                    <option value="remote">Remote</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="on-site">On-Site</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1 font-semibold">Job Posting URL (Optional)</label>
+                <input
+                  type="url"
+                  value={importUrl}
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  placeholder="e.g. https://internshala.com/internship/detail/..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1 font-semibold">
+                  Job Description & Requirements * (Paste full text)
+                </label>
+                <textarea
+                  required
+                  rows={6}
+                  value={importDescription}
+                  onChange={(e) => setImportDescription(e.target.value)}
+                  placeholder="Paste the requirements, tech stack, and responsibilities here..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 font-mono text-[11px] leading-relaxed"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(false)}
+                  className="px-4 py-2 text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={importing}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold transition shadow-sm"
+                >
+                  {importing ? 'Importing Job...' : 'Import to Dashboard'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

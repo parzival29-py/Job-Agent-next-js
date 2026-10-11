@@ -25,7 +25,7 @@ import {
   generateApplicationAnswers,
 } from './server/applicationAi.js';
 import { generateTailoredResume, detectRecommendedFormat, generateResumePdf } from './server/resumeGenerator.js';
-import { getAllJobs, filterJobs } from './server/jobScraper.js';
+import { getAllJobs, filterJobs, saveCustomJob } from './server/jobScraper.js';
 import {
   createApplication,
   getApplications,
@@ -795,49 +795,66 @@ app.get(['/jobs/search', '/api/jobs/search'], async (req, res) => {
     }
   }
 
-  const queryOpp = (req.query.opportunity_type as string) || '';
-  const queryMode = (req.query.work_mode as string) || '';
+  const queryOpp = (req.query.opportunity_type as string) || (req.query.type as string) || '';
+  const queryMode = (req.query.work_mode as string) || (req.query.mode as string) || '';
   const queryLoc = (req.query.location as string) || '';
-  const queryDomains = (req.query.domains as string) || '';
+  const queryDomains = (req.query.domains as string) || (req.query.domain as string) || '';
   const querySearch = (req.query.q as string) || (req.query.search as string) || '';
   const queryCurrency = (req.query.currency as string) || '';
+  const queryPlatform = (req.query.platform as string) || '';
+  const queryPpo = req.query.ppo === 'true' || req.query.ppo_only === 'true';
+  const queryMinStipend = req.query.min_stipend ? parseFloat(req.query.min_stipend as string) : undefined;
+  const isStrict = req.query.strict === 'true';
 
+  // If explicit query parameter is provided, honor it.
+  // When browsing all jobs without strict mode, default to 'any'/'all' so jobs aren't hidden
   const effective_opportunity_type = queryOpp.trim()
     ? queryOpp.trim().toLowerCase()
-    : (savedPreferences.opportunity_type || 'internship').trim().toLowerCase();
+    : isStrict
+    ? (savedPreferences.opportunity_type || 'any').trim().toLowerCase()
+    : 'any';
 
   const effective_work_mode = queryMode.trim()
     ? queryMode.trim().toLowerCase()
-    : (savedPreferences.work_mode || 'remote').trim().toLowerCase();
+    : isStrict
+    ? (savedPreferences.work_mode || 'any').trim().toLowerCase()
+    : 'any';
 
   const effective_location = queryLoc.trim()
     ? queryLoc.trim()
-    : savedPreferences.location || 'Anywhere';
+    : isStrict
+    ? savedPreferences.location || 'Anywhere'
+    : 'Anywhere';
 
   let effective_domains: string[] = [];
-  if (queryDomains.trim()) {
+  if (queryDomains.trim() && queryDomains.trim() !== 'all') {
     effective_domains = queryDomains
       .split(',')
       .map((d) => d.trim())
       .filter(Boolean);
-  } else {
+  } else if (isStrict) {
     effective_domains = savedPreferences.domains || [];
   }
 
   const effective_currency = queryCurrency.trim() || savedPreferences.currency || 'USD';
+  const effective_platform = queryPlatform.trim() || 'all';
+  const effective_ppo_only = queryPpo || (isStrict ? savedPreferences.ppo_only || false : false);
+  const effective_min_stipend = queryMinStipend !== undefined ? queryMinStipend : (isStrict ? savedPreferences.minimum_stipend || 0 : 0);
 
   const searchPreferences = {
     opportunity_type: effective_opportunity_type,
     work_mode: effective_work_mode,
     domains: effective_domains,
     location: effective_location,
-    minimum_stipend: savedPreferences.minimum_stipend || 0,
+    minimum_stipend: effective_min_stipend,
     currency: effective_currency,
+    platform: effective_platform,
+    ppo_only: effective_ppo_only,
     experience_level: savedPreferences.experience_level || 'Fresher',
   };
 
   try {
-    const jobs = await getAllJobs(querySearch, 100);
+    const jobs = await getAllJobs(querySearch, 1000);
     const filteredJobs = filterJobs(jobs, searchPreferences);
 
     return res.json({
@@ -853,6 +870,23 @@ app.get(['/jobs/search', '/api/jobs/search'], async (req, res) => {
       success: false,
       message: 'Job search failed.',
       error: error.message,
+    });
+  }
+});
+
+// Import custom job from Internshala/Naukri/URL
+app.post(['/jobs/custom', '/api/jobs/custom'], (req, res) => {
+  try {
+    const newJob = saveCustomJob(req.body);
+    return res.json({
+      success: true,
+      message: 'Custom job imported successfully.',
+      job: newJob,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to import custom job.',
     });
   }
 });

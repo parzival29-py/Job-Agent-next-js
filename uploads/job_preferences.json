@@ -1,14 +1,11 @@
 {
-    "opportunity_type": "internship",
-    "work_mode": "remote",
-    "domains": [
-        "cloud",
-        "frontend",
-        "backend",
-        "ai"
-    ],
-    "location": "Anywhere",
-    "minimum_stipend": 50000,
-    "currency": "INR",
-    "experience_level": "Fresher"
+  "opportunity_type": "any",
+  "work_mode": "any",
+  "domains": [],
+  "location": "Anywhere",
+  "minimum_stipend": 0,
+  "currency": "INR",
+  "platform": "all",
+  "ppo_only": false,
+  "experience_level": "Fresher"
 }

@@ -3,38 +3,76 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 &&
+             id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
     function isValidProfile(data) {
-      return data.name is string && data.name.size() > 0 &&
-             data.extracted_text is string && data.extracted_text.size() > 0;
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             (!('extracted_text' in data) || (data.extracted_text is string && data.extracted_text.size() <= 500000)) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 200)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 100)) &&
+             (!('headline' in data) || (data.headline is string && data.headline.size() <= 300)) &&
+             (!('summary' in data) || (data.summary is string && data.summary.size() <= 10000)) &&
+             (!('resume_format' in data) || (data.resume_format is string && data.resume_format.size() <= 100)) &&
+             (!('skills' in data) || data.skills is map) &&
+             (!('experience' in data) || (data.experience is list && data.experience.size() <= 100)) &&
+             (!('education' in data) || (data.education is list && data.education.size() <= 50)) &&
+             (!('projects' in data) || (data.projects is list && data.projects.size() <= 50)) &&
+             (!('ats_score' in data) || (data.ats_score is number && data.ats_score >= 0 && data.ats_score <= 100)) &&
+             (!('updated_at' in data) || (data.updated_at is string && data.updated_at.size() <= 100));
     }
 
     function isValidApplication(data) {
-      return data.company is string && data.company.size() > 0 &&
-             data.job_title is string && data.job_title.size() > 0 &&
-             data.status in ['Saved', 'Ready to Apply', 'Applied', 'Interview', 'Offer', 'Rejected'];
+      return data.company is string && data.company.size() > 0 && data.company.size() <= 200 &&
+             data.job_title is string && data.job_title.size() > 0 && data.job_title.size() <= 200 &&
+             data.status in ['Saved', 'Ready to Apply', 'Applied', 'Interview', 'Offer', 'Rejected'] &&
+             (!('job_url' in data) || (data.job_url is string && data.job_url.size() <= 1000)) &&
+             (!('job_description' in data) || (data.job_description is string && data.job_description.size() <= 100000)) &&
+             (!('resume_format' in data) || (data.resume_format is string && data.resume_format.size() <= 100)) &&
+             (!('ats_score' in data) || data.ats_score == null || (data.ats_score is number && data.ats_score >= 0 && data.ats_score <= 100)) &&
+             (!('resume_version' in data) || (data.resume_version is string && data.resume_version.size() <= 300)) &&
+             (!('custom_resume_text' in data) || (data.custom_resume_text is string && data.custom_resume_text.size() <= 100000)) &&
+             (!('custom_docx_url' in data) || (data.custom_docx_url is string && data.custom_docx_url.size() <= 500)) &&
+             (!('custom_pdf_url' in data) || (data.custom_pdf_url is string && data.custom_pdf_url.size() <= 500)) &&
+             (!('custom_txt_url' in data) || (data.custom_txt_url is string && data.custom_txt_url.size() <= 500)) &&
+             (!('cover_letter' in data) || (data.cover_letter is string && data.cover_letter.size() <= 50000)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 20000)) &&
+             (!('created_at' in data) || (data.created_at is string && data.created_at.size() <= 100)) &&
+             (!('updated_at' in data) || (data.updated_at is string && data.updated_at.size() <= 100));
     }
 
     function isValidPreferences(data) {
-      return data.opportunity_type is string &&
-             data.work_mode is string;
+      return data.opportunity_type is string && data.opportunity_type.size() > 0 && data.opportunity_type.size() <= 100 &&
+             data.work_mode is string && data.work_mode.size() > 0 && data.work_mode.size() <= 100 &&
+             (!('domains' in data) || (data.domains is list && data.domains.size() <= 50)) &&
+             (!('location' in data) || (data.location is string && data.location.size() <= 200)) &&
+             (!('minimum_stipend' in data) || data.minimum_stipend is number) &&
+             (!('experience_level' in data) || (data.experience_level is string && data.experience_level.size() <= 100)) &&
+             (!('updated_at' in data) || (data.updated_at is string && data.updated_at.size() <= 100));
     }
 
     match /resume_profiles/{profileId} {
       allow read: if true;
-      allow create, update: if isValidProfile(request.resource.data);
-      allow delete: if true;
+      allow create, update: if isValidId(profileId) && isValidProfile(request.resource.data);
+      allow delete: if isValidId(profileId);
     }
 
     match /applications/{applicationId} {
       allow read: if true;
-      allow create, update: if isValidApplication(request.resource.data);
-      allow delete: if true;
+      allow create, update: if isValidId(applicationId) && isValidApplication(request.resource.data);
+      allow delete: if isValidId(applicationId);
     }
 
     match /preferences/{preferenceId} {
       allow read: if true;
-      allow create, update: if isValidPreferences(request.resource.data);
-      allow delete: if true;
+      allow create, update: if isValidId(preferenceId) && isValidPreferences(request.resource.data);
+      allow delete: if isValidId(preferenceId);
+    }
+
+    match /test/{testId} {
+      allow read: if true;
     }
 
     // Default deny all other paths

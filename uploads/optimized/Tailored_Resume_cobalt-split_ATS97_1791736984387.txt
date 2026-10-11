@@ -1,0 +1,35 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Software Engineer with a focus on building scalable distributed systems and robust backend architectures. Proficient in Python and TypeScript, with hands-on experience deploying containerized applications using Docker and Kubernetes. Skilled in designing high-availability database schemas with PostgreSQL and optimizing system performance for high-throughput environments.
+
+TECHNICAL SKILLS
+• Programming Languages: Python, TypeScript, JavaScript, C++
+• Cloud & DevOps: Docker, Kubernetes, Git, CI/CD Pipelines
+• Databases: PostgreSQL, SQL, Database Design
+• Core Competencies: Distributed Systems, RESTful APIs, Backend Architecture, System Optimization
+
+PROJECTS
+Scalable Attendance System
+• Engineered a distributed face-recognition attendance system, achieving 99.8% accuracy in identification by leveraging Python-based microservices.
+• Optimized database interactions using PostgreSQL, reducing query latency by 40% through effective indexing and schema normalization.
+• Containerized the application using Docker, ensuring consistent deployment environments and 99.9% uptime during high-concurrency testing.
+
+Cloud-Native Portfolio Infrastructure
+• Built a responsive personal portfolio using TypeScript and modern web frameworks, improving load times by 35% via optimized asset delivery.
+• Deployed the application on a Kubernetes cluster to manage traffic scaling and automated recovery during load spikes.
+• Integrated SQL-based backend storage to manage project metadata, increasing data retrieval speed by 25% compared to static file storage.
+
+Distributed Machine Learning Pipeline
+• Developed a data preprocessing pipeline for ML workflows, processing 5,000+ records/minute using Python-based parallel processing techniques.
+• Implemented containerized environments with Docker to ensure reproducible model training across distributed nodes.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+CERTIFICATIONS
+• Python Programming Fundamentals
+• Advanced Distributed Systems Architecture
+• PostgreSQL Database Management

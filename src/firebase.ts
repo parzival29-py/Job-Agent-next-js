@@ -8,11 +8,23 @@ export const db = firebaseConfig.firestoreDatabaseId
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app);
 
+export async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error('Please check your Firebase configuration.');
+    }
+  }
+}
+
+testConnection();
+
 export async function testFirestoreConnection(): Promise<boolean> {
   try {
     // Attempt reading from server to test online connectivity
-    await getDocFromServer(doc(db, 'resume_profiles', 'active_profile'));
-    return true;
+    const snap = await getDocFromServer(doc(db, 'resume_profiles', 'active_profile'));
+    return snap.exists();
   } catch (error: any) {
     if (error?.message?.includes('the client is offline')) {
       console.error('Please check your Firebase configuration.');

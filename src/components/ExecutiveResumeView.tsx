@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Phone,
   Mail,
@@ -308,6 +308,12 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
   const currentData = activeProfileMode === 'mockup' ? mockupData : candidateData;
   const [data, setData] = useState(currentData);
 
+  useEffect(() => {
+    if (activeProfileMode === 'candidate') {
+      setData(candidateData);
+    }
+  }, [profile, activeProfileMode, targetJobTitle, targetCompany]);
+
   const switchMode = (mode: 'candidate' | 'mockup') => {
     setActiveProfileMode(mode);
     setData(mode === 'mockup' ? mockupData : candidateData);
@@ -323,8 +329,32 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
     setIsExportingPdf(true);
     try {
       const candidateFullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || profile?.name || 'Resume';
+      const sheetIdMap: Record<string, string> = {
+        'executive-monolith': 'executive-resume-sheet',
+        'cobalt-split': 'cobalt-resume-sheet',
+        'minimalist-two-col': 'minimalist-resume-sheet',
+        'editorial-grid': 'editorial-resume-sheet',
+        'tech-engineering': 'tech-resume-sheet',
+        'modern-nordic': 'nordic-resume-sheet',
+        'ivy-executive': 'ivy-resume-sheet',
+        'datascience-ai': 'datascience-resume-sheet',
+        'product-leader': 'product-resume-sheet',
+        'startup-founder': 'startup-resume-sheet',
+        'fintech-quant': 'fintech-resume-sheet',
+        'consulting-mckinsey': 'consulting-resume-sheet',
+        'creative-director': 'creative-resume-sheet',
+        'healthcare-clinical': 'healthcare-resume-sheet',
+        'corporate-legal': 'legal-resume-sheet',
+        'sales-enterprise': 'sales-resume-sheet',
+        'federal-gov': 'federal-resume-sheet',
+        'academic-scholar': 'academic-resume-sheet',
+        'international-hybrid': 'international-resume-sheet',
+        'marketing-growth': 'marketing-resume-sheet',
+        'operations-scrum': 'operations-resume-sheet',
+      };
+      const activeSheetId = sheetIdMap[selectedFormat] || 'cobalt-resume-sheet';
       const success = await exportResumeToPdf({
-        elementId: 'executive-resume-sheet',
+        elementId: activeSheetId,
         format: selectedFormat,
         atsScore: atsScore || 95,
         candidateName: candidateFullName,

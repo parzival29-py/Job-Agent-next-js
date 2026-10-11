@@ -2,7 +2,7 @@
   "entities": {
     "ResumeProfile": {
       "title": "Resume Profile",
-      "description": "Parsed candidate resume profile and extracted text",
+      "description": "Parsed candidate resume profile, extracted text, and preferred resume layout format",
       "type": "object",
       "properties": {
         "name": { "type": "string", "description": "Candidate full name" },
@@ -12,13 +12,15 @@
         "summary": { "type": "string", "description": "Professional summary" },
         "filename": { "type": "string", "description": "Uploaded resume filename" },
         "extracted_text": { "type": "string", "description": "Raw extracted resume text" },
+        "resume_format": { "type": "string", "description": "Selected or default resume format styling (e.g. cobalt-split, tech-engineering)" },
         "skills": { "type": "object", "description": "Categorized skill lists" },
         "experience": { "type": "array", "description": "Work history entries" },
         "education": { "type": "array", "description": "Education credentials" },
         "projects": { "type": "array", "description": "Technical project highlights" },
+        "ats_score": { "type": "number", "description": "Composite ATS evaluation score" },
         "updated_at": { "type": "string", "description": "ISO timestamp of last update" }
       },
-      "required": ["name", "extracted_text"]
+      "required": ["name"]
     },
     "JobApplication": {
       "title": "Job Application",
@@ -31,6 +33,11 @@
         "job_description": { "type": "string", "description": "Full job description text" },
         "ats_score": { "type": "number", "description": "Composite ATS benchmark score" },
         "resume_version": { "type": "string", "description": "Targeted tailored resume filename" },
+        "resume_format": { "type": "string", "description": "Resume visual layout format (e.g. cobalt-split, tech-engineering)" },
+        "custom_resume_text": { "type": "string", "description": "Customized ATS resume plain text" },
+        "custom_docx_url": { "type": "string", "description": "Download URL for customized DOCX resume" },
+        "custom_pdf_url": { "type": "string", "description": "Download URL for customized PDF resume" },
+        "custom_txt_url": { "type": "string", "description": "Download URL for customized TXT resume" },
         "cover_letter": { "type": "string", "description": "Tailored cover letter text" },
         "status": {
           "type": "string",

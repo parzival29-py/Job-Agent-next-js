@@ -512,8 +512,7 @@ app.post(['/ai/render-resume-pdf', '/api/ai/render-resume-pdf'], async (req, res
     const userFormat = req.body?.resume_format || req.body?.formatType || req.body?.format;
     let chosenFormat = userFormat;
     if (!chosenFormat || chosenFormat === 'auto') {
-      const rec = detectRecommendedFormat(jobDescription, rawText);
-      chosenFormat = rec.formatId;
+      chosenFormat = 'cobalt-split';
     }
 
     const customData = req.body?.resume_data || req.body?.data || null;
@@ -1149,7 +1148,12 @@ app.post(
 // ============================================================
 
 app.post(
-  ['/ai/application-questions/answers', '/api/ai/application-questions/answers'],
+  [
+    '/ai/application-questions/answers',
+    '/api/ai/application-questions/answers',
+    '/ai/application-answers',
+    '/api/ai/application-answers',
+  ],
   async (req, res) => {
     const profile = loadCurrentProfile();
     if (!profile) {

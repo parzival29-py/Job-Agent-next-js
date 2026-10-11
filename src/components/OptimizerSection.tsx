@@ -96,7 +96,6 @@ Requirements:
     try {
       // 1. Try DOM high-resolution capture first if sheet is mounted
       const domSuccess = await exportResumeToPdf({
-        elementId: 'executive-resume-sheet',
         format: formatToUse,
         atsScore: result?.final_score?.ats_score || 95,
         candidateName: profile?.name || 'Resume',

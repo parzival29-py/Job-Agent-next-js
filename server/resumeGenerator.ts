@@ -748,125 +748,288 @@ export async function generateResumePdf(
       doc.pipe(writeStream);
 
       // =========================================================================
-      // FORMAT 1: COBALT MODERN SPLIT (Two-Column with Navy Left Sidebar)
+      // FORMAT 1: COBALT MODERN SPLIT (Screenshot 2: CV Template Split Layout)
       // =========================================================================
       if (formatType === 'cobalt-split') {
-        const sidebarWidth = 180;
-        const mainX = 196;
-        const mainWidth = 388;
+        const pageWidth = 612;
+        const pageHeight = 792;
+        const marginX = 36;
+        const contentWidth = pageWidth - marginX * 2; // 540
 
-        // Draw Full-Height Navy Left Sidebar
-        doc.rect(0, 0, sidebarWidth, 792).fill('#0F172A');
+        // 1. TOP CENTERED HEADER
+        let headerY = 26;
 
-        // Sidebar Initials Avatar
-        doc.roundedRect(20, 26, 42, 42, 6).fill('#2563EB');
-        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(16).text(parsed.initials, 20, 38, { width: 42, align: 'center' });
+        // Label: "CV TEMPLATE"
+        doc.fillColor('#64748B')
+          .font('Helvetica-Bold')
+          .fontSize(8.5)
+          .text('CV TEMPLATE', marginX, headerY, {
+            width: contentWidth,
+            align: 'center',
+            characterSpacing: 2.5,
+          });
 
-        // Sidebar Name & Headline
-        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(12).text(parsed.name.toUpperCase(), 20, 78, { width: 140, lineGap: 1 });
-        doc.fillColor('#60A5FA').font('Helvetica-Bold').fontSize(7.5).text(parsed.headline, 20, doc.y + 2, { width: 140 });
+        // Blue accent bar directly under "CV TEMPLATE"
+        headerY += 13;
+        const accentWidth = 44;
+        doc.roundedRect((pageWidth - accentWidth) / 2, headerY, accentWidth, 2, 1).fill('#2563EB');
 
-        // Sidebar Divider
-        let sideY = doc.y + 8;
-        doc.moveTo(20, sideY).lineTo(160, sideY).lineWidth(0.8).strokeColor('#334155').stroke();
-        sideY += 10;
+        // Full Name (Centered, Bold, Uppercase)
+        headerY += 8;
+        doc.fillColor('#0F172A')
+          .font('Helvetica-Bold')
+          .fontSize(23)
+          .text(parsed.name.toUpperCase(), marginX, headerY, {
+            width: contentWidth,
+            align: 'center',
+          });
 
-        // Sidebar Contact Info
-        doc.fillColor('#93C5FD').font('Helvetica-Bold').fontSize(8).text('CONTACT', 20, sideY);
-        sideY += 12;
-        doc.fillColor('#E2E8F0').font('Helvetica').fontSize(7);
-        for (const contact of parsed.contacts.slice(0, 5)) {
-          doc.text(`• ${contact}`, 20, sideY, { width: 140, lineGap: 1 });
-          sideY = doc.y + 3;
-        }
+        // Headline (Centered, Bold, Uppercase)
+        headerY += 25;
+        doc.fillColor('#475569')
+          .font('Helvetica-Bold')
+          .fontSize(8.5)
+          .text((parsed.headline || 'FULL-STACK SOFTWARE ENGINEER').toUpperCase(), marginX, headerY, {
+            width: contentWidth,
+            align: 'center',
+            characterSpacing: 1.5,
+          });
 
-        // Sidebar Skills
-        sideY += 6;
-        doc.fillColor('#93C5FD').font('Helvetica-Bold').fontSize(8).text('CORE COMPETENCIES', 20, sideY);
-        sideY += 12;
-        for (const skill of parsed.skillsList.slice(0, 9)) {
-          doc.fillColor('#E2E8F0').font('Helvetica-Bold').fontSize(7).text(skill, 20, sideY, { width: 140 });
-          sideY += 9;
-          // Progress level bar
-          doc.roundedRect(20, sideY, 130, 3, 1.5).fill('#1E293B');
-          doc.roundedRect(20, sideY, 105, 3, 1.5).fill('#2563EB');
-          sideY += 7;
-        }
+        // Full horizontal light gray separator line
+        headerY += 16;
+        doc.moveTo(marginX, headerY).lineTo(marginX + contentWidth, headerY).lineWidth(1.2).strokeColor('#E2E8F0').stroke();
 
-        // Sidebar Education
-        if (parsed.education.length > 0) {
-          sideY += 6;
-          doc.fillColor('#93C5FD').font('Helvetica-Bold').fontSize(8).text('EDUCATION', 20, sideY);
-          sideY += 12;
-          for (const edu of parsed.education.slice(0, 2)) {
-            doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(7).text(edu.degree, 20, sideY, { width: 140 });
-            sideY = doc.y + 1;
-            doc.fillColor('#94A3B8').font('Helvetica').fontSize(6.5).text(edu.institution, 20, sideY, { width: 140 });
-            sideY = doc.y + 5;
+        // 2. TWO-COLUMN SPLIT LAYOUT
+        const splitStartY = headerY + 12;
+        const col1X = marginX; // 36
+        const col1Width = 162;
+        const divX = 208; // Blue vertical divider line
+        const col2X = 222; // Right main column
+        const col2Width = marginX + contentWidth - col2X; // 354
+
+        // Helper to draw section header with blue circle badge
+        const drawSectionHeader = (x: number, y: number, title: string, hasAccentBar = false) => {
+          // Blue circle badge (diameter 15, radius 7.5)
+          const badgeX = x + 8;
+          const badgeY = y + 7.5;
+          doc.circle(badgeX, badgeY, 7.5).fill('#2563EB');
+          // White center dot / glyph inside badge
+          doc.circle(badgeX, badgeY, 2.5).fill('#FFFFFF');
+
+          // Title text
+          doc.fillColor('#0F172A')
+            .font('Helvetica-Bold')
+            .fontSize(9)
+            .text(title.toUpperCase(), x + 21, y + 2.5, {
+              characterSpacing: 0.8,
+            });
+
+          if (hasAccentBar) {
+            doc.roundedRect(x, y + 17, 44, 2, 1).fill('#2563EB');
+            return y + 24;
           }
+          return y + 18;
+        };
+
+        // --- LEFT COLUMN: CONTACT, SKILLS, EDUCATION ---
+        let leftY = splitStartY;
+
+        // CONTACT SECTION
+        leftY = drawSectionHeader(col1X, leftY, 'CONTACT');
+
+        // Contact Items
+        const contactEntries = parsed.contacts && parsed.contacts.length > 0
+          ? parsed.contacts
+          : [
+              'aryamanharshdewangan@gmail.com',
+              '+1 (555) 747-0435',
+              'San Francisco, CA, USA',
+              'linkedin.com/in/aryamandewangan',
+              'aryamandewangan.dev',
+            ];
+
+        for (const item of contactEntries.slice(0, 5)) {
+          // Blue accent bullet dot
+          doc.circle(col1X + 4, leftY + 4, 1.8).fill('#2563EB');
+          doc.fillColor('#334155')
+            .font('Helvetica')
+            .fontSize(7.5)
+            .text(item, col1X + 11, leftY, {
+              width: col1Width - 12,
+              lineGap: 1,
+            });
+          leftY = doc.y + 3;
         }
 
-        // Right Main Column: Summary, Experience, Projects
-        let rightY = 26;
+        // Divider after Contact
+        leftY += 4;
+        doc.moveTo(col1X, leftY).lineTo(col1X + col1Width - 8, leftY).lineWidth(0.8).strokeColor('#E2E8F0').stroke();
+        leftY += 12;
 
-        // Summary
-        doc.fillColor('#1D4ED8').font('Helvetica-Bold').fontSize(9).text('EXECUTIVE SUMMARY', mainX, rightY);
-        rightY += 11;
-        doc.moveTo(mainX, rightY).lineTo(mainX + mainWidth, rightY).lineWidth(0.8).strokeColor('#2563EB').stroke();
-        rightY += 6;
-        doc.fillColor('#1E293B').font('Helvetica').fontSize(7.8).text(parsed.summary, mainX, rightY, { width: mainWidth, lineGap: 1.2 });
-        rightY = doc.y + 10;
+        // SKILLS SECTION
+        leftY = drawSectionHeader(col1X, leftY, 'SKILLS');
 
-        // Experience
-        doc.fillColor('#1D4ED8').font('Helvetica-Bold').fontSize(9).text('PROFESSIONAL EXPERIENCE', mainX, rightY);
-        rightY += 11;
-        doc.moveTo(mainX, rightY).lineTo(mainX + mainWidth, rightY).lineWidth(0.8).strokeColor('#2563EB').stroke();
-        rightY += 6;
+        const skillsToDisplay = parsed.skillsList && parsed.skillsList.length > 0
+          ? parsed.skillsList.slice(0, 10)
+          : [
+              'Python & FastAPI',
+              'TypeScript & React',
+              'Node.js & Go',
+              'PostgreSQL & Redis',
+              'Docker & Kubernetes',
+              'AWS & GCP Cloud',
+              'CI/CD Pipelines',
+              'REST & GraphQL APIs',
+            ];
+
+        for (const skill of skillsToDisplay) {
+          doc.circle(col1X + 4, leftY + 4, 1.8).fill('#2563EB');
+          doc.fillColor('#334155')
+            .font('Helvetica')
+            .fontSize(7.8)
+            .text(skill, col1X + 11, leftY, {
+              width: col1Width - 12,
+            });
+          leftY = doc.y + 2.5;
+        }
+
+        // Divider after Skills
+        leftY += 4;
+        doc.moveTo(col1X, leftY).lineTo(col1X + col1Width - 8, leftY).lineWidth(0.8).strokeColor('#E2E8F0').stroke();
+        leftY += 12;
+
+        // EDUCATION SECTION
+        leftY = drawSectionHeader(col1X, leftY, 'EDUCATION');
+
+        const eduEntries = parsed.education && parsed.education.length > 0
+          ? parsed.education.slice(0, 3)
+          : [
+              {
+                degree: 'BACHELOR OF SCIENCE IN COMPUTER SCIENCE',
+                institution: 'University School of Engineering',
+                duration: '2022 - 2026',
+              },
+            ];
+
+        for (const edu of eduEntries) {
+          doc.fillColor('#0F172A')
+            .font('Helvetica-Bold')
+            .fontSize(7.8)
+            .text((edu.degree || 'B.S. COMPUTER SCIENCE').toUpperCase(), col1X, leftY, {
+              width: col1Width - 8,
+            });
+          leftY = doc.y + 1;
+          doc.fillColor('#475569')
+            .font('Helvetica')
+            .fontSize(7.2)
+            .text(edu.institution || 'University', col1X, leftY, {
+              width: col1Width - 8,
+            });
+          leftY = doc.y + 1;
+          doc.fillColor('#64748B')
+            .font('Helvetica')
+            .fontSize(7)
+            .text(edu.duration || '2022 - 2026', col1X, leftY, {
+              width: col1Width - 8,
+            });
+          leftY = doc.y + 6;
+        }
+
+        // --- RIGHT COLUMN: PROFESSIONAL SUMMARY & EXPERIENCE ---
+        let rightY = splitStartY;
+
+        // PROFESSIONAL SUMMARY
+        rightY = drawSectionHeader(col2X, rightY, 'PROFESSIONAL SUMMARY', true);
+
+        const summaryText = parsed.summary ||
+          'Results-driven Software Engineer with extensive experience developing full-stack web applications, distributed microservices, and AI-enabled systems using Python, TypeScript, React, Go, and PostgreSQL. Proven track record of optimizing database throughput, implementing automated CI/CD pipelines with Docker and Kubernetes, and architecting scalable cloud-native architectures.';
+
+        doc.fillColor('#334155')
+          .font('Helvetica')
+          .fontSize(8)
+          .text(summaryText, col2X, rightY, {
+            width: col2Width,
+            align: 'justify',
+            lineGap: 1.8,
+          });
+        rightY = doc.y + 9;
+
+        // Divider after Summary
+        doc.moveTo(col2X, rightY).lineTo(col2X + col2Width, rightY).lineWidth(0.8).strokeColor('#E2E8F0').stroke();
+        rightY += 12;
+
+        // EXPERIENCE SECTION
+        rightY = drawSectionHeader(col2X, rightY, 'EXPERIENCE', true);
 
         for (const exp of parsed.experience) {
-          if (rightY > 730) {
+          if (rightY > 720) {
+            // Draw current vertical blue divider
+            doc.moveTo(divX, splitStartY).lineTo(divX, 756).lineWidth(2).strokeColor('#2563EB').stroke();
             doc.addPage();
-            doc.rect(0, 0, sidebarWidth, 792).fill('#0F172A');
-            rightY = 26;
+            rightY = 36;
+            // Draw continuation divider on page 2
+            doc.moveTo(divX, 36).lineTo(divX, 756).lineWidth(2).strokeColor('#2563EB').stroke();
           }
-          doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(8.5).text(exp.role, mainX, rightY);
-          doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(7.5).text(`${exp.company}  |  ${exp.duration}`, mainX, doc.y + 1);
-          rightY = doc.y + 3;
 
-          for (const bullet of exp.bullets.slice(0, 5)) {
-            doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(7).text('•', mainX + 2, rightY, { width: 8 });
-            doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(bullet, mainX + 12, rightY, { width: mainWidth - 12, lineGap: 1.1 });
-            rightY = doc.y + 2;
+          // Role Title (Bold uppercase) on left, Duration on right
+          const expTopY = rightY;
+          doc.fillColor('#0F172A')
+            .font('Helvetica-Bold')
+            .fontSize(8.6)
+            .text(exp.role.toUpperCase(), col2X, expTopY, {
+              width: col2Width - 95,
+            });
+
+          doc.fillColor('#64748B')
+            .font('Helvetica')
+            .fontSize(7.5)
+            .text(exp.duration, col2X + col2Width - 95, expTopY, {
+              width: 95,
+              align: 'right',
+            });
+
+          // Company Name (Bold Blue)
+          doc.fillColor('#1D4ED8')
+            .font('Helvetica-Bold')
+            .fontSize(8)
+            .text(exp.company, col2X, doc.y + 1, {
+              width: col2Width,
+            });
+          rightY = doc.y + 2.5;
+
+          // Description / Bullets
+          if (exp.bullets && exp.bullets.length > 0) {
+            for (const bullet of exp.bullets.slice(0, 5)) {
+              doc.fillColor('#2563EB')
+                .font('Helvetica-Bold')
+                .fontSize(7)
+                .text('•', col2X + 2, rightY, { width: 8 });
+              doc.fillColor('#334155')
+                .font('Helvetica')
+                .fontSize(7.6)
+                .text(bullet, col2X + 11, rightY, {
+                  width: col2Width - 11,
+                  lineGap: 1.2,
+                });
+              rightY = doc.y + 2;
+            }
+          } else if ((exp as any).description) {
+            doc.fillColor('#334155')
+              .font('Helvetica')
+              .fontSize(7.6)
+              .text((exp as any).description, col2X, rightY, {
+                width: col2Width,
+                align: 'justify',
+                lineGap: 1.2,
+              });
+            rightY = doc.y + 2.5;
           }
           rightY += 5;
         }
 
-        // Projects
-        if (parsed.projects.length > 0) {
-          if (rightY > 660) {
-            doc.addPage();
-            doc.rect(0, 0, sidebarWidth, 792).fill('#0F172A');
-            rightY = 26;
-          }
-          doc.fillColor('#1D4ED8').font('Helvetica-Bold').fontSize(9).text('KEY TECHNICAL PROJECTS', mainX, rightY);
-          rightY += 11;
-          doc.moveTo(mainX, rightY).lineTo(mainX + mainWidth, rightY).lineWidth(0.8).strokeColor('#2563EB').stroke();
-          rightY += 6;
-
-          for (const proj of parsed.projects.slice(0, 3)) {
-            doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(8).text(proj.title, mainX, rightY);
-            if (proj.subtitle) {
-              doc.fillColor('#2563EB').font('Helvetica').fontSize(7).text(proj.subtitle, mainX, doc.y + 1);
-            }
-            rightY = doc.y + 2;
-            for (const b of proj.bullets.slice(0, 3)) {
-              doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(7).text('•', mainX + 2, rightY, { width: 8 });
-              doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(b, mainX + 12, rightY, { width: mainWidth - 12, lineGap: 1.1 });
-              rightY = doc.y + 2;
-            }
-            rightY += 4;
-          }
-        }
+        // Draw the vertical blue divider line between left and right column
+        const maxContentY = Math.min(756, Math.max(leftY, rightY, 730));
+        doc.moveTo(divX, splitStartY).lineTo(divX, maxContentY).lineWidth(2).strokeColor('#2563EB').stroke();
       }
 
       // =========================================================================

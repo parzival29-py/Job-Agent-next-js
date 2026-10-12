@@ -251,6 +251,85 @@ export const RESUME_FORMATS_LIST: ResumeFormatDefinition[] = [
     primaryColor: '#18181B',
     accentColor: '#2563EB',
   },
+
+  // 6. Modern Tech & Deep Tech Formats (New Additions)
+  {
+    id: 'cloud-devops',
+    name: 'Cloud & Site Reliability Architect',
+    category: 'Tech & Engineering',
+    tag: 'AWS/GCP & SRE',
+    description: 'Designed for infrastructure engineers, platform teams, Kubernetes cluster administrators, and Site Reliability Engineers managing 99.99% SLA availability.',
+    bestFor: 'DevOps Engineers, SREs, Cloud Architects, Platform Engineers, Systems Administrators',
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    primaryColor: '#0C4A6E',
+    accentColor: '#EA580C',
+  },
+  {
+    id: 'cybersecurity-soc',
+    name: 'Cybersecurity & InfoSec Guardian',
+    category: 'Tech & Engineering',
+    tag: 'Cyber & DevSecOps',
+    description: 'Optimized for penetration testers, security architects, SOC analysts, and DevSecOps engineers highlighting vulnerability mitigation, SIEM, and zero-trust policies.',
+    bestFor: 'Cybersecurity Analysts, InfoSec Engineers, Pen-Testers, SOC Leads, DevSecOps',
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    primaryColor: '#022C22',
+    accentColor: '#0E7490',
+  },
+  {
+    id: 'blockchain-web3',
+    name: 'Web3 & Smart Contract Engineer',
+    category: 'Tech & Engineering',
+    tag: 'Solidity & EVM',
+    description: 'Tailored for decentralized protocol developers, Solidity/Rust smart contract auditors, DeFi architects, and zero-knowledge cryptography specialists.',
+    bestFor: 'Web3 Developers, Smart Contract Engineers, Protocol Architects, Blockchain Developers',
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    primaryColor: '#1E1B4B',
+    accentColor: '#7C3AED',
+  },
+  {
+    id: 'fullstack-modern',
+    name: 'Modern Full-Stack & Microservices',
+    category: 'Tech & Engineering',
+    tag: 'Full-Stack & APIs',
+    description: 'High-velocity full-stack template prioritizing end-to-end architecture, React/Next.js frontend, Node/Go APIs, and database indexing.',
+    bestFor: 'Full-Stack Developers, MERN/PERN Engineers, Web Architects',
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    primaryColor: '#0F172A',
+    accentColor: '#4F46E5',
+  },
+  {
+    id: 'mobile-app-eng',
+    name: 'Mobile Systems & App Architecture',
+    category: 'Tech & Engineering',
+    tag: 'iOS / Android / Flutter',
+    description: 'Built specifically for mobile engineers emphasizing native iOS (Swift/SwiftUI), Android (Kotlin/Compose), Flutter, offline caching, and App Store ratings.',
+    bestFor: 'Mobile Engineers, iOS Developers, Android Developers, React Native Specialists',
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    primaryColor: '#111827',
+    accentColor: '#0284C7',
+  },
+  {
+    id: 'quant-algorithmic',
+    name: 'High-Frequency & Algorithmic Quant',
+    category: 'Finance & Strategy',
+    tag: 'Low-Latency C++/Python',
+    description: 'Ultra-dense analytical layout for quantitative researchers, algorithmic traders, and high-frequency trading (HFT) developers.',
+    bestFor: 'Quant Researchers, HFT Developers, Risk Analysts, Portfolio Strategists',
+    fontFamily: 'Georgia, Times New Roman, serif',
+    primaryColor: '#0A192F',
+    accentColor: '#D97706',
+  },
+  {
+    id: 'product-growth',
+    name: 'Product Growth & Analytics Strategy',
+    category: 'Finance & Strategy',
+    tag: 'Growth & PLG',
+    description: 'Highlights ARR/MRR metrics, funnel conversion gains, A/B experimentation velocity, product-led growth (PLG), and cohort retention.',
+    bestFor: 'Growth Product Managers, Product Operations, Growth Marketers, Data Strategists',
+    fontFamily: 'Helvetica, Arial, sans-serif',
+    primaryColor: '#14532D',
+    accentColor: '#16A34A',
+  },
 ];
 
 export function detectRecommendedFormat(
@@ -265,6 +344,66 @@ export function detectRecommendedFormat(
 } {
   // Check the job description primarily so recommendation matches the target job role
   const text = (jobDescription?.trim() ? jobDescription : candidateContext).toLowerCase();
+
+  // 0a. Cloud & SRE / DevOps
+  if (
+    /\b(devops|sre|site reliability|cloud engineer|cloud architect|kubernetes|k8s|terraform|docker|ci\/cd|aws architect|gcp platform|infrastructure engineer)\b/i.test(
+      text
+    )
+  ) {
+    return {
+      formatId: 'cloud-devops',
+      name: 'Cloud & Site Reliability Architect',
+      reason: 'Role centers on distributed infrastructure, high-availability SLAs, and cloud orchestration.',
+      tag: 'AWS/GCP & SRE',
+      category: 'Tech & Engineering',
+    };
+  }
+
+  // 0b. Cybersecurity / InfoSec
+  if (
+    /\b(cyber|cybersecurity|infosec|security engineer|pen-test|penetration testing|siem|soc analyst|zero trust|vulnerability|incident response|owasp|cissp)\b/i.test(
+      text
+    )
+  ) {
+    return {
+      formatId: 'cybersecurity-soc',
+      name: 'Cybersecurity & InfoSec Guardian',
+      reason: 'Target role emphasizes threat defense, vulnerability mitigation, and zero-trust security postures.',
+      tag: 'Cyber & DevSecOps',
+      category: 'Tech & Engineering',
+    };
+  }
+
+  // 0c. Blockchain / Web3 / Crypto
+  if (
+    /\b(web3|blockchain|solidity|smart contract|ethereum|evm|defi|nft|crypto|rust blockchain|zero knowledge|zk-snark)\b/i.test(
+      text
+    )
+  ) {
+    return {
+      formatId: 'blockchain-web3',
+      name: 'Web3 & Smart Contract Engineer',
+      reason: 'Target role focuses on decentralized protocols, smart contracts, and cryptographic systems.',
+      tag: 'Solidity & EVM',
+      category: 'Tech & Engineering',
+    };
+  }
+
+  // 0d. BioTech & Genomics
+  if (
+    /\b(genom|bioinformatics|crispr|computational biology|molecular biology|biotech|dna sequencing|ngs|drug discovery|structural biology)\b/i.test(
+      text
+    )
+  ) {
+    return {
+      formatId: 'biotech-pharma',
+      name: 'BioTech & Genomic Engineering',
+      reason: 'Target role demands computational bioinformatics assays, genomic sequencing, and life sciences modeling.',
+      tag: 'BioPharma & R&D',
+      category: 'Specialized & Industry',
+    };
+  }
 
   // 1. FinTech / Quant
   if (

@@ -287,6 +287,102 @@ export const FORMAT_STYLES: Record<string, FormatStyle> = {
     bodyColor: '1E293B',
     headingSize: 20,
   },
+  'cloud-devops': {
+    name: 'Cloud & Site Reliability Architect',
+    font: 'Calibri',
+    pdfFont: 'Helvetica',
+    pdfFontBold: 'Helvetica-Bold',
+    primaryColor: '0C4A6E',
+    headlineColor: '0284C7',
+    dividerColor: 'EA580C',
+    bulletColor: '0284C7',
+    bodyColor: '0F172A',
+    headingSize: 20,
+  },
+  'cybersecurity-soc': {
+    name: 'Cybersecurity & InfoSec Guardian',
+    font: 'Calibri',
+    pdfFont: 'Helvetica',
+    pdfFontBold: 'Helvetica-Bold',
+    primaryColor: '022C22',
+    headlineColor: '0E7490',
+    dividerColor: '059669',
+    bulletColor: '0D9488',
+    bodyColor: '0F172A',
+    headingSize: 20,
+  },
+  'blockchain-web3': {
+    name: 'Web3 & Smart Contract Engineer',
+    font: 'Calibri',
+    pdfFont: 'Helvetica',
+    pdfFontBold: 'Helvetica-Bold',
+    primaryColor: '1E1B4B',
+    headlineColor: '7C3AED',
+    dividerColor: '8B5CF6',
+    bulletColor: '6D28D9',
+    bodyColor: '1F2937',
+    headingSize: 20,
+  },
+  'biotech-pharma': {
+    name: 'BioTech & Genomic Engineering',
+    font: 'Georgia',
+    pdfFont: 'Times-Roman',
+    pdfFontBold: 'Times-Bold',
+    primaryColor: '042F2E',
+    headlineColor: '0D9488',
+    dividerColor: '14B8A6',
+    bulletColor: '0F766E',
+    bodyColor: '1E293B',
+    headingSize: 20,
+  },
+  'fullstack-modern': {
+    name: 'Modern Full-Stack & Microservices',
+    font: 'Calibri',
+    pdfFont: 'Helvetica',
+    pdfFontBold: 'Helvetica-Bold',
+    primaryColor: '0F172A',
+    headlineColor: '4338CA',
+    dividerColor: '4F46E5',
+    bulletColor: '4F46E5',
+    bodyColor: '1E293B',
+    headingSize: 20,
+  },
+  'mobile-app-eng': {
+    name: 'Mobile Systems & App Architecture',
+    font: 'Calibri',
+    pdfFont: 'Helvetica',
+    pdfFontBold: 'Helvetica-Bold',
+    primaryColor: '111827',
+    headlineColor: '0369A1',
+    dividerColor: '0284C7',
+    bulletColor: '0284C7',
+    bodyColor: '1F2937',
+    headingSize: 20,
+  },
+  'quant-algorithmic': {
+    name: 'High-Frequency & Algorithmic Quant',
+    font: 'Georgia',
+    pdfFont: 'Times-Roman',
+    pdfFontBold: 'Times-Bold',
+    primaryColor: '0A192F',
+    headlineColor: 'B45309',
+    dividerColor: 'D97706',
+    bulletColor: 'D97706',
+    bodyColor: '0F172A',
+    headingSize: 21,
+  },
+  'product-growth': {
+    name: 'Product Growth & Analytics Strategy',
+    font: 'Calibri',
+    pdfFont: 'Helvetica',
+    pdfFontBold: 'Helvetica-Bold',
+    primaryColor: '14532D',
+    headlineColor: '15803D',
+    dividerColor: '16A34A',
+    bulletColor: '16A34A',
+    bodyColor: '1E293B',
+    headingSize: 20,
+  },
 };
 
 export function detectRecommendedFormat(
@@ -299,6 +395,42 @@ export function detectRecommendedFormat(
   tag: string;
 } {
   const combined = (jobDescription?.trim() ? jobDescription : candidateText).toLowerCase();
+
+  if (/\b(devops|sre|site reliability|cloud engineer|cloud architect|kubernetes|k8s|terraform|docker|ci\/cd|aws architect|gcp platform)\b/i.test(combined)) {
+    return {
+      formatId: 'cloud-devops',
+      name: 'Cloud & Site Reliability Architect',
+      reason: 'Role emphasizes cloud infrastructure, high-availability SLAs, and Kubernetes orchestration.',
+      tag: 'AWS/GCP & SRE',
+    };
+  }
+
+  if (/\b(cyber|cybersecurity|infosec|security engineer|pen-test|penetration testing|siem|soc analyst|zero trust|vulnerability|incident response|owasp)\b/i.test(combined)) {
+    return {
+      formatId: 'cybersecurity-soc',
+      name: 'Cybersecurity & InfoSec Guardian',
+      reason: 'Target role emphasizes threat defense, vulnerability mitigation, and zero-trust security postures.',
+      tag: 'Cyber & DevSecOps',
+    };
+  }
+
+  if (/\b(web3|blockchain|solidity|smart contract|ethereum|evm|defi|nft|crypto|rust blockchain|zero knowledge)\b/i.test(combined)) {
+    return {
+      formatId: 'blockchain-web3',
+      name: 'Web3 & Smart Contract Engineer',
+      reason: 'Target role focuses on decentralized protocols, smart contracts, and cryptographic systems.',
+      tag: 'Solidity & EVM',
+    };
+  }
+
+  if (/\b(genom|bioinformatics|crispr|computational biology|molecular biology|biotech|dna sequencing|ngs|drug discovery)\b/i.test(combined)) {
+    return {
+      formatId: 'biotech-pharma',
+      name: 'BioTech & Genomic Engineering',
+      reason: 'Target role demands computational bioinformatics assays, genomic sequencing, and life sciences modeling.',
+      tag: 'BioPharma & R&D',
+    };
+  }
 
   if (/\b(quant|hedge fund|algorithmic trading|derivatives|portfolio manager|investment banking|fintech|risk model|trading)\b/i.test(combined)) {
     return {
@@ -672,13 +804,14 @@ export async function generateResumePdf(
   download_url: string;
 }> {
   return new Promise((resolve, reject) => {
+    let filepath = '';
     try {
       const timestamp = Date.now();
       const cleanScore = Math.max(91, Math.round(atsScore));
       const style = FORMAT_STYLES[formatType] || FORMAT_STYLES['cobalt-split'];
       const safeFormatSlug = formatType.replace(/[^a-z0-9_-]/gi, '');
       const filename = `Tailored_Resume_${safeFormatSlug}_ATS${cleanScore}_${timestamp}.pdf`;
-      const filepath = path.join(OPTIMIZED_DIR, filename);
+      filepath = path.join(OPTIMIZED_DIR, filename);
 
       const parsed = parseResumeContent(resumeText);
 
@@ -2416,9 +2549,15 @@ export async function generateResumePdf(
       });
 
       writeStream.on('error', (err) => {
+        if (fs.existsSync(filepath)) {
+          try { fs.unlinkSync(filepath); } catch {}
+        }
         reject(err);
       });
     } catch (error: any) {
+      if (fs.existsSync(filepath)) {
+        try { fs.unlinkSync(filepath); } catch {}
+      }
       reject(error);
     }
   });

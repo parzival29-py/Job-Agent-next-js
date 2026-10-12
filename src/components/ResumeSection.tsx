@@ -5,7 +5,7 @@ import { db, testFirestoreConnection } from '../firebase.ts';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { detectRecommendedFormat, RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
-import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload } from '../utils/pdfExport.ts';
+import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 
 interface ResumeSectionProps {
   onProfileLoaded?: (profile: ResumeProfile) => void;
@@ -257,19 +257,7 @@ HONORS & CERTIFICATIONS
       setLoading(true);
       const resolvedFormat = format && format !== 'auto' ? format : resumeFormat || 'cobalt-split';
 
-      // 1. Try DOM high-resolution capture first (100% exact replica of what shows in the agent)
-      const domSuccess = await exportResumeToPdf({
-        format: resolvedFormat,
-        atsScore: 95,
-        candidateName: profile?.name || 'Resume',
-        fallbackData: profile,
-      });
-      if (domSuccess) {
-        setLoading(false);
-        return;
-      }
-
-      // 2. Try fast dedicated format renderer with rich candidate data
+      // Fast server-side dedicated format renderer
       try {
         const renderRes = await fetch('/ai/render-resume-pdf', {
           method: 'POST',
@@ -291,23 +279,13 @@ HONORS & CERTIFICATIONS
         console.warn('Fast render fallback:', fastErr);
       }
 
-      // 3. Fallback pipeline
-      const res = await fetch('/ai/generate-resume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          job_description: profile?.headline || 'Software Engineer',
-          max_iterations: 1,
-          resume_format: resolvedFormat,
-        }),
+      // Fallback DOM PDF capture
+      await exportResumeToPdf({
+        format: resolvedFormat,
+        atsScore: 95,
+        candidateName: profile?.name || 'Resume',
+        fallbackData: profile,
       });
-      const data = await res.json();
-      if (data.resume?.pdf_download_url) {
-        const outName = data.resume.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}.pdf`;
-        await triggerUrlDownload(data.resume.pdf_download_url, outName);
-      } else if (data.resume?.download_url) {
-        await triggerUrlDownload(data.resume.download_url, data.resume.filename || 'Tailored_Resume.docx');
-      }
     } catch (e: any) {
       console.error('Failed to download PDF:', e);
     } finally {
@@ -443,13 +421,30 @@ HONORS & CERTIFICATIONS
               )}
               <span className="font-medium text-xs sm:text-sm">{message.text}</span>
             </div>
-            <button
-              onClick={() => setMessage(null)}
-              className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition shrink-0"
-              title="Dismiss"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {message.type === 'success' && profile && (
+                <button
+                  onClick={() => {
+                    openPdfViewerModal(
+                      `/download/Tailored_Resume_${(profile.name || 'Resume').replace(/\s+/g, '_')}_${resumeFormat}_ATS98.pdf`,
+                      `${(profile.name || 'Resume').replace(/\s+/g, '_')}_Resume.pdf`,
+                      { resumeData: profile, resumeText: profile.raw_text, atsScore: 98 }
+                    );
+                  }}
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Open Resume Now</span>
+                </button>
+              )}
+              <button
+                onClick={() => setMessage(null)}
+                className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition shrink-0 cursor-pointer"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -502,6 +497,24 @@ HONORS & CERTIFICATIONS
               </p>
 
               <div className="flex flex-wrap items-center justify-center gap-2.5">
+                {profile && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openPdfViewerModal(
+                        `/download/Tailored_Resume_${(profile.name || 'Resume').replace(/\s+/g, '_')}_${resumeFormat}_ATS98.pdf`,
+                        `${(profile.name || 'Resume').replace(/\s+/g, '_')}_Resume.pdf`,
+                        { resumeData: profile, resumeText: profile.raw_text, atsScore: 98 }
+                      );
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-indigo-600 via-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/50 transition flex items-center gap-1.5 cursor-pointer"
+                    title="Open active resume directly in in-app viewer"
+                  >
+                    <Layout className="w-3.5 h-3.5" />
+                    <span>Open & View Resume</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -509,7 +522,7 @@ HONORS & CERTIFICATIONS
                     fileInputRef.current?.click();
                   }}
                   disabled={loading}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <Upload className="w-3.5 h-3.5" />
                   Browse Files
@@ -536,7 +549,7 @@ HONORS & CERTIFICATIONS
                     e.stopPropagation();
                     setUploadTextMode(true);
                   }}
-                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition"
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium border border-slate-700 transition cursor-pointer"
                 >
                   Paste Raw Text
                 </button>
@@ -547,7 +560,7 @@ HONORS & CERTIFICATIONS
                     fetchProfile();
                   }}
                   disabled={loading}
-                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-indigo-300 rounded-lg text-xs font-medium border border-indigo-900/60 transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-indigo-300 rounded-lg text-xs font-medium border border-indigo-900/60 transition flex items-center gap-1.5 cursor-pointer"
                   title="Reload active profile"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -675,6 +688,53 @@ HONORS & CERTIFICATIONS
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                const resolvedFormat = resumeFormat || 'cobalt-split';
+                try {
+                  const renderRes = await fetch('/ai/render-resume-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      resume_text: profile?.raw_text || '',
+                      resume_format: resolvedFormat,
+                      ats_score: 95,
+                      resume_data: profile,
+                    }),
+                  });
+                  const renderData = await renderRes.json();
+                  if (renderData.success && renderData.pdf_download_url) {
+                    openPdfViewerModal(
+                      renderData.pdf_download_url,
+                      renderData.pdf_filename || `Tailored_Resume_${resolvedFormat}.pdf`,
+                      {
+                        resumeData: profile,
+                        resumeText: profile?.raw_text,
+                        atsScore: 95,
+                      }
+                    );
+                    return;
+                  }
+                } catch (e) {
+                  console.warn('Open modal fast path error:', e);
+                }
+                openPdfViewerModal(
+                  `/download/Tailored_Resume_${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${resolvedFormat}.pdf`,
+                  `${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${resolvedFormat}.pdf`,
+                  {
+                    resumeData: profile,
+                    resumeText: profile?.raw_text,
+                    atsScore: 95,
+                  }
+                );
+              }}
+              disabled={loading}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer disabled:opacity-50"
+              title="Open and view resume directly in browser"
+            >
+              <Layout className="w-3.5 h-3.5" />
+              <span>Open & View</span>
+            </button>
             <button
               onClick={() => handleDownloadPdf(resumeFormat)}
               disabled={loading}

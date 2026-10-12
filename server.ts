@@ -224,15 +224,60 @@ app.get('/', (req, res, next) => {
   next();
 });
 
-// Explicit binary download handler for generated docs
-app.get(['/download/:filename', '/api/download/:filename'], (req, res) => {
+// Explicit binary download and inline view handler for generated docs
+app.get(['/download/:filename', '/api/download/:filename', '/view/:filename', '/api/view/:filename'], async (req, res) => {
   const safeFilename = path.basename(req.params.filename);
   const filePath = path.join(OPTIMIZED_DIR, safeFilename);
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ success: false, message: 'File not found' });
+  const isExistingHealthy = fs.existsSync(filePath) && fs.statSync(filePath).size > 100;
+  if (!isExistingHealthy) {
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch {}
+    }
+    // Check in UPLOAD_DIR as fallback
+    const uploadFilePath = path.join(UPLOAD_DIR, safeFilename);
+    if (fs.existsSync(uploadFilePath) && fs.statSync(uploadFilePath).size > 100) {
+      return serveFile(uploadFilePath, safeFilename, req, res);
+    }
+
+    // Dynamic recovery: If a PDF was requested but is missing on disk, synthesize real PDF
+    if (safeFilename.toLowerCase().endsWith('.pdf')) {
+      try {
+        const txtAlternative = path.join(OPTIMIZED_DIR, safeFilename.replace(/\.pdf$/i, '.txt'));
+        let resumeContent = '';
+        if (fs.existsSync(txtAlternative)) {
+          resumeContent = fs.readFileSync(txtAlternative, 'utf-8');
+        } else {
+          resumeContent = loadResumeText();
+        }
+
+        if (resumeContent && resumeContent.trim()) {
+          let formatType = 'cobalt-split';
+          const match = safeFilename.match(/Tailored_Resume_([a-z0-9\-]+)_/i);
+          if (match && match[1]) {
+            formatType = match[1];
+          }
+
+          const generated = await generateResumePdf(resumeContent, 95, 90, formatType);
+          if (generated.filepath && fs.existsSync(generated.filepath)) {
+            try {
+              fs.copyFileSync(generated.filepath, filePath);
+            } catch {}
+            return serveFile(filePath, safeFilename, req, res);
+          }
+        }
+      } catch (genErr) {
+        console.warn('On-the-fly PDF generation notice:', genErr);
+      }
+    }
+
+    return res.status(404).json({ success: false, message: `File "${safeFilename}" not found` });
   }
 
+  return serveFile(filePath, safeFilename, req, res);
+});
+
+function serveFile(filePath: string, safeFilename: string, req: express.Request, res: express.Response) {
   const ext = path.extname(safeFilename).toLowerCase();
   if (ext === '.docx') {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
@@ -240,14 +285,27 @@ app.get(['/download/:filename', '/api/download/:filename'], (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
   } else if (ext === '.txt') {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  } else if (ext === '.json') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
   }
 
-  res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+  const isViewRoute = req.path.startsWith('/view') || req.path.startsWith('/api/view');
+  const isInline = isViewRoute || req.query.view === '1' || req.query.inline === '1' || req.query.disposition === 'inline';
+
+  if (isInline && ext === '.pdf') {
+    res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+  } else if (isInline && ext === '.txt') {
+    res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+  } else {
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+  }
+
   return res.sendFile(filePath);
-});
+}
 
 // Static downloads for generated resume docs
 app.use('/download', express.static(OPTIMIZED_DIR));
+app.use('/view', express.static(OPTIMIZED_DIR));
 app.use('/uploads/optimized', express.static(OPTIMIZED_DIR));
 app.use('/uploads', express.static(UPLOAD_DIR));
 

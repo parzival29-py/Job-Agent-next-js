@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, TrendingUp, FileCheck, FileText, Layout, Code, Sparkles, Layers } from 'lucide-react';
+import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, TrendingUp, FileCheck, FileText, Layout, Code, Sparkles, Layers, Eye } from 'lucide-react';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
-import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload } from '../utils/pdfExport.ts';
+import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 
 interface OptimizerSectionProps {
   jobDescription: string;
@@ -132,13 +132,14 @@ Requirements:
       const renderData = await renderRes.json();
       if (renderData.success && renderData.pdf_download_url) {
         const outFilename = renderData.pdf_filename || renderData.filename || `Tailored_Resume_${formatToUse}.pdf`;
-        await downloadFile(renderData.pdf_download_url, outFilename);
         setDocxResult((prev: any) => ({
           ...prev,
           pdf_download_url: renderData.pdf_download_url,
           pdf_filename: outFilename,
           format_used: formatToUse,
         }));
+        // Clean single download
+        await triggerUrlDownload(renderData.pdf_download_url, outFilename);
         setGeneratingDocx(false);
         return;
       }
@@ -167,14 +168,13 @@ Requirements:
           setResult(data.optimization);
         }
         setError(null);
-        // Automatically download the PDF version so user immediately receives the right format
-        if (data.resume?.pdf_download_url) {
-          downloadFile(
-            data.resume.pdf_download_url,
-            data.resume.pdf_filename || data.resume.filename.replace(/\.docx$/i, '.pdf')
-          );
+        const targetPdfUrl = data.resume?.pdf_download_url || data.resume?.download_url.replace(/\.docx$/i, '.pdf');
+        const targetPdfName = data.resume?.pdf_filename || data.resume?.filename.replace(/\.docx$/i, '.pdf');
+        
+        if (targetPdfUrl) {
+          await triggerUrlDownload(targetPdfUrl, targetPdfName);
         } else if (data.resume?.download_url) {
-          downloadFile(data.resume.download_url, data.resume.filename);
+          await triggerUrlDownload(data.resume.download_url, data.resume.filename);
         }
       } else {
         setError(data.message || 'Document generation failed.');
@@ -340,6 +340,30 @@ Requirements:
           </button>
 
           <button
+            onClick={async () => {
+              const formatToUse = selectedFormat === 'auto' ? recommended.formatId : selectedFormat;
+              const textToRender = result?.optimized_resume || profile?.raw_text || '';
+              openPdfViewerModal(
+                `/download/Tailored_Resume_${formatToUse}.pdf`,
+                `Tailored_Resume_${formatToUse}.pdf`,
+                {
+                  resumeText: textToRender,
+                  resumeData: profile,
+                  atsScore: result?.final_score?.ats_score || 95,
+                  format: formatToUse,
+                  docxUrl: docxResult?.download_url,
+                }
+              );
+            }}
+            disabled={loading || generatingDocx}
+            className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl text-sm shadow-md transition cursor-pointer flex items-center gap-2 disabled:opacity-50"
+            title="Open and inspect resume in full visual viewer modal without downloading"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Open & View</span>
+          </button>
+
+          <button
             onClick={() => handleGenerateResume()}
             disabled={loading || generatingDocx}
             className="relative group flex items-center gap-2.5 px-5 py-2.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-rose-950/50 border border-white/20 transition-all cursor-pointer disabled:opacity-50"
@@ -428,12 +452,28 @@ Requirements:
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <button
-              onClick={() =>
-                downloadFile(
-                  docxResult.pdf_download_url || docxResult.download_url.replace(/\.docx$/i, '.pdf'),
-                  docxResult.pdf_filename || docxResult.filename.replace(/\.docx$/i, '.pdf')
-                )
-              }
+              onClick={() => {
+                const targetUrl = docxResult.pdf_download_url || `/download/Tailored_Resume_${effectiveFormat}.pdf`;
+                const targetFilename = docxResult.pdf_filename || `Tailored_Resume_${effectiveFormat}.pdf`;
+                openPdfViewerModal(targetUrl, targetFilename, {
+                  resumeText: result?.optimized_resume || profile?.raw_text,
+                  resumeData: profile,
+                  atsScore: docxResult.ats_score || 95,
+                  docxUrl: docxResult.download_url,
+                });
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
+              title="Open and view resume directly in browser"
+            >
+              <Layout className="w-4 h-4" />
+              Open & View Resume
+            </button>
+            <button
+              onClick={() => {
+                const targetUrl = docxResult.pdf_download_url || `/download/Tailored_Resume_${effectiveFormat}.pdf`;
+                const targetFilename = docxResult.pdf_filename || `Tailored_Resume_${effectiveFormat}.pdf`;
+                downloadFile(targetUrl, targetFilename);
+              }}
               className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
               title="Download verified single-page PDF with zero spillover"
             >

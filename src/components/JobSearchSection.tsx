@@ -26,7 +26,7 @@ import {
 import type { JobItem, JobPreferences, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
-import { triggerUrlDownload } from '../utils/pdfExport.ts';
+import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 import { useCurrency } from '../context/CurrencyContext.tsx';
 
 interface JobSearchSectionProps {
@@ -66,9 +66,12 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
   const [selectedRoleType, setSelectedRoleType] = useState<string>('all');
   const [selectedWorkMode, setSelectedWorkMode] = useState<string>('all');
   const [selectedDomain, setSelectedDomain] = useState<string>('all');
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [selectedExperience, setSelectedExperience] = useState<string>('all');
+  const [minStipendFilter, setMinStipendFilter] = useState<number>(0);
   const [ppoOnly, setPpoOnly] = useState<boolean>(false);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [sortBy, setSortBy] = useState<'default' | 'salary_high' | 'title'>('default');
+  const [sortBy, setSortBy] = useState<'default' | 'salary_high' | 'title' | 'recent'>('default');
 
   // Pagination / Load more
   const [visibleCount, setVisibleCount] = useState<number>(24);
@@ -110,6 +113,23 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
     { id: 'ai', label: 'AI & Data' },
     { id: 'cloud', label: 'Cloud & DevOps' },
     { id: 'mobile', label: 'Mobile App' },
+  ];
+
+  const locationOptions = [
+    { id: 'all', label: 'All Locations' },
+    { id: 'remote', label: 'Remote / Work from Home' },
+    { id: 'bengaluru', label: 'Bengaluru / Bangalore' },
+    { id: 'mumbai', label: 'Mumbai / Pune' },
+    { id: 'hyderabad', label: 'Hyderabad' },
+    { id: 'delhi', label: 'Delhi NCR / Gurugram' },
+    { id: 'international', label: 'US / Global' },
+  ];
+
+  const experienceOptions = [
+    { id: 'all', label: 'All Experience' },
+    { id: 'fresher', label: 'Fresher / Intern' },
+    { id: '0-2', label: 'Entry Level (0-2 Yrs)' },
+    { id: '3+', label: 'Experienced (3+ Yrs)' },
   ];
 
   const roleTypesList = [
@@ -243,6 +263,44 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
         if (!match) return false;
       }
 
+      // Location filter
+      if (selectedLocation !== 'all') {
+        const loc = (job.location || '').toLowerCase();
+        const mode = (job.work_mode || '').toLowerCase();
+        if (selectedLocation === 'remote') {
+          if (!loc.includes('remote') && mode !== 'remote') return false;
+        } else if (selectedLocation === 'bengaluru') {
+          if (!loc.includes('bengaluru') && !loc.includes('bangalore')) return false;
+        } else if (selectedLocation === 'mumbai') {
+          if (!loc.includes('mumbai') && !loc.includes('pune')) return false;
+        } else if (selectedLocation === 'hyderabad') {
+          if (!loc.includes('hyderabad')) return false;
+        } else if (selectedLocation === 'delhi') {
+          if (!loc.includes('delhi') && !loc.includes('gurugram') && !loc.includes('noida')) return false;
+        } else if (selectedLocation === 'international') {
+          if (!loc.includes('us') && !loc.includes('usa') && !loc.includes('san francisco') && !loc.includes('new york') && !loc.includes('london')) return false;
+        }
+      }
+
+      // Experience Level filter
+      if (selectedExperience !== 'all') {
+        const exp = (job.experience_level || '').toLowerCase();
+        if (selectedExperience === 'fresher') {
+          if (!exp.includes('fresh') && !exp.includes('student') && !exp.includes('intern') && !exp.includes('graduate')) return false;
+        } else if (selectedExperience === '0-2') {
+          if (!exp.includes('0-') && !exp.includes('1-') && !exp.includes('2') && !exp.includes('fresh') && !exp.includes('junior')) return false;
+        } else if (selectedExperience === '3+') {
+          if (!exp.includes('3') && !exp.includes('4') && !exp.includes('5') && !exp.includes('senior') && !exp.includes('lead')) return false;
+        }
+      }
+
+      // Minimum stipend / compensation filter (converted to USD equivalent)
+      if (minStipendFilter > 0) {
+        if (job.stipend_amount < minStipendFilter) {
+          return false;
+        }
+      }
+
       // PPO only filter
       if (ppoOnly && !job.ppo_offered) {
         return false;
@@ -270,10 +328,12 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       result.sort((a, b) => b.stipend_amount - a.stipend_amount);
     } else if (sortBy === 'title') {
       result.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'recent') {
+      result.sort((a, b) => (b.posted_date || '').localeCompare(a.posted_date || ''));
     }
 
     return result;
-  }, [jobs, selectedPlatform, selectedRoleType, selectedWorkMode, selectedDomain, ppoOnly, searchKeyword, sortBy]);
+  }, [jobs, selectedPlatform, selectedRoleType, selectedWorkMode, selectedDomain, selectedLocation, selectedExperience, minStipendFilter, ppoOnly, searchKeyword, sortBy]);
 
   const displayedJobs = useMemo(() => {
     return filteredJobs.slice(0, visibleCount);
@@ -509,9 +569,26 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               {jobs.length} Real Active Listings
             </span>
+            <button
+              onClick={() => {
+                setSelectedPlatform('all');
+                setSelectedRoleType('all');
+                setSelectedWorkMode('all');
+                setSelectedDomain('all');
+                setPpoOnly(false);
+                setSearchKeyword('');
+                setVisibleCount(jobs.length || 500);
+                showToast(`Displaying all ${jobs.length} jobs from every website!`);
+              }}
+              className="px-3 py-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+              title="Show all jobs from all portals simultaneously"
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-200" />
+              <span>Show Every Job from Every Website ({jobs.length})</span>
+            </button>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Real software & tech job listings directly from Internshala, Naukri.com, Unstop, Wellfound, and LinkedIn with authentic stipends, LPA packages & PPO offers.
+            Real software & tech job listings directly from Internshala, Naukri.com, Unstop, Wellfound, LinkedIn, Instahyre, Hirist, Cutshort, Indeed, Glassdoor & Official Portals with authentic stipends, LPA packages & PPO offers.
           </p>
         </div>
 
@@ -695,6 +772,49 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                   </option>
                 ))}
               </select>
+
+              {/* Location Dropdown Filter */}
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1 text-[11px] font-semibold focus:outline-none"
+              >
+                {locationOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id} className="bg-slate-900 text-white">
+                    📍 {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Experience Dropdown Filter */}
+              <select
+                value={selectedExperience}
+                onChange={(e) => setSelectedExperience(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1 text-[11px] font-semibold focus:outline-none"
+              >
+                {experienceOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id} className="bg-slate-900 text-white">
+                    🎓 {opt.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Minimum Stipend / Salary Filter */}
+              <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800 text-[11px]">
+                <span className="text-amber-400 font-semibold">Min Pay:</span>
+                <select
+                  value={minStipendFilter}
+                  onChange={(e) => setMinStipendFilter(Number(e.target.value))}
+                  className="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer"
+                >
+                  <option value={0} className="bg-slate-900 text-white">Any Pay</option>
+                  <option value={400} className="bg-slate-900 text-white">≥ ₹30k/mo / $400</option>
+                  <option value={600} className="bg-slate-900 text-white">≥ ₹50k/mo / $600</option>
+                  <option value={1000} className="bg-slate-900 text-white">≥ ₹80k/mo / $1,000</option>
+                  <option value={2000} className="bg-slate-900 text-white">≥ ₹18 LPA / $2,000</option>
+                  <option value={3500} className="bg-slate-900 text-white">≥ ₹30+ LPA / $3,500</option>
+                </select>
+              </div>
             </div>
 
             {/* Right Sorting & Count */}
@@ -707,6 +827,7 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               >
                 <option value="default">Best Match / Curated</option>
                 <option value="salary_high">Highest Compensation</option>
+                <option value="recent">Latest Posted (Newest First)</option>
                 <option value="title">Job Title (A-Z)</option>
               </select>
 
@@ -716,13 +837,16 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                   setSelectedRoleType('all');
                   setSelectedWorkMode('all');
                   setSelectedDomain('all');
+                  setSelectedLocation('all');
+                  setSelectedExperience('all');
+                  setMinStipendFilter(0);
                   setPpoOnly(false);
                   setSearchKeyword('');
                   setSortBy('default');
                 }}
                 className="text-[11px] text-slate-400 hover:text-white underline pl-1"
               >
-                Reset
+                Reset All
               </button>
             </div>
           </div>
@@ -1001,19 +1125,33 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
             </div>
           )}
 
-          {/* Load More Pagination Button */}
-          {filteredJobs.length > visibleCount && (
-            <div className="pt-4 flex justify-center">
+          {/* Load More & Show All Pagination Buttons */}
+          {filteredJobs.length > visibleCount ? (
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
               <button
-                onClick={() => setVisibleCount((prev) => prev + 24)}
-                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-2"
+                onClick={() => setVisibleCount((prev) => prev + 36)}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-2 cursor-pointer"
               >
-                <span>Load More Roles (+24)</span>
+                <span>Load More Roles (+36)</span>
                 <span className="text-slate-400 font-mono text-[11px]">
                   ({filteredJobs.length - visibleCount} remaining)
                 </span>
               </button>
+              <button
+                onClick={() => setVisibleCount(filteredJobs.length)}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <Globe className="w-4 h-4 text-indigo-200" />
+                <span>Show Every Job from Every Website ({filteredJobs.length})</span>
+              </button>
             </div>
+          ) : (
+            filteredJobs.length > 20 && (
+              <div className="pt-4 text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Showing all {filteredJobs.length} active roles across all platforms</span>
+              </div>
+            )
           )}
         </div>
       )}
@@ -1451,6 +1589,24 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {(customResumeModal.data.pdf_download_url || customResumeModal.data.download_url) && (
+                  <button
+                    onClick={() => {
+                      const targetUrl =
+                        customResumeModal.data.pdf_download_url ||
+                        customResumeModal.data.download_url.replace(/\.docx$/i, '.pdf');
+                      const targetFilename =
+                        customResumeModal.data.pdf_filename ||
+                        `Tailored_Resume_${customResumeModal.data.resume_format}.pdf`;
+                      openPdfViewerModal(targetUrl, targetFilename);
+                    }}
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition cursor-pointer"
+                    title="Open and view resume directly in browser"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Open & View
+                  </button>
+                )}
                 {(customResumeModal.data.pdf_download_url || customResumeModal.data.download_url) && (
                   <a
                     href={

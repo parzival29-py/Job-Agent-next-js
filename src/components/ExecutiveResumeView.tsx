@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import type { ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat, type ResumeFormatDefinition } from '../utils/formatUtils.ts';
-import { exportResumeToPdf } from '../utils/pdfExport.ts';
+import { exportResumeToPdf, openPdfViewerModal } from '../utils/pdfExport.ts';
 
 export type ResumeFormatType =
   | 'tech-engineering'
@@ -442,6 +442,32 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
             </button>
 
             <button
+              onClick={async () => {
+                const targetName = `Tailored_Resume_${(data.firstName || 'Resume')}_${selectedFormat}.pdf`;
+                const targetUrl = pdfUrl || `/download/${targetName}`;
+                await openPdfViewerModal(targetUrl, targetName, {
+                  resumeData: {
+                    name: `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Aryaman Dewangan',
+                    headline: data.headline || targetJobTitle || 'Software Engineer',
+                    email: data.email,
+                    phone: data.phone,
+                    summary: data.aboutMe || '',
+                    skills: data.expertise || [],
+                    experience: data.experience,
+                    education: data.education,
+                  },
+                  atsScore: atsScore || 96,
+                });
+              }}
+              disabled={isExportingPdf}
+              className="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+              title="Open and view resume directly in browser"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Open & View</span>
+            </button>
+
+            <button
               onClick={handleDownloadPdfAction}
               disabled={isExportingPdf}
               className={`px-3.5 py-1.5 bg-gradient-to-r from-rose-600 via-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition ${
@@ -612,6 +638,324 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
 
       {/* PAPER CANVAS CONTAINER */}
       <div className="flex justify-center bg-slate-200/60 p-4 sm:p-8 rounded-2xl overflow-x-auto">
+        {/* ========================================================================= */}
+        {/* FORMAT: MODERN FULLSTACK & MICROSERVICES                                  */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'fullstack-modern' && (
+          <div
+            id="fullstack-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-8 sm:p-12 font-sans border border-slate-300/60 select-text leading-normal"
+            style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="border-b-2 border-indigo-700 pb-4 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                <h1 className="text-3xl sm:text-4xl font-extrabold uppercase tracking-tight text-slate-950">
+                  {data.firstName} {data.lastName}
+                </h1>
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 w-fit">
+                  Full-Stack Architecture · Microservices
+                </span>
+              </div>
+              <p className="text-sm font-bold text-indigo-700 tracking-wide mt-1">
+                {data.headline}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-slate-600 font-medium">
+                <span>📧 {data.email}</span>
+                <span>•</span>
+                <span>📱 {data.phone}</span>
+                <span>•</span>
+                <span>📍 {data.location}</span>
+                <span>•</span>
+                <span className="text-indigo-600 font-semibold">{data.website}</span>
+              </div>
+            </div>
+
+            {/* Technical Skills - 4 Column Grid */}
+            <div className="mb-4">
+              <h2 className="text-xs font-black uppercase tracking-wider text-indigo-950 border-b border-indigo-200 pb-1 mb-2">
+                CORE TECHNICAL COMPETENCIES
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-800">
+                <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                  <span className="font-bold text-indigo-950">Frontend & Client:</span> React 19, TypeScript, Next.js, Redux/Zustand, Tailwind CSS, WebSockets, Responsive UI
+                </div>
+                <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                  <span className="font-bold text-indigo-950">Backend & APIs:</span> Node.js, Express, Golang, Python FastAPI, RESTful APIs, GraphQL, gRPC
+                </div>
+                <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                  <span className="font-bold text-indigo-950">Data & Persistence:</span> PostgreSQL, Redis, MongoDB, ElasticSearch, Prisma, Database Indexing
+                </div>
+                <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                  <span className="font-bold text-indigo-950">DevOps & Cloud:</span> Docker, Kubernetes, AWS, Google Cloud, CI/CD Actions, Linux, Microservices
+                </div>
+              </div>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-4">
+              <h2 className="text-xs font-black uppercase tracking-wider text-indigo-950 border-b border-indigo-200 pb-1 mb-3">
+                PROFESSIONAL EXPERIENCE & LEADERSHIP
+              </h2>
+              <div className="space-y-3.5">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="text-xs font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="font-mono text-xs text-slate-600">{exp.duration}</span>
+                    </div>
+                    <p className="text-xs font-semibold text-indigo-700">{exp.company} • {data.location}</p>
+                    <p className="text-xs text-slate-700 leading-relaxed text-justify">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Key Architecture Projects */}
+            <div className="mb-4">
+              <h2 className="text-xs font-black uppercase tracking-wider text-indigo-950 border-b border-indigo-200 pb-1 mb-2">
+                FLAGSHIP ENGINEERING PROJECTS
+              </h2>
+              <div className="space-y-2 text-xs">
+                <div className="border-l-2 border-indigo-500 pl-3">
+                  <h4 className="font-bold text-slate-950 uppercase">AUTONOMOUS MULTI-AGENT ATS PLATFORM</h4>
+                  <p className="text-slate-700">Architected reactive full-stack pipeline matching 260+ jobs across Internshala, Naukri & Wellfound, boosting application velocity by 400%.</p>
+                </div>
+                <div className="border-l-2 border-indigo-500 pl-3">
+                  <h4 className="font-bold text-slate-950 uppercase">DISTRIBUTED EVENT CACHE & STREAMING PIPELINE</h4>
+                  <p className="text-slate-700">Built resilient Node/Go microservices handling 12,000 req/sec with sub-50ms latency using Redis cluster and Kafka pub-sub.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-wider text-indigo-950 border-b border-indigo-200 pb-1 mb-2">
+                EDUCATION & CREDENTIALS
+              </h2>
+              <div className="flex justify-between items-baseline text-xs">
+                <div>
+                  <h4 className="font-bold text-slate-900 uppercase">BACHELOR OF TECHNOLOGY IN COMPUTER SCIENCE</h4>
+                  <p className="text-slate-600">Specialization in Distributed Systems & AI/ML Architecture</p>
+                </div>
+                <span className="font-mono text-xs text-slate-600">2022 - 2026</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: MOBILE SYSTEMS & APP ARCHITECTURE                                 */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'mobile-app-eng' && (
+          <div
+            id="mobile-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-8 sm:p-12 font-sans border border-slate-300/60 select-text leading-normal"
+          >
+            <div className="text-center pb-4 border-b-2 border-sky-600 space-y-1">
+              <h1 className="text-3xl font-black uppercase tracking-tight text-slate-950">
+                {data.firstName} {data.lastName}
+              </h1>
+              <p className="text-xs font-bold text-sky-700 tracking-wide">
+                Mobile Systems Engineer · iOS (Swift) · Android (Kotlin) · Cross-Platform
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1 text-xs text-slate-600 font-mono">
+                <span>{data.email}</span>
+                <span>•</span>
+                <span>{data.phone}</span>
+                <span>•</span>
+                <span>{data.location}</span>
+                <span>•</span>
+                <span className="text-sky-600">{data.website}</span>
+              </div>
+            </div>
+
+            <div className="py-3 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-2">
+                MOBILE STACK & FRAMEWORKS
+              </h2>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-800">
+                <p><span className="font-bold text-sky-900">Platforms:</span> iOS (Swift, SwiftUI, UIKit), Android (Kotlin, Jetpack Compose), React Native, Flutter</p>
+                <p><span className="font-bold text-sky-900">Architecture:</span> MVVM, MVI, Clean Architecture, Dependency Injection (Hilt/Koin), Combine/Rx</p>
+                <p><span className="font-bold text-sky-900">Storage & Network:</span> Room, SQLite, CoreData, Realm, Retrofit, Apollo GraphQL, URLSession</p>
+                <p><span className="font-bold text-sky-900">Performance & CI:</span> Memory Profiling, Crashlytics, App Store Connect, Fastlane, TestFlight, 99.9% Crash-Free</p>
+              </div>
+            </div>
+
+            <div className="py-3 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-3">
+                MOBILE APP DELIVERIES & EXPERIENCE
+              </h2>
+              <div className="space-y-3">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1 text-xs">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="font-mono text-slate-600">{exp.duration}</span>
+                    </div>
+                    <p className="font-semibold text-sky-700">{exp.company}</p>
+                    <p className="text-slate-700 leading-relaxed text-justify">{exp.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-2">
+                EDUCATION & HONORS
+              </h2>
+              <div className="flex justify-between items-baseline text-xs">
+                <div>
+                  <h4 className="font-bold text-slate-900 uppercase">BACHELOR OF SCIENCE IN COMPUTER ENGINEERING</h4>
+                  <p className="text-slate-600">Mobile Computing & Distributed Architectures</p>
+                </div>
+                <span className="font-mono text-slate-600">2022 - 2026</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: HIGH-FREQUENCY & ALGORITHMIC QUANT                                */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'quant-algorithmic' && (
+          <div
+            id="quant-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-8 sm:p-12 font-serif border border-slate-300/60 select-text leading-normal"
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+          >
+            <div className="text-center pb-4 border-b-2 border-amber-800 space-y-1">
+              <h1 className="text-3xl font-bold uppercase tracking-wide text-slate-950">
+                {data.firstName} {data.lastName}
+              </h1>
+              <p className="text-xs font-semibold text-amber-900 tracking-wider">
+                Quantitative Researcher · Low-Latency Systems Architect · Statistical Arbitrage
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1 text-xs text-slate-700 font-mono">
+                <span>{data.email}</span>
+                <span>|</span>
+                <span>{data.phone}</span>
+                <span>|</span>
+                <span>{data.location}</span>
+                <span>|</span>
+                <span className="text-amber-800">{data.website}</span>
+              </div>
+            </div>
+
+            <div className="py-3 border-b border-slate-300">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-950 mb-2">
+                QUANTITATIVE & COMPUTATIONAL STACK
+              </h2>
+              <div className="text-xs text-slate-800 space-y-1">
+                <p><strong className="text-slate-950">Languages:</strong> C++20, Python (NumPy, SciPy, Pandas, Polars), Rust, SQL, KDB+/Q, Bash</p>
+                <p><strong className="text-slate-950">Modeling & Math:</strong> Stochastic Calculus, Time-Series Econometrics, Convex Optimization, Monte Carlo Simulations</p>
+                <p><strong className="text-slate-950">Infrastructure:</strong> Low-Latency Kernel Bypassing, Zero-Allocation Memory, Multithreading, Lock-Free Queues</p>
+              </div>
+            </div>
+
+            <div className="py-3 border-b border-slate-300">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-950 mb-3">
+                EXPERIENCE & RESEARCH BENCHMARKS
+              </h2>
+              <div className="space-y-3.5 text-xs">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="font-mono text-slate-600">{exp.duration}</span>
+                    </div>
+                    <p className="font-semibold text-amber-800">{exp.company}</p>
+                    <p className="text-slate-700 leading-relaxed text-justify">{exp.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-950 mb-2">
+                ACADEMIC CREDENTIALS
+              </h2>
+              <div className="flex justify-between items-baseline text-xs">
+                <div>
+                  <h4 className="font-bold text-slate-950 uppercase">BACHELOR OF SCIENCE IN MATHEMATICS & COMPUTER SCIENCE</h4>
+                  <p className="text-slate-600">Summa Cum Laude · High Honors in Algorithmic Combinatorics</p>
+                </div>
+                <span className="font-mono text-slate-600">2022 - 2026</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: PRODUCT GROWTH & ANALYTICS STRATEGY                               */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'product-growth' && (
+          <div
+            id="growth-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-8 sm:p-12 font-sans border border-slate-300/60 select-text leading-normal"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between border-b-2 border-emerald-700 pb-4 mb-4 gap-2">
+              <div>
+                <h1 className="text-3xl font-black uppercase tracking-tight text-slate-950">
+                  {data.firstName} {data.lastName}
+                </h1>
+                <p className="text-xs font-bold text-emerald-700 tracking-wide mt-0.5">
+                  Product Growth & PLG Strategist · Funnel Experimentation · Metric Acceleration
+                </p>
+              </div>
+              <div className="text-xs text-slate-600 space-y-0.5 text-left sm:text-right">
+                <p>{data.email} • {data.phone}</p>
+                <p>{data.location} • {data.website}</p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h2 className="text-xs font-black uppercase tracking-wider text-emerald-950 border-b border-emerald-200 pb-1 mb-2">
+                CORE GROWTH DISCIPLINES & TOOLS
+              </h2>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-800">
+                <p><span className="font-bold text-emerald-900">Analytics:</span> Amplitude, Mixpanel, SQL, Looker, Tableau, Google Analytics 4</p>
+                <p><span className="font-bold text-emerald-900">Strategy:</span> Product-Led Growth (PLG), Viral Loops, A/B Hypothesis Testing, Cohort Retention</p>
+                <p><span className="font-bold text-emerald-900">Execution:</span> User Onboarding Optimization, Activation Funnels, Pricing & Packaging, Stripe</p>
+                <p><span className="font-bold text-emerald-900">Stack:</span> Segment, Optimizely, PostHog, Jira, Figma, Agile Sprint Velocity</p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h2 className="text-xs font-black uppercase tracking-wider text-emerald-950 border-b border-emerald-200 pb-1 mb-3">
+                PRODUCT IMPACT & TRACK RECORD
+              </h2>
+              <div className="space-y-3.5 text-xs">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="font-mono text-slate-600">{exp.duration}</span>
+                    </div>
+                    <p className="font-semibold text-emerald-700">{exp.company}</p>
+                    <p className="text-slate-700 leading-relaxed text-justify">{exp.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xs font-black uppercase tracking-wider text-emerald-950 border-b border-emerald-200 pb-1 mb-2">
+                EDUCATION
+              </h2>
+              <div className="flex justify-between items-baseline text-xs">
+                <div>
+                  <h4 className="font-bold text-slate-900 uppercase">BACHELOR OF BUSINESS & COMPUTER SYSTEMS</h4>
+                  <p className="text-slate-600">Focus on Product Management, Quantitative Analytics & Economics</p>
+                </div>
+                <span className="font-mono text-slate-600">2022 - 2026</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* FORMAT 1: EXECUTIVE MONOLITH (David Anderson / Image 1)                   */}
         {/* ========================================================================= */}

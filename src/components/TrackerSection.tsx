@@ -3,7 +3,7 @@ import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileTe
 import type { ApplicationRecord, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
-import { triggerUrlDownload } from '../utils/pdfExport.ts';
+import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 
 export const TrackerSection: React.FC = () => {
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
@@ -464,6 +464,26 @@ export const TrackerSection: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                {(selectedApp.custom_pdf_url || selectedApp.custom_docx_url) ? (
+                  <button
+                    onClick={() => {
+                      const targetUrl = selectedApp.custom_pdf_url || selectedApp.custom_docx_url?.replace(/\.docx$/i, '.pdf');
+                      const targetName = selectedApp.resume_version || `Tailored_Resume_${selectedApp.company.replace(/\s+/g, '_')}.pdf`;
+                      if (targetUrl) {
+                        openPdfViewerModal(targetUrl, targetName, {
+                          resumeText: selectedApp.custom_resume_text,
+                          atsScore: selectedApp.ats_score || 95,
+                          docxUrl: selectedApp.custom_docx_url,
+                        });
+                      }
+                    }}
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition cursor-pointer"
+                    title="Open and view resume directly in browser"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    Open & View
+                  </button>
+                ) : null}
                 {(selectedApp.custom_pdf_url || selectedApp.custom_docx_url) ? (
                   <a
                     href={selectedApp.custom_pdf_url || selectedApp.custom_docx_url?.replace(/\.docx$/i, '.pdf')}

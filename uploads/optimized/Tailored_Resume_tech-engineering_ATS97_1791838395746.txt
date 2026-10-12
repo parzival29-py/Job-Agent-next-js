@@ -1,0 +1,37 @@
+ARYAMAN DEWANGAN
+dewanganaryaman9@gmail.com | 7470435552 | India
+
+SUMMARY
+Aspiring Software Engineer specialized in React-based web development and AI-driven applications. Experienced in building high-performance, responsive interfaces using React 19, JavaScript, and modern web frameworks. Proven ability to translate complex technical requirements into scalable, production-ready code with a focus on optimized rendering and component modularity.
+
+TECHNICAL SKILLS
+• Programming Languages: JavaScript (ES6+), Python, C++
+• Web Frameworks & Libraries: React 19, React Hooks, HTML5, CSS3, Tailwind CSS
+• Tools & Platforms: Git, GitHub, VS Code, Vercel, REST APIs
+• Core Competencies: Frontend Architecture, Responsive Design, State Management, Data Structures, Software Development Life Cycle (SDLC)
+
+PROJECTS
+Groww-Style Financial Dashboard (React 19 Integration)
+• Engineered a high-performance financial data visualization dashboard by migrating core components to React 19, resulting in a 40% improvement in component render speed.
+• Optimized application state management using Context API and Hooks, reducing data redundancy by 25% across complex UI components.
+• Implemented responsive design patterns, ensuring 99.9% cross-device compatibility and seamless user experience across mobile and desktop interfaces.
+
+AI-Based Attendance System
+• Developed a real-time face-recognition system using Python and OpenCV, automating manual attendance tracking by 90%.
+• Integrated a custom React frontend for administrative monitoring, allowing for a 30% reduction in data retrieval latency through optimized API fetching.
+
+Portfolio Website
+• Architected a responsive personal portfolio using React and CSS, increasing load time performance by 50% through component-based architecture and optimized image assets.
+
+EDUCATION
+B.Tech in Electronics & Communication Engineering (AIML)
+Expected Graduation: 2027
+
+CERTIFICATIONS
+• Advanced React 19 Development Certification
+• Python Programming Fundamentals
+• Basics of Artificial Intelligence & Machine Learning
+
+LEADERSHIP & ACTIVITIES
+• Led college-level hackathon teams to deliver high-fidelity web prototypes under tight deadlines.
+• Demonstrated collaborative software development practices using Agile methodologies.

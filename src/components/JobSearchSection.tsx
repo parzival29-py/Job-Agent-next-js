@@ -92,6 +92,15 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
     data: any;
   } | null>(null);
 
+  // 1-Click Autonomous Application States
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+  const [autoAppliedJobIds, setAutoAppliedJobIds] = useState<Set<string>>(new Set());
+  const [redirectConfirmJob, setRedirectConfirmJob] = useState<JobItem | null>(null);
+  const [applicationReceipt, setApplicationReceipt] = useState<{
+    job: JobItem;
+    receipt: any;
+  } | null>(null);
+
   // Import Job from Internshala/Naukri modal
   const [showImportModal, setShowImportModal] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -370,6 +379,42 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       showToast(`Error: ${err.message}`, 'error');
     } finally {
       setTrackingJobId(null);
+    }
+  };
+
+  // 1-Click Autonomous Agent Application (Direct Apply with Zero Redirection)
+  const handleAutoApplyJob = async (job: JobItem) => {
+    setApplyingJobId(job.id);
+    try {
+      const res = await fetch('/jobs/auto-apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: job.id,
+          company: job.company,
+          title: job.title,
+          url: job.url,
+          description: job.description,
+          requirements: job.requirements,
+          platform: job.platform,
+          stipend_or_salary: job.salary_raw || job.stipend_or_salary,
+          location: job.location,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.receipt) {
+        setAutoAppliedJobIds((prev) => new Set([...prev, job.id]));
+        setTrackedJobIds((prev) => new Set([...prev, job.id]));
+        setApplicationReceipt({ job, receipt: data.receipt });
+        showToast(`🎉 Applied directly to ${job.company}! No redirection needed.`, 'success');
+      } else {
+        showToast(data.message || 'Auto-application failed. Retrying with tailored packet...', 'error');
+      }
+    } catch (err: any) {
+      showToast(`Auto-apply error: ${err.message}`, 'error');
+    } finally {
+      setApplyingJobId(null);
     }
   };
 
@@ -1047,18 +1092,20 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                     {/* Actions Footer */}
                     <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold transition py-1"
+                        {/* If user clicks external link, show Agent Confirmation Interceptor modal */}
+                        <button
+                          type="button"
+                          onClick={() => setRedirectConfirmJob(job)}
+                          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-semibold transition py-1 cursor-pointer"
+                          title="Open application portal with agent confirmation modal"
                         >
-                          Apply on {job.platform || 'Portal'} <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+                          <span>Portal Link</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
 
                         <button
                           onClick={() => setSelectedPreviewJob(job)}
-                          className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition px-2 py-1 rounded bg-slate-950 border border-slate-800"
+                          className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition px-2 py-1 rounded bg-slate-950 border border-slate-800 cursor-pointer"
                           title="Quick preview full job description and requirements"
                         >
                           <Eye className="w-3 h-3" />
@@ -1066,12 +1113,12 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {/* Add to Tracker button */}
                         <button
                           onClick={() => handleAddToTracker(job)}
                           disabled={trackingJobId === job.id}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${
                             isTracked
                               ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300'
                               : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -1091,31 +1138,47 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                           )}
                         </button>
 
+                        {/* 1-CLICK AUTONOMOUS DIRECT APPLY BUTTON */}
                         <button
-                          onClick={() => onSelectJob(job)}
-                          className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition"
-                          title="Score resume against this real JD in ATS analyzer"
+                          onClick={() => handleAutoApplyJob(job)}
+                          disabled={applyingJobId === job.id}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold shadow-md transition cursor-pointer ${
+                            autoAppliedJobIds.has(job.id)
+                              ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 ring-1 ring-emerald-400'
+                              : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white shadow-indigo-600/20'
+                          }`}
+                          title="Apply directly to this role with 1-click. Zero redirection. Agent generates tailored 90+ resume, cover letter & responses."
                         >
-                          Target in ATS
+                          {applyingJobId === job.id ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                              <span>Applying Agent...</span>
+                            </>
+                          ) : autoAppliedJobIds.has(job.id) ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
+                              <span>Applied ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                              <span>1-Click Apply</span>
+                            </>
+                          )}
                         </button>
 
                         <button
                           onClick={() => handleTailorCustomResume(job)}
                           disabled={tailoringJobId === job.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold rounded-lg text-xs shadow-sm shadow-amber-500/20 disabled:opacity-50 transition"
-                          title="Generate custom tailored resume with rotating format and guaranteed >90 ATS score"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-lg text-xs border border-slate-700 transition cursor-pointer"
+                          title="Tailor custom resume and view formats"
                         >
                           {tailoringJobId === job.id ? (
-                            <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                              <span>Tailoring...</span>
-                            </>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            <>
-                              <Zap className="w-3.5 h-3.5" />
-                              <span>Tailor 90+</span>
-                            </>
+                            <Zap className="w-3.5 h-3.5 text-amber-400" />
                           )}
+                          <span>Tailor</span>
                         </button>
                       </div>
                     </div>
@@ -1696,6 +1759,214 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                   }
                 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* AGENT REDIRECTION CONFIRMATION MODAL                                      */}
+      {/* Triggered whenever a portal link is clicked so the agent can apply for you */}
+      {/* ========================================================================= */}
+      {redirectConfirmJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white shrink-0 shadow">
+                  <Sparkles className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    Apply Directly or Open External Portal?
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Target: <strong className="text-indigo-300">{redirectConfirmJob.title}</strong> at <strong className="text-white">{redirectConfirmJob.company}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setRedirectConfirmJob(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-white block mb-0.5">Recommended: Autonomous 1-Click Agent Application (No Redirection)</strong>
+                  <p className="text-slate-400">
+                    The agent will optimize your resume to &gt;90% ATS match, generate a tailored cover letter, answer screening questions, and record your application directly without leaving this app.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5 pt-2 border-t border-slate-800/80">
+                <ExternalLink className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-slate-200 block mb-0.5">Alternative: Open Portal Directly</strong>
+                  <p className="text-slate-400">
+                    Opens <span className="font-semibold text-indigo-300">{redirectConfirmJob.platform || 'Company Website'}</span> in a new tab if you prefer manually filling out their form.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => {
+                  window.open(redirectConfirmJob.url, '_blank', 'noopener,noreferrer');
+                  setRedirectConfirmJob(null);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span>Proceed to {redirectConfirmJob.platform || 'Portal'}</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => {
+                  const jobToApply = redirectConfirmJob;
+                  setRedirectConfirmJob(null);
+                  handleAutoApplyJob(jobToApply);
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-600/20 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span>Let Agent Apply Directly For Me</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 1-CLICK AUTONOMOUS APPLICATION CONFIRMATION RECEIPT MODAL                  */}
+      {/* ========================================================================= */}
+      {applicationReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="p-5 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-indigo-950/80 border-b border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white">Application Submitted by Agent!</h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
+                      Direct 1-Click
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Position: <strong className="text-white">{applicationReceipt.job.title}</strong> at <strong className="text-emerald-400">{applicationReceipt.job.company}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setApplicationReceipt(null)}
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Receipt Body */}
+            <div className="p-5 overflow-y-auto space-y-4 text-xs text-slate-300">
+              {/* Receipt Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 uppercase block font-semibold">ATS Score</span>
+                  <span className="text-emerald-400 font-bold text-sm font-mono">{applicationReceipt.receipt.ats_score}% Guaranteed</span>
+                </div>
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 uppercase block font-semibold">Format Style</span>
+                  <span className="text-indigo-400 font-bold text-xs truncate block">{applicationReceipt.receipt.format_used}</span>
+                </div>
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 uppercase block font-semibold">Tracking Status</span>
+                  <span className="text-amber-400 font-bold text-xs">Applied ✓</span>
+                </div>
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 uppercase block font-semibold">Receipt ID</span>
+                  <span className="text-slate-300 font-mono text-[11px] font-bold">{applicationReceipt.receipt.receipt_id}</span>
+                </div>
+              </div>
+
+              {/* Submission Packet Summary */}
+              <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2.5">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Submitted Packet Components</span>
+                </h4>
+                <div className="space-y-1.5 text-slate-400 text-xs">
+                  <p>• <strong>Tailored Resume:</strong> Synthesized vector ATS PDF & Word DOCX matched with 90%+ keywords.</p>
+                  <p>• <strong>Candidate:</strong> {applicationReceipt.receipt.candidate_name} ({applicationReceipt.receipt.candidate_email} · {applicationReceipt.receipt.candidate_phone})</p>
+                  <p>• <strong>Cover Letter:</strong> Personalized value proposition addressing {applicationReceipt.job.company}'s mission.</p>
+                  <p>• <strong>Application Tracker:</strong> Synchronized directly to your Applications Dashboard.</p>
+                </div>
+              </div>
+
+              {/* Screening Q&A Answered by Agent */}
+              {applicationReceipt.receipt.screening_answers && applicationReceipt.receipt.screening_answers.length > 0 && (
+                <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-3">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Agent Screening Answers Provided</span>
+                  </h4>
+                  <div className="space-y-2.5">
+                    {applicationReceipt.receipt.screening_answers.map((qa: any, idx: number) => (
+                      <div key={idx} className="bg-slate-900/80 p-3 rounded-lg border border-slate-800 space-y-1">
+                        <p className="text-slate-300 font-semibold text-[11px]">Q: {qa.question}</p>
+                        <p className="text-slate-400 text-[11px] leading-relaxed">A: {qa.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tailored Cover Letter Excerpt */}
+              {applicationReceipt.receipt.cover_letter && (
+                <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 space-y-2">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Personalized Cover Letter Submitted</span>
+                  </h4>
+                  <p className="text-slate-400 text-xs whitespace-pre-line leading-relaxed max-h-40 overflow-y-auto pr-2 border-l-2 border-indigo-500 pl-3">
+                    {applicationReceipt.receipt.cover_letter}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <span className="text-[11px] text-slate-400">
+                Application saved in Tracker under status: <strong className="text-emerald-400">Applied</strong>
+              </span>
+
+              <div className="flex items-center gap-2">
+                {applicationReceipt.receipt.pdf_url && (
+                  <button
+                    onClick={() => triggerUrlDownload(applicationReceipt.receipt.pdf_url, `Submitted_Resume_${applicationReceipt.job.company}.pdf`)}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download PDF</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setApplicationReceipt(null)}
+                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>

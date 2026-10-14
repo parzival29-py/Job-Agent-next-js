@@ -1,0 +1,33 @@
+ARYAMAN DEWANGAN
+San Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev
+
+SUMMARY
+Software Engineer specializing in distributed infrastructure and React-based frontend development. Expert in building high-concurrency distributed systems with Go, Python, and Kubernetes, combined with advanced React expertise to create scalable, performant web platforms. Proven history of optimizing complex cloud architectures and modern frontend stacks to enhance reliability and user engagement for high-traffic applications.
+
+TECHNICAL SKILLS
+• Languages: Go, Python, TypeScript, JavaScript (ESNext), C++, SQL, Bash
+• Distributed Infrastructure: Kubernetes, Docker, Microservices, gRPC, Redis, Kafka, Event-Driven Architecture, AWS/GCP
+• Frontend Technologies: React 19, Next.js, TypeScript, Tailwind CSS, WebSockets, Redux Toolkit, Vite
+• Databases: PostgreSQL, MongoDB, Pinecone, ChromaDB, SQL Index Optimization
+• Core Competencies: Distributed Systems Design, Cloud-Native Architecture, CI/CD Pipeline Automation, LLM Agent Workflows, API Performance Tuning
+
+EXPERIENCE
+
+APEX CLOUD SYSTEMS | San Francisco, CA
+Lead Software Engineering Resident & Systems Architect | 2024 – Present
+• Optimized distributed infrastructure by architecting asynchronous microservices in Go and FastAPI, resulting in 250M+ monthly transactions with p99 latency under 35ms.
+• Scaled high-throughput data platforms by implementing Redis caching and PostgreSQL indexing, reducing database IOPS load by 58% and saving $42,000 in annual AWS compute costs.
+• Improved deployment reliability for distributed microservices by transitioning to automated blue/green pipelines with Kubernetes, decreasing release cycle lead times from 14 days to 4 hours with 99.99% uptime.
+• Engineered an autonomous multi-agent optimization engine using LangGraph and Gemini 3.1 Flash, improving system benchmark match rates by 34% across 50,000+ trials.
+
+CLOUDSCALE TECHNOLOGIES | Remote, USA
+Full-Stack Software Engineer | 2023 – 2024
+• Engineered high-performance frontend interfaces using React 19 and TypeScript, supporting 12,000+ concurrent active sessions on real-time collaboration dashboards.
+• Enhanced distributed infrastructure communication by developing type-safe gRPC and REST service interfaces, ensuring 94% test code coverage through automated contract testing.
+• Reduced mean-time-to-detection (MTTD) by 65% by building automated observability and telemetry pipelines using Prometheus and Grafana for distributed systems monitoring.
+
+INNOVATETECH LABS | San Francisco, CA
+Software & Machine Learning Engineer | 2022 – 2023
+• Increased throughput by 3.8x for distributed transformer model inference on AWS EC2 GPU clusters by applying TensorRT optimization and batch processing.
+• Reduced identity verification latency to sub-200ms by deploying a real-time computer vision pipeline with Python and OpenCV, achieving 99.4% inference accuracy.
+• Designed scalable database schemas with automated partition pruning to handle large-scale historical datasets, maintaining low latency for query operations.

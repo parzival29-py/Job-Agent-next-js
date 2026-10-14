@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers } from 'lucide-react';
+import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers, Search, Filter } from 'lucide-react';
 import type { ApplicationRecord, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
+import { ApplicationProgressTimeline, MiniTimelineBar, PIPELINE_STAGES } from './ApplicationProgressTimeline.tsx';
 
 export const TrackerSection: React.FC = () => {
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
@@ -14,6 +15,10 @@ export const TrackerSection: React.FC = () => {
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ResumeProfile | null>(null);
 
+  // Filter & Search states
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   // New Application Modal
   const [isAdding, setIsAdding] = useState(false);
   const [newCompany, setNewCompany] = useState('');
@@ -23,8 +28,9 @@ export const TrackerSection: React.FC = () => {
   const [newNotes, setNewNotes] = useState('');
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [appToDelete, setAppToDelete] = useState<string | null>(null);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
 
-  const statusOptions = ['Saved', 'Ready to Apply', 'Applied', 'Interview', 'Offer', 'Rejected'];
+  const statusOptions = ['Saved', 'Ready to Apply', 'Applied', 'Screening', 'Interview', 'Offer', 'Rejected'];
 
   const fetchData = async () => {
     setLoading(true);
@@ -147,12 +153,12 @@ export const TrackerSection: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (appId: string, newStatusVal: string) => {
+  const handleStatusChange = async (appId: string, newStatusVal: string, note?: string) => {
     try {
       const res = await fetch(`/applications/${appId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatusVal }),
+        body: JSON.stringify({ status: newStatusVal, note, action_by: 'user' }),
       });
       const data = await res.json();
       if (data.success) {
@@ -165,6 +171,29 @@ export const TrackerSection: React.FC = () => {
     } catch (e) {
       console.error(e);
       setToastMsg({ text: 'Failed to update status', type: 'error' });
+    }
+  };
+
+  const handleAddTimelineNote = async (appId: string, note: string, status?: string) => {
+    try {
+      const res = await fetch(`/applications/${appId}/timeline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note, status, action_by: 'user' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchData();
+        if (selectedApp?.id === appId) {
+          setSelectedApp(data.application);
+        }
+        setToastMsg({ text: 'Timeline milestone recorded successfully', type: 'success' });
+      } else {
+        setToastMsg({ text: data.message || 'Failed to add timeline event', type: 'error' });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setToastMsg({ text: `Timeline error: ${err.message}`, type: 'error' });
     }
   };
 
@@ -214,16 +243,60 @@ export const TrackerSection: React.FC = () => {
     }
   };
 
+  const handleAutoApplyTracked = async (app: ApplicationRecord) => {
+    setApplyingId(app.id);
+    try {
+      const res = await fetch('/jobs/auto-apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: app.id,
+          company: app.company,
+          title: app.job_title,
+          url: app.job_url,
+          description: app.job_description,
+          platform: 'Direct Agent Submission',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg({
+          text: `🎉 Successfully applied directly to ${app.company} with 1-click! Status updated to Applied with 90+ ATS score.`,
+          type: 'success',
+        });
+        await fetchData();
+        if (selectedApp?.id === app.id) {
+          setSelectedApp((prev) => (prev ? {
+            ...prev,
+            status: 'Applied',
+            ats_score: data.final_ats_score || prev.ats_score,
+            custom_pdf_url: data.pdf_download_url || prev.custom_pdf_url,
+            custom_docx_url: data.docx_download_url || prev.custom_docx_url,
+            cover_letter: data.receipt?.cover_letter || prev.cover_letter,
+          } : null));
+        }
+      } else {
+        setToastMsg({ text: data.message || 'Auto-apply failed.', type: 'error' });
+      }
+    } catch (err: any) {
+      setToastMsg({ text: `Auto-apply error: ${err.message}`, type: 'error' });
+    } finally {
+      setApplyingId(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Offer':
         return 'bg-emerald-950/80 text-emerald-300 border-emerald-700/80';
       case 'Interview':
         return 'bg-violet-950/80 text-violet-300 border-violet-700/80';
+      case 'Screening':
+        return 'bg-indigo-950/80 text-indigo-300 border-indigo-700/80';
       case 'Applied':
         return 'bg-sky-950/80 text-sky-300 border-sky-700/80';
       case 'Ready to Apply':
-        return 'bg-indigo-950/80 text-indigo-300 border-indigo-700/80';
+        return 'bg-amber-950/80 text-amber-300 border-amber-700/80';
       case 'Rejected':
         return 'bg-rose-950/80 text-rose-300 border-rose-700/80';
       default:
@@ -300,9 +373,11 @@ export const TrackerSection: React.FC = () => {
             </p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <span className="text-xs text-slate-400">Interviews & Offers</span>
+            <span className="text-xs text-slate-400">Screening, Interview & Offer</span>
             <p className="text-2xl font-bold text-violet-400 mt-1">
-              {(stats.by_status?.['Interview'] || 0) + (stats.by_status?.['Offer'] || 0)}
+              {(stats.by_status?.['Screening'] || 0) +
+                (stats.by_status?.['Interview'] || 0) +
+                (stats.by_status?.['Offer'] || 0)}
             </p>
           </div>
         </div>
@@ -314,20 +389,75 @@ export const TrackerSection: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Briefcase className="w-5 h-5 text-indigo-400" />
-              Job Application Tracker
+              Job Application Tracker & Pipeline
             </h2>
             <p className="text-sm text-slate-400 mt-0.5">
-              Live database tracking all tailored resumes, ATS scores, cover letters, and application stages.
+              Live database tracking all tailored resumes, ATS scores, visual progress timelines, and transition histories.
             </p>
           </div>
 
-          <button
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" />
-            Add Application
-          </button>
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Add Application
+            </button>
+          </div>
+        </div>
+
+        {/* Pipeline Stage Filter Tabs & Search Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+            {['All', ...statusOptions].map((tab) => {
+              const count =
+                tab === 'All'
+                  ? applications.length
+                  : applications.filter((a) => a.status === tab).length;
+              const isActive = statusFilter === tab;
+
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-sm font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <span>{tab}</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                      isActive ? 'bg-indigo-900/80 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative min-w-[220px]">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search company, role, or notes..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-2 text-slate-500 hover:text-white"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Applications List */}
@@ -344,69 +474,117 @@ export const TrackerSection: React.FC = () => {
                 <tr>
                   <th className="py-3 px-4">Company & Role</th>
                   <th className="py-3 px-4">ATS Score</th>
+                  <th className="py-3 px-4">Pipeline Progress</th>
                   <th className="py-3 px-4">Resume Format</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">File Version</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {applications.map((app) => (
-                  <tr
-                    key={app.id}
-                    className="hover:bg-slate-800/40 cursor-pointer transition"
-                    onClick={() => {
-                      setSelectedApp(app);
-                      setShowResumePreview(false);
-                    }}
-                  >
-                    <td className="py-3 px-4">
-                      <span className="font-bold text-white text-sm block">{app.company}</span>
-                      <span className="text-slate-400">{app.job_title}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {app.ats_score != null ? (
-                        <span className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${app.ats_score >= 90 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}`}>
-                          {app.ats_score}%
+                {applications
+                  .filter((app) => {
+                    const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
+                    const matchesSearch =
+                      !searchQuery.trim() ||
+                      app.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      app.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      (app.notes && app.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+                    return matchesStatus && matchesSearch;
+                  })
+                  .map((app) => (
+                    <tr
+                      key={app.id}
+                      className="hover:bg-slate-800/40 cursor-pointer transition"
+                      onClick={() => {
+                        setSelectedApp(app);
+                        setShowResumePreview(false);
+                      }}
+                    >
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-white text-sm block">{app.company}</span>
+                        <span className="text-slate-400">{app.job_title}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {app.ats_score != null ? (
+                          <span
+                            className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
+                              app.ats_score >= 90
+                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                                : 'bg-amber-950 text-amber-300 border border-amber-800'
+                            }`}
+                          >
+                            {app.ats_score}%
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="space-y-1">
+                          <span className="text-[11px] font-semibold text-slate-300 block">{app.status}</span>
+                          <MiniTimelineBar status={app.status} />
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 capitalize">
+                          {app.resume_format || 'Cobalt Modern Split'}
                         </span>
-                      ) : (
-                        <span className="text-slate-600">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800 capitalize">
-                        {app.resume_format || 'Cobalt Modern Split'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={app.status}
-                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                        className={`text-xs px-2.5 py-1 rounded-md border font-semibold focus:outline-none cursor-pointer ${getStatusBadge(
-                          app.status
-                        )}`}
-                      >
-                        {statusOptions.map((st) => (
-                          <option key={st} value={st} className="bg-slate-900 text-white">
-                            {st}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-3 px-4 text-slate-400 font-mono text-[11px] truncate max-w-[150px]">
-                      {app.resume_version || 'Default'}
-                    </td>
-                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => setAppToDelete(app.id)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 transition"
-                        title="Delete application"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={app.status}
+                          onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                          className={`text-xs px-2.5 py-1 rounded-md border font-semibold focus:outline-none cursor-pointer ${getStatusBadge(
+                            app.status
+                          )}`}
+                        >
+                          {statusOptions.map((st) => (
+                            <option key={st} value={st} className="bg-slate-900 text-white">
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedApp(app);
+                              setShowResumePreview(false);
+                            }}
+                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-indigo-200 font-semibold text-[11px] rounded-lg transition border border-slate-700 flex items-center gap-1 cursor-pointer"
+                            title="View visual progress timeline & status transition history"
+                          >
+                            <Clock className="w-3 h-3 text-indigo-400" />
+                            <span>Timeline</span>
+                          </button>
+
+                          {['Saved', 'Ready to Apply'].includes(app.status) && (
+                            <button
+                              onClick={() => handleAutoApplyTracked(app)}
+                              disabled={applyingId === app.id}
+                              className="px-2.5 py-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-extrabold text-[11px] rounded-lg transition shadow-md flex items-center gap-1 cursor-pointer"
+                              title="1-Click Agent Apply: Zero redirection. Agent synthesizes 90+ resume, cover letter & screening answers."
+                            >
+                              {applyingId === app.id ? (
+                                <RefreshCw className="w-3 h-3 animate-spin text-white" />
+                              ) : (
+                                <Sparkles className="w-3 h-3 text-amber-300" />
+                              )}
+                              <span>{applyingId === app.id ? 'Applying...' : '1-Click Apply'}</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setAppToDelete(app.id)}
+                            className="p-1.5 text-slate-500 hover:text-rose-400 transition cursor-pointer"
+                            title="Delete application"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -426,6 +604,9 @@ export const TrackerSection: React.FC = () => {
                   <span className="px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800 text-[11px] font-mono capitalize">
                     Format: {selectedApp.resume_format || 'Cobalt Modern Split'}
                   </span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${getStatusBadge(selectedApp.status)}`}>
+                    Stage: {selectedApp.status}
+                  </span>
                 </div>
                 <h3 className="text-xl font-bold text-white">{selectedApp.company}</h3>
                 <p className="text-sm text-slate-400">{selectedApp.job_title}</p>
@@ -441,9 +622,34 @@ export const TrackerSection: React.FC = () => {
               </button>
             </div>
 
+            {/* Visual Progress Timeline with Timestamped History */}
+            <ApplicationProgressTimeline
+              application={selectedApp}
+              onStatusChange={handleStatusChange}
+              onAddTimelineNote={handleAddTimelineNote}
+              onAutoApply={handleAutoApplyTracked}
+              isApplying={applyingId === selectedApp.id}
+            />
+
             {/* Toolbar for Format Cycling & Downloads */}
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
               <div className="flex flex-wrap items-center gap-2">
+                {['Saved', 'Ready to Apply'].includes(selectedApp.status) && (
+                  <button
+                    onClick={() => handleAutoApplyTracked(selectedApp)}
+                    disabled={applyingId === selectedApp.id}
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-lg transition shadow-md flex items-center gap-1.5 cursor-pointer"
+                    title="1-Click Agent Apply: Zero redirection. Agent synthesizes 90+ resume, cover letter & screening answers."
+                  >
+                    {applyingId === selectedApp.id ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    )}
+                    <span>{applyingId === selectedApp.id ? 'Applying Directly...' : '1-Click Agent Apply (Zero Redirection)'}</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => handleRegenerateNextFormat(selectedApp)}
                   disabled={regeneratingId === selectedApp.id}
@@ -451,7 +657,7 @@ export const TrackerSection: React.FC = () => {
                   title="Cycle to the next distinct format with guaranteed >90 ATS score"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${regeneratingId === selectedApp.id ? 'animate-spin' : ''}`} />
-                  <span>{regeneratingId === selectedApp.id ? 'Rotating Format...' : 'Rotate to Next Format (90+ ATS)'}</span>
+                  <span>{regeneratingId === selectedApp.id ? 'Rotating Format...' : 'Rotate Format (90+ ATS)'}</span>
                 </button>
 
                 <button

@@ -76,6 +76,14 @@ export interface JobItem {
   ppo_package?: string;
 }
 
+export interface StatusTransition {
+  id: string;
+  status: string; // 'Saved' | 'Ready to Apply' | 'Applied' | 'Screening' | 'Interview' | 'Offer' | 'Rejected'
+  timestamp: string;
+  note?: string;
+  action_by?: 'agent' | 'user' | 'recruiter' | 'system';
+}
+
 export interface ApplicationRecord {
   id: string;
   company: string;
@@ -92,6 +100,7 @@ export interface ApplicationRecord {
   cover_letter?: string;
   status: string;
   notes?: string;
+  timeline?: StatusTransition[];
   created_at: string;
   updated_at: string;
 }

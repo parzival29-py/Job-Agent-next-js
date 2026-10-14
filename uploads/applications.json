@@ -1,5 +1,180 @@
 [
   {
+    "id": "app_1792007629740_9t3lo",
+    "company": "Anthropic",
+    "job_title": "AI Systems Engineer",
+    "job_url": "",
+    "job_description": "",
+    "ats_score": 96,
+    "resume_version": "",
+    "resume_format": "creative-director",
+    "custom_resume_text": "",
+    "custom_docx_url": "",
+    "custom_pdf_url": "",
+    "custom_txt_url": "",
+    "cover_letter": "",
+    "status": "Offer",
+    "notes": "1-Click Direct Application submitted autonomously by Agent.",
+    "timeline": [
+      {
+        "id": "trans_init_1792007629740",
+        "status": "Saved",
+        "timestamp": "2026-10-14T19:53:49.740Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_1792007629740",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-14T19:55:49.740Z",
+        "note": "Automated ATS optimization reached 96% score with tailored resume format (creative-director).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_1792007629740",
+        "status": "Applied",
+        "timestamp": "2026-10-14T19:53:49.740Z",
+        "note": "1-Click Direct Application submitted autonomously by Agent.",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_1792007629757_t86w",
+        "status": "Applied",
+        "timestamp": "2026-10-14T19:53:49.757Z",
+        "note": "Recruiter reach-out: Initial technical screening call confirmed.",
+        "action_by": "recruiter"
+      },
+      {
+        "id": "trans_1792007629765_e5po",
+        "status": "Screening",
+        "timestamp": "2026-10-14T19:53:49.765Z",
+        "note": "Candidate completed 45-min technical discussion on distributed systems.",
+        "action_by": "user"
+      },
+      {
+        "id": "trans_1792007629774_heuz",
+        "status": "Interview",
+        "timestamp": "2026-10-14T19:53:49.774Z",
+        "note": "Full-day engineering loops scheduled with Core Infrastructure team.",
+        "action_by": "recruiter"
+      },
+      {
+        "id": "trans_1792007629781_9q9j",
+        "status": "Offer",
+        "timestamp": "2026-10-14T19:53:49.781Z",
+        "note": "Formal written offer extended! Base $170k + equity package.",
+        "action_by": "recruiter"
+      }
+    ],
+    "created_at": "2026-10-14T19:53:49.740Z",
+    "updated_at": "2026-10-14T19:53:49.781Z"
+  },
+  {
+    "id": "app_1792006994680_90x4f",
+    "company": "Meta",
+    "job_title": "Software Engineer",
+    "job_url": "",
+    "job_description": "Meta distributed infrastructure and React",
+    "ats_score": 97,
+    "resume_version": "Tailored_Resume_tech-engineering_ATS97_1792006975548.pdf",
+    "resume_format": "tech-engineering",
+    "custom_resume_text": "ARYAMAN DEWANGAN\nSan Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev\n\nSUMMARY\nSoftware Engineer specializing in distributed infrastructure and React-based frontend development. Expert in building high-concurrency distributed systems with Go, Python, and Kubernetes, combined with advanced React expertise to create scalable, performant web platforms. Proven history of optimizing complex cloud architectures and modern frontend stacks to enhance reliability and user engagement for high-traffic applications.\n\nTECHNICAL SKILLS\n• Languages: Go, Python, TypeScript, JavaScript (ESNext), C++, SQL, Bash\n• Distributed Infrastructure: Kubernetes, Docker, Microservices, gRPC, Redis, Kafka, Event-Driven Architecture, AWS/GCP\n• Frontend Technologies: React 19, Next.js, TypeScript, Tailwind CSS, WebSockets, Redux Toolkit, Vite\n• Databases: PostgreSQL, MongoDB, Pinecone, ChromaDB, SQL Index Optimization\n• Core Competencies: Distributed Systems Design, Cloud-Native Architecture, CI/CD Pipeline Automation, LLM Agent Workflows, API Performance Tuning\n\nEXPERIENCE\n\nAPEX CLOUD SYSTEMS | San Francisco, CA\nLead Software Engineering Resident & Systems Architect | 2024 – Present\n• Optimized distributed infrastructure by architecting asynchronous microservices in Go and FastAPI, resulting in 250M+ monthly transactions with p99 latency under 35ms.\n• Scaled high-throughput data platforms by implementing Redis caching and PostgreSQL indexing, reducing database IOPS load by 58% and saving $42,000 in annual AWS compute costs.\n• Improved deployment reliability for distributed microservices by transitioning to automated blue/green pipelines with Kubernetes, decreasing release cycle lead times from 14 days to 4 hours with 99.99% uptime.\n• Engineered an autonomous multi-agent optimization engine using LangGraph and Gemini 3.1 Flash, improving system benchmark match rates by 34% across 50,000+ trials.\n\nCLOUDSCALE TECHNOLOGIES | Remote, USA\nFull-Stack Software Engineer | 2023 – 2024\n• Engineered high-performance frontend interfaces using React 19 and TypeScript, supporting 12,000+ concurrent active sessions on real-time collaboration dashboards.\n• Enhanced distributed infrastructure communication by developing type-safe gRPC and REST service interfaces, ensuring 94% test code coverage through automated contract testing.\n• Reduced mean-time-to-detection (MTTD) by 65% by building automated observability and telemetry pipelines using Prometheus and Grafana for distributed systems monitoring.\n\nINNOVATETECH LABS | San Francisco, CA\nSoftware & Machine Learning Engineer | 2022 – 2023\n• Increased throughput by 3.8x for distributed transformer model inference on AWS EC2 GPU clusters by applying TensorRT optimization and batch processing.\n• Reduced identity verification latency to sub-200ms by deploying a real-time computer vision pipeline with Python and OpenCV, achieving 99.4% inference accuracy.\n• Designed scalable database schemas with automated partition pruning to handle large-scale historical datasets, maintaining low latency for query operations.",
+    "custom_docx_url": "/download/Tailored_Resume_tech-engineering_ATS97_1792006975466.docx",
+    "custom_pdf_url": "/download/Tailored_Resume_tech-engineering_ATS97_1792006975548.pdf",
+    "custom_txt_url": "/download/Tailored_Resume_tech-engineering_ATS97_1792006975466.txt",
+    "cover_letter": "**ARYAMAN DEWANGAN**\naryamanharshdewangan@gmail.com | +1 (555) 747-0435\n\n**To the Meta Infrastructure Hiring Team,**\n\nMeta’s ability to operate at a global scale—powering billions of daily interactions through sophisticated distributed systems and the evolution of the React ecosystem—represents the gold standard of modern engineering. My work as a Full-Stack Engineer and Distributed Systems Architect has centered on the same challenge: architecting resilient, high-throughput systems that bridge the gap between complex backend infrastructure and seamless front-end performance. I am eager to bring my expertise in Go, Kubernetes, and React 19 to help Meta continue pushing the boundaries of what is possible at scale.\n\nIn my recent projects, I have focused on optimizing distributed architectures to reduce latency and improve system reliability. For instance, I successfully architected a containerized microservices environment using Docker and Kubernetes, which resulted in a 30% improvement in deployment efficiency and significantly reduced downtime during peak traffic loads. I am deeply familiar with the nuances of state management and component lifecycle optimization in React, having leveraged the latest features in React 19 to build highly performant, server-side rendered applications. My technical approach—rooted in a deep understanding of C and Linux internals—allows me to debug effectively across the entire stack, from kernel-level performance tuning to optimizing data delivery in Next.js.\n\nWhat attracts me to Meta is the company’s commitment to solving problems that do not yet have a roadmap. Whether it is refining the distributed orchestration that powers Meta’s global infrastructure or contributing to the next iteration of React, I thrive in environments where performance is not a feature, but a requirement. I am not looking for a role; I am looking for the complexity and scale that only Meta provides, and I am confident that my technical versatility and rigorous approach to system design will make me an immediate contributor to your team.\n\nI look forward to discussing how my background in distributed systems and modern web architecture aligns with your current technical initiatives. Thank you for your time and consideration.\n\nBest regards,\n\n**ARYAMAN DEWANGAN**",
+    "status": "Interview",
+    "notes": "Autonomous 1-Click Agent Application completed directly on 10/14/2026. Portal: Meta Careers. ATS Score: 97%. Format: tech-engineering. Zero manual redirection required.",
+    "created_at": "2026-10-14T19:43:14.680Z",
+    "updated_at": "2026-10-14T19:52:55.899Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1792006994680_90x4f",
+        "status": "Saved",
+        "timestamp": "2026-10-14T19:43:14.680Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1792006994680_90x4f",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-14T19:45:14.680Z",
+        "note": "Automated ATS optimization reached 97% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_app_1792006994680_90x4f",
+        "status": "Applied",
+        "timestamp": "2026-10-14T19:43:14.680Z",
+        "note": "Autonomous 1-Click Agent Application completed directly on 10/14/2026. Portal: Meta Careers. ATS Score: 97%. Format: tech-engineering. Zero manual redirection required.",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_1792007568822_rlg3",
+        "status": "Applied",
+        "timestamp": "2026-10-14T19:52:48.822Z",
+        "note": "Recruiter call scheduled",
+        "action_by": "user"
+      },
+      {
+        "id": "trans_1792007575881_hn9c",
+        "status": "Screening",
+        "timestamp": "2026-10-14T19:52:55.881Z",
+        "note": "Passed initial resume scan, recruiter phone screen scheduled.",
+        "action_by": "recruiter"
+      },
+      {
+        "id": "trans_1792007575899_xr6z",
+        "status": "Interview",
+        "timestamp": "2026-10-14T19:52:55.899Z",
+        "note": "Completed technical system design interview with Staff Engineer.",
+        "action_by": "user"
+      }
+    ]
+  },
+  {
+    "id": "app_1792005916378_wgfaw",
+    "company": "Google",
+    "job_title": "Software Engineering Intern",
+    "job_url": "",
+    "job_description": "Google distributed systems internship",
+    "ats_score": 99,
+    "resume_version": "Tailored_Resume_tech-engineering_ATS99_1792005895877.pdf",
+    "resume_format": "tech-engineering",
+    "custom_resume_text": "ARYAMAN DEWANGAN\nSan Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev\n\nPROFESSIONAL SUMMARY\nHigh-impact Full-Stack Software Engineer & Distributed AI Systems Architect with extensive experience designing resilient cloud-native microservices, autonomous LLM agent pipelines, and high-throughput data platforms. Proven track record scaling web applications to 1.4M+ monthly active users, reducing API latency by 42% through Go concurrency and Redis caching, and deploying fault-tolerant CI/CD pipelines across AWS and GCP with 99.99% uptime. Specialist in Python, TypeScript, React 19, Go, Kubernetes, and PostgreSQL.\n\nCORE COMPETENCIES & TECHNICAL SKILLS\n• Programming Languages: Python, TypeScript, Go, C++, JavaScript (ESNext), SQL, Bash\n• Frontend Technologies: React 19, Next.js, Tailwind CSS, TypeScript, Vite, Motion, Redux Toolkit\n• Backend & Distributed Systems: Node.js, FastAPI, Go Gin, Express, gRPC, RESTful APIs, WebSockets, Microservices\n• Cloud, DevOps & Infrastructure: Docker, Kubernetes, AWS (ECS, S3, RDS), Google Cloud (Cloud Run, GKE), GitHub Actions CI/CD, Terraform, Linux\n• Databases & Data Stores: PostgreSQL, Redis, MongoDB, Vector DBs (Pinecone, ChromaDB), SQL Index Optimization\n• AI & Systems Engineering: Multi-Agent Systems, Gemini 3 Flash, LangGraph, LLM Agentic Workflows, Computer Vision (OpenCV), RAG Architectures\n\nPROFESSIONAL EXPERIENCE\n\nAPEX CLOUD SYSTEMS | San Francisco, CA (Hybrid)\nLead Software Engineering Resident & Systems Architect | 2024 – Present\n• Architected and deployed asynchronous distributed microservices in Go and Python FastAPI processing 250M+ monthly transactions with p99 latency under 35ms.\n• Engineered an autonomous multi-agent ATS resume optimization engine utilizing Gemini 3.1 Flash and LangGraph, increasing qualification match rates from 62% to 96% across 50,000+ benchmark trials.\n• Designed high-performance Redis caching layers and optimized PostgreSQL relational indexing, reducing database IOPS load by 58% and saving $42,000 annually in AWS compute costs.\n• Led continuous integration and automated blue/green deployment pipelines using Docker, Kubernetes, and GitHub Actions, slashing release cycle lead time from 14 days to 4 hours with zero downtime.\n\nCLOUDSCALE TECHNOLOGIES | Remote, USA\nFull-Stack Software Engineer | 2023 – 2024\n• Spearheaded full-stack development of real-time collaboration dashboards using React 19, TypeScript, and WebSocket streams, supporting 12,000+ concurrent active sessions.\n• Developed type-safe REST and gRPC service interfaces, establishing automated schema validation and contract testing with 94% test code coverage.\n• Built automated telemetry and observability pipelines integrating Prometheus and Grafana dashboards, decreasing mean-time-to-detection (MTTD) by 65%.\n• Mentored 4 junior engineers on distributed systems architecture, clean code practices, and asynchronous event-driven design patterns.\n\nINNOVATETECH LABS | San Francisco, CA\nSoftware & Machine Learning Engineer | 2022 – 2023\n• Engineered real-time computer vision and facial biometrics pipeline in Python and OpenCV with 99.4% inference accuracy, reducing identity verification latency to sub-200ms.\n• Trained and deployed custom transformer models on AWS EC2 GPU clusters with TensorRT optimization, achieving 3.8x throughput acceleration.\n• Designed PostgreSQL database schemas with automated partition pruning for 10M+ biometric access event records.\n\nTECHNICAL PROJECTS\n\nAutonomous ATS Optimization Agent (Production Open Source) | 2025 – Present\n• Architected an end-to-end multi-agent system executing automated resume extraction, deterministic rubric evaluation, and multi-iteration ATS alignment achieving verified 95%+ scores.\n• Implemented dynamic OOXML (.docx) and typography-perfect vector PDF generation engines with sub-second synthesis speeds.\n\nDistributed High-Throughput Event Broker (Go) | 2024\n• Built a fault-tolerant message queue in Go with Raft consensus protocol, processing 85,000 msgs/sec with persistent disk write-ahead logging and zero data loss.\n\nCloud-Native Kubernetes Infrastructure Orchestrator | 2023 – 2024\n• Constructed automated infrastructure-as-code manifests with Terraform and Helm, provisioning multi-tenant clusters with automated horizontal pod autoscaling.\n\nEDUCATION\nBachelor of Science in Computer Science & Artificial Intelligence\nUniversity School of Engineering & Technology | 2022 – 2026\nGPA: 3.88 / 4.00 | Dean's Honors List | Relevant Coursework: Distributed Systems, Advanced Data Structures, Cloud Computing, Database Internals\n\nHONORS & CERTIFICATIONS\n• AWS Certified Solutions Architect (Associate) • Google Cloud Professional Machine Learning Engineer\n• 1st Place Winner – Autonomous AI Systems Hackathon 2024",
+    "custom_docx_url": "/download/Tailored_Resume_tech-engineering_ATS99_1792005895723.docx",
+    "custom_pdf_url": "/download/Tailored_Resume_tech-engineering_ATS99_1792005895877.pdf",
+    "custom_txt_url": "/download/Tailored_Resume_tech-engineering_ATS99_1792005895723.txt",
+    "cover_letter": "**ARYAMAN DEWANGAN**\naryamanharshdewangan@gmail.com | +1 (555) 747-0435\n\n**Hiring Manager**\nGoogle\n1600 Amphitheatre Parkway\nMountain View, CA 94043\n\nGoogle’s infrastructure operates at a scale that defines the modern web, and my work as a Full-Stack Software Engineer has been driven by a fascination with the complexities of that same scale. I specialize in building distributed systems that prioritize high availability and efficient data processing—the core challenges at the heart of Google’s engineering mission. With a robust background in Python, Go, and cloud-native architecture, I am prepared to contribute immediately to the high-stakes environments within your distributed systems teams.\n\nIn my recent projects, I have focused on solving the limitations of monolithic architectures by designing microservices that leverage containerization and CI/CD pipelines. By utilizing Docker, Kubernetes, and Terraform, I have successfully architected systems that reduce deployment latency and improve fault tolerance. For instance, I recently engineered a high-throughput backend using FastAPI and Go, which optimized request handling and improved data consistency across distributed nodes. This experience with low-level systems programming and modern web frameworks gives me the versatility to tackle everything from backend infrastructure optimization to the seamless integration of AI-driven features.\n\nBeyond my technical toolkit, I am deeply analytical and thrive in collaborative, fast-paced environments where precision is paramount. I am particularly drawn to Google’s commitment to solving the \"impossible\" engineering problems, such as refining distributed consensus protocols or optimizing large-scale storage systems. I am confident that my hands-on experience with the full stack—combined with my proficiency in cloud architecture and distributed systems design—will allow me to hit the ground running as an intern.\n\nI welcome the opportunity to discuss how my technical background and problem-solving approach align with the current priorities of your team. Thank you for your time and for the work you do in pushing the boundaries of what is possible in distributed computing.\n\nBest regards,\n\n**ARYAMAN DEWANGAN**",
+    "status": "Applied",
+    "notes": "Autonomous 1-Click Agent Application completed directly on 10/14/2026. Portal: Direct API. ATS Score: 99%. Format: tech-engineering. Zero manual redirection required.",
+    "created_at": "2026-10-14T19:25:16.378Z",
+    "updated_at": "2026-10-14T19:25:16.378Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1792005916378_wgfaw",
+        "status": "Saved",
+        "timestamp": "2026-10-14T19:25:16.378Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1792005916378_wgfaw",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-14T19:27:16.378Z",
+        "note": "Automated ATS optimization reached 99% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_app_1792005916378_wgfaw",
+        "status": "Applied",
+        "timestamp": "2026-10-14T19:25:16.378Z",
+        "note": "Autonomous 1-Click Agent Application completed directly on 10/14/2026. Portal: Direct API. ATS Score: 99%. Format: tech-engineering. Zero manual redirection required.",
+        "action_by": "agent"
+      }
+    ]
+  },
+  {
     "id": "app_1791838409873_1qbdk",
     "company": "Groww",
     "job_title": "Frontend React Development Intern",
@@ -16,7 +191,30 @@
     "status": "Applied",
     "notes": "Autonomous 1-Click Agent Application completed directly on 10/12/2026. Portal: Internshala. ATS Score: 97%. Format: tech-engineering. Zero manual redirection required.",
     "created_at": "2026-10-12T20:53:29.873Z",
-    "updated_at": "2026-10-12T20:53:29.873Z"
+    "updated_at": "2026-10-12T20:53:29.873Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1791838409873_1qbdk",
+        "status": "Saved",
+        "timestamp": "2026-10-12T20:53:29.873Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1791838409873_1qbdk",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-12T20:55:29.873Z",
+        "note": "Automated ATS optimization reached 97% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_app_1791838409873_1qbdk",
+        "status": "Applied",
+        "timestamp": "2026-10-12T20:53:29.873Z",
+        "note": "Autonomous 1-Click Agent Application completed directly on 10/12/2026. Portal: Internshala. ATS Score: 97%. Format: tech-engineering. Zero manual redirection required.",
+        "action_by": "agent"
+      }
+    ]
   },
   {
     "id": "app_1791572178934_pf8mn",
@@ -35,7 +233,23 @@
     "status": "Ready to Apply",
     "notes": "Customized 90+ ATS resume generated using the tech-engineering template. Initial ATS: 98%, Final ATS: 99%.",
     "created_at": "2026-10-09T18:56:18.934Z",
-    "updated_at": "2026-10-09T18:56:18.934Z"
+    "updated_at": "2026-10-09T18:56:18.934Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1791572178934_pf8mn",
+        "status": "Saved",
+        "timestamp": "2026-10-09T18:56:18.934Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1791572178934_pf8mn",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-09T18:58:18.934Z",
+        "note": "Automated ATS optimization reached 99% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      }
+    ]
   },
   {
     "id": "app_1791381676416_hi732",
@@ -53,7 +267,23 @@
     "status": "Ready to Apply",
     "notes": "Customized 90+ ATS resume generated using the tech-engineering template. Initial ATS: 45%, Final ATS: 97%.",
     "created_at": "2026-10-07T14:01:16.416Z",
-    "updated_at": "2026-10-07T14:01:16.416Z"
+    "updated_at": "2026-10-07T14:01:16.416Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1791381676416_hi732",
+        "status": "Saved",
+        "timestamp": "2026-10-07T14:01:16.416Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1791381676416_hi732",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-07T14:03:16.416Z",
+        "note": "Automated ATS optimization reached 97% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      }
+    ]
   },
   {
     "id": "app_1791381573376_0ztdy",
@@ -71,7 +301,23 @@
     "status": "Ready to Apply",
     "notes": "Customized 90+ ATS resume generated using the editorial-grid template. Initial ATS: 50%, Final ATS: 97%.",
     "created_at": "2026-10-07T13:59:33.376Z",
-    "updated_at": "2026-10-07T13:59:33.376Z"
+    "updated_at": "2026-10-07T13:59:33.376Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1791381573376_0ztdy",
+        "status": "Saved",
+        "timestamp": "2026-10-07T13:59:33.376Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1791381573376_0ztdy",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-07T14:01:33.376Z",
+        "note": "Automated ATS optimization reached 97% score with tailored resume format (editorial-grid).",
+        "action_by": "agent"
+      }
+    ]
   },
   {
     "id": "app_1791275515823_36ohr",
@@ -85,7 +331,23 @@
     "status": "Ready to Apply",
     "notes": "Automated E2E pipeline completed.",
     "created_at": "2026-10-06T08:31:55.823Z",
-    "updated_at": "2026-10-06T08:31:55.823Z"
+    "updated_at": "2026-10-06T08:31:55.823Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_1791275515823_36ohr",
+        "status": "Saved",
+        "timestamp": "2026-10-06T08:31:55.823Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_1791275515823_36ohr",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-06T08:33:55.823Z",
+        "note": "Automated ATS optimization reached 92% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      }
+    ]
   },
   {
     "id": "app_demo_1",
@@ -99,7 +361,23 @@
     "status": "Ready to Apply",
     "notes": "Automated E2E pipeline completed with 92.5% ATS score.",
     "created_at": "2026-10-06T00:30:00.000Z",
-    "updated_at": "2026-10-06T00:30:00.000Z"
+    "updated_at": "2026-10-06T00:30:00.000Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_demo_1",
+        "status": "Saved",
+        "timestamp": "2026-10-06T00:30:00.000Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_demo_1",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-06T00:32:00.000Z",
+        "note": "Automated ATS optimization reached 92.5% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      }
+    ]
   },
   {
     "id": "app_demo_2",
@@ -113,6 +391,29 @@
     "status": "Applied",
     "notes": "Applied on company portal.",
     "created_at": "2026-10-05T14:15:00.000Z",
-    "updated_at": "2026-10-05T14:15:00.000Z"
+    "updated_at": "2026-10-05T14:15:00.000Z",
+    "timeline": [
+      {
+        "id": "trans_init_app_demo_2",
+        "status": "Saved",
+        "timestamp": "2026-10-05T14:15:00.000Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_app_demo_2",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-05T14:17:00.000Z",
+        "note": "Automated ATS optimization reached 88% score with tailored resume format (tech-engineering).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_app_demo_2",
+        "status": "Applied",
+        "timestamp": "2026-10-05T14:15:00.000Z",
+        "note": "Applied on company portal.",
+        "action_by": "agent"
+      }
+    ]
   }
 ]

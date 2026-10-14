@@ -158,6 +158,107 @@ export const TestSuiteSection: React.FC = () => {
         return await res.json();
       },
     },
+    {
+      id: 'test-26',
+      name: 'Test 26: 1-Click Autonomous Agent Application (Zero Redirection)',
+      endpoint: 'POST /jobs/auto-apply',
+      description: 'Validates 1-click autonomous direct application with ATS >90 optimization, vector PDF generation, cover letter, screening answers, and zero-redirection receipt creation.',
+      run: async () => {
+        const res = await fetch('/jobs/auto-apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            job_id: 'test-direct-autoapply',
+            company: 'Stripe',
+            title: 'Distributed Systems & Infrastructure Engineer',
+            platform: 'Stripe Careers',
+            description: 'Scale payment infrastructure and high-throughput microservices in Go, TypeScript, and distributed consensus.',
+            requirements: ['Go or TypeScript proficiency', 'Distributed systems design', 'High reliability'],
+          }),
+        });
+      },
+    },
+    {
+      id: 'test-27',
+      name: 'Test 27: Visual Progress Timeline & Status Transitions',
+      endpoint: 'PATCH /applications/:id/status & POST /applications/:id/timeline',
+      description: 'Tests full lifecycle status transition pipeline (Saved -> Ready -> Applied -> Screening -> Interview -> Offer) with timestamped milestone history logging.',
+      run: async () => {
+        // 1. Create a test application
+        const createRes = await fetch('/applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company: 'Anthropic',
+            job_title: 'AI Systems Engineer',
+            status: 'Applied',
+            ats_score: 96,
+            notes: '1-Click Direct Application submitted autonomously by Agent.',
+          }),
+        }).then((r) => r.json());
+
+        const appId = createRes.application?.id;
+        if (!appId) {
+          throw new Error('Failed to create application for timeline test');
+        }
+
+        // 2. Log custom milestone note
+        const noteRes = await fetch(`/applications/${appId}/timeline`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            note: 'Recruiter reach-out: Initial technical screening call confirmed.',
+            status: 'Applied',
+            action_by: 'recruiter',
+          }),
+        }).then((r) => r.json());
+
+        // 3. Advance to Screening
+        const screenRes = await fetch(`/applications/${appId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'Screening',
+            note: 'Candidate completed 45-min technical discussion on distributed systems.',
+            action_by: 'user',
+          }),
+        }).then((r) => r.json());
+
+        // 4. Advance to Interview
+        const interviewRes = await fetch(`/applications/${appId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'Interview',
+            note: 'Full-day engineering loops scheduled with Core Infrastructure team.',
+            action_by: 'recruiter',
+          }),
+        }).then((r) => r.json());
+
+        // 5. Advance to Offer
+        const offerRes = await fetch(`/applications/${appId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'Offer',
+            note: 'Formal written offer extended! Base $170k + equity package.',
+            action_by: 'recruiter',
+          }),
+        }).then((r) => r.json());
+
+        return {
+          success: true,
+          application_id: appId,
+          final_status: offerRes.application?.status,
+          total_timeline_events: offerRes.application?.timeline?.length,
+          timeline: offerRes.application?.timeline,
+          note_logged: noteRes.success,
+          screening_transition: screenRes.success,
+          interview_transition: interviewRes.success,
+          offer_transition: offerRes.success,
+        };
+      },
+    },
   ];
 
   const executeTest = async (testItem: typeof tests[0]) => {

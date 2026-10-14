@@ -924,38 +924,59 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               </button>
             </form>
 
-            {/* Quick External Platform Search Launchers */}
+            {/* Quick In-App Platform Filters with Zero Redirection */}
             <div className="flex flex-wrap items-center gap-1.5 shrink-0 w-full lg:w-auto justify-end">
-              <span className="text-[11px] text-slate-500 font-semibold mr-1 hidden xl:inline">Live Links:</span>
-              <a
-                href={getLiveSearchUrl('Internshala', searchKeyword)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800 text-cyan-300 rounded text-[11px] font-semibold transition"
-                title="Open live search on Internshala.com in a new tab"
+              <span className="text-[11px] text-emerald-400/90 font-semibold mr-1 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Zero Redirection:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPlatform(selectedPlatform === 'Internshala' ? 'all' : 'Internshala');
+                  showToast('Filtered in-app feed to live Internshala opportunities. Zero redirection!', 'success');
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                  selectedPlatform === 'Internshala'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
+                    : 'bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800 text-cyan-300'
+                }`}
+                title="Filter in-app feed to live Internshala internships"
               >
-                <span>Internshala</span> <ExternalLink className="w-3 h-3" />
-              </a>
+                <span>Internshala</span>
+              </button>
 
-              <a
-                href={getLiveSearchUrl('Naukri', searchKeyword)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1 bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800 text-blue-300 rounded text-[11px] font-semibold transition"
-                title="Open live search on Naukri.com in a new tab"
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPlatform(selectedPlatform === 'Naukri' ? 'all' : 'Naukri');
+                  showToast('Filtered in-app feed to Naukri postings. Zero redirection!', 'success');
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                  selectedPlatform === 'Naukri'
+                    ? 'bg-blue-500 text-slate-950 font-bold shadow-sm'
+                    : 'bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800 text-blue-300'
+                }`}
+                title="Filter in-app feed to Naukri jobs"
               >
-                <span>Naukri</span> <ExternalLink className="w-3 h-3" />
-              </a>
+                <span>Naukri</span>
+              </button>
 
-              <a
-                href={getLiveSearchUrl('Unstop', searchKeyword)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-2.5 py-1 bg-amber-950/60 hover:bg-amber-900/60 border border-amber-800 text-amber-300 rounded text-[11px] font-semibold transition"
-                title="Open live search on Unstop (formerly Dare2Compete) in a new tab"
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPlatform(selectedPlatform === 'Unstop' ? 'all' : 'Unstop');
+                  showToast('Filtered in-app feed to Unstop roles. Zero redirection!', 'success');
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                  selectedPlatform === 'Unstop'
+                    ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                    : 'bg-amber-950/60 hover:bg-amber-900/60 border border-amber-800 text-amber-300'
+                }`}
+                title="Filter in-app feed to Unstop hackathons & campus roles"
               >
-                <span>Unstop</span> <ExternalLink className="w-3 h-3" />
-              </a>
+                <span>Unstop</span>
+              </button>
 
               <button
                 onClick={() => fetchJobs()}
@@ -1413,14 +1434,36 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
 
             {/* Modal Actions */}
             <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
-              <a
-                href={selectedPreviewJob.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow"
-              >
-                Apply on {selectedPreviewJob.platform || 'Portal'} <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const job = selectedPreviewJob;
+                    setSelectedPreviewJob(null);
+                    handleAutoApplyJob(job);
+                  }}
+                  disabled={applyingJobId === selectedPreviewJob.id}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white rounded-lg text-xs font-extrabold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/25 cursor-pointer"
+                  title="Apply directly to this role with 1-click. Zero redirection."
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>1-Click Agent Apply (Zero Redirection)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const job = selectedPreviewJob;
+                    setSelectedPreviewJob(null);
+                    setRedirectConfirmJob(job);
+                  }}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition cursor-pointer"
+                  title="Review details and let agent apply or proceed to portal"
+                >
+                  <span>Portal Link</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              </div>
 
               <div className="flex items-center gap-2">
                 <button
@@ -1768,18 +1811,28 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       {/* AGENT REDIRECTION CONFIRMATION MODAL                                      */}
       {/* Triggered whenever a portal link is clicked so the agent can apply for you */}
       {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* AGENT REDIRECTION INTERCEPTOR & APPLICATION CONFIRMATION MODAL            */}
+      {/* Triggered whenever external portal is clicked so the agent can apply for you*/}
+      {/* ========================================================================= */}
       {redirectConfirmJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-700/90 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="p-5 bg-gradient-to-r from-indigo-950/90 via-slate-900 to-emerald-950/90 border-b border-slate-800 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white shrink-0 shadow">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg">
                   <Sparkles className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">
-                    Apply Directly or Open External Portal?
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-white">
+                      Confirm Application & Let Agent Apply
+                    </h3>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
+                      Zero Redirection
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-400">
                     Target: <strong className="text-indigo-300">{redirectConfirmJob.title}</strong> at <strong className="text-white">{redirectConfirmJob.company}</strong>
                   </p>
@@ -1787,58 +1840,122 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               </div>
               <button
                 onClick={() => setRedirectConfirmJob(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800">
-              <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-white block mb-0.5">Recommended: Autonomous 1-Click Agent Application (No Redirection)</strong>
-                  <p className="text-slate-400">
-                    The agent will optimize your resume to &gt;90% ATS match, generate a tailored cover letter, answer screening questions, and record your application directly without leaving this app.
-                  </p>
+            {/* Confirmation Body: Confirm everything */}
+            <div className="p-5 space-y-4 text-xs text-slate-300 overflow-y-auto max-h-[70vh]">
+              {/* Job Summary Banner */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Platform Portal:</span>
+                  <span className="font-semibold text-indigo-300 bg-indigo-950/60 px-2.5 py-0.5 rounded border border-indigo-800/80">
+                    {redirectConfirmJob.platform || 'Company Website'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Location & Work Mode:</span>
+                  <span className="text-slate-200">{redirectConfirmJob.location || 'Remote'} • {redirectConfirmJob.work_mode || 'Remote'}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Compensation:</span>
+                  <span className="text-emerald-400 font-bold">{redirectConfirmJob.salary_raw || redirectConfirmJob.stipend_or_salary || 'Competitive'}</span>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 pt-2 border-t border-slate-800/80">
-                <ExternalLink className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-slate-200 block mb-0.5">Alternative: Open Portal Directly</strong>
-                  <p className="text-slate-400">
-                    Opens <span className="font-semibold text-indigo-300">{redirectConfirmJob.platform || 'Company Website'}</span> in a new tab if you prefer manually filling out their form.
-                  </p>
+              {/* Verified Submission Components */}
+              <div className="bg-emerald-950/30 border border-emerald-800/50 rounded-xl p-3.5 space-y-2.5">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs uppercase tracking-wide">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Submission Components (Ready to Submit)</span>
+                </div>
+                <div className="space-y-1.5 text-slate-300 pl-2 text-[11px] leading-relaxed">
+                  <p>• <strong>Candidate Profile:</strong> Aryaman Dewangan (aryamandewangan@gmail.com · +1 (555) 747-0435)</p>
+                  <p>• <strong>Tailored 90+ ATS Resume:</strong> Dynamically tailored vector PDF & DOCX matched to {redirectConfirmJob.company}'s requirements.</p>
+                  <p>• <strong>Custom Cover Letter:</strong> Structured executive pitch highlighting distributed systems & full-stack experience.</p>
+                  <p>• <strong>Screening Questions:</strong> Formulated with STAR-method tailored answers.</p>
+                  <p>• <strong>Zero Redirection:</strong> The agent submits directly. An official transaction receipt will be recorded in your Tracker pipeline.</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2">
+            {/* Modal Actions */}
+            <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               <button
+                type="button"
                 onClick={() => {
                   window.open(redirectConfirmJob.url, '_blank', 'noopener,noreferrer');
                   setRedirectConfirmJob(null);
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
+                className="text-[11px] text-slate-500 hover:text-slate-300 transition underline underline-offset-2 cursor-pointer"
               >
-                <span>Proceed to {redirectConfirmJob.platform || 'Portal'}</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                Manual fallback: Open external {redirectConfirmJob.platform || 'portal'} tab anyway
               </button>
 
-              <button
-                onClick={() => {
-                  const jobToApply = redirectConfirmJob;
-                  setRedirectConfirmJob(null);
-                  handleAutoApplyJob(jobToApply);
-                }}
-                className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-indigo-600/20 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Let Agent Apply Directly For Me</span>
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRedirectConfirmJob(null)}
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const jobToApply = redirectConfirmJob;
+                    setRedirectConfirmJob(null);
+                    handleAutoApplyJob(jobToApply);
+                  }}
+                  className="px-5 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white rounded-xl text-xs font-extrabold transition shadow-lg shadow-emerald-600/25 cursor-pointer flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>Confirm Everything & Let Agent Apply (1-Click)</span>
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* AGENT APPLYING IN-PROGRESS MODAL OVERLAY                                    */}
+      {/* ========================================================================= */}
+      {applyingJobId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 text-center">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+              <RefreshCw className="w-7 h-7 text-white animate-spin" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-white">Agent Applying Directly...</h3>
+              <p className="text-xs text-slate-400">Zero Redirection Mode: Submitting verified application packet</p>
+            </div>
+
+            <div className="space-y-2.5 text-left text-xs bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 animate-pulse shrink-0" />
+                <span className="text-slate-200">1. Analyzing requirements & optimizing ATS keywords to 90%+</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 animate-pulse shrink-0" />
+                <span className="text-slate-200">2. Synthesizing tailored vector PDF resume & cover letter</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 animate-pulse shrink-0" />
+                <span className="text-slate-200">3. Answering screening questions with STAR-method responses</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-cyan-400 animate-pulse shrink-0" />
+                <span className="text-slate-200">4. Submitting application packet & generating transaction receipt</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 font-medium">Zero redirection required. Complete confirmation receipt will open immediately.</p>
           </div>
         </div>
       )}

@@ -285,7 +285,7 @@ app.get(['/download/:filename', '/api/download/:filename', '/view/:filename', '/
         }
 
         if (resumeContent && resumeContent.trim()) {
-          let formatType = 'cobalt-split';
+          let formatType = 'executive-monolith';
           const match = safeFilename.match(/Tailored_Resume_([a-z0-9\-]+)_/i);
           if (match && match[1]) {
             formatType = match[1];
@@ -603,7 +603,7 @@ app.post(['/ai/render-resume-pdf', '/api/ai/render-resume-pdf'], async (req, res
     const userFormat = req.body?.resume_format || req.body?.formatType || req.body?.format;
     let chosenFormat = userFormat;
     if (!chosenFormat || chosenFormat === 'auto') {
-      chosenFormat = 'cobalt-split';
+      chosenFormat = 'executive-monolith';
     }
 
     const customData = req.body?.resume_data || req.body?.data || null;
@@ -625,6 +625,28 @@ app.post(['/ai/render-resume-pdf', '/api/ai/render-resume-pdf'], async (req, res
       success: false,
       message: error?.message || 'Failed to render PDF in selected format.',
     });
+  }
+});
+
+// Endpoint to store high-fidelity client-captured preview PDFs in OPTIMIZED_DIR
+app.post(['/ai/save-rendered-pdf', '/api/save-rendered-pdf'], express.json({ limit: '25mb' }), (req, res) => {
+  try {
+    const { filename, pdf_base64 } = req.body;
+    if (!filename || !pdf_base64) {
+      return res.status(400).json({ success: false, message: 'filename and pdf_base64 are required' });
+    }
+    const safeFilename = path.basename(filename);
+    const buffer = Buffer.from(pdf_base64, 'base64');
+    const targetPath = path.join(OPTIMIZED_DIR, safeFilename);
+    fs.writeFileSync(targetPath, buffer);
+    return res.json({
+      success: true,
+      message: 'PDF saved successfully',
+      filename: safeFilename,
+      download_url: `/download/${safeFilename}`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message || 'Failed to save PDF' });
   }
 });
 

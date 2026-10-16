@@ -251,6 +251,17 @@ export const RESUME_FORMATS_LIST: ResumeFormatDefinition[] = [
     primaryColor: '#18181B',
     accentColor: '#2563EB',
   },
+  {
+    id: 'biotech-pharma',
+    name: 'BioTech & Genomic Engineering',
+    category: 'Specialized & Industry',
+    tag: 'Genomics & Biotech',
+    description: 'Structured for computational biologists, genomic bioinformaticians, CRISPR workflow engineers, and clinical laboratory pipeline architects.',
+    bestFor: 'Bioinformaticians, Computational Biologists, Biotech Engineers, Clinical Scientists',
+    fontFamily: 'Georgia, Times New Roman, serif',
+    primaryColor: '#042F2E',
+    accentColor: '#0D9488',
+  },
 
   // 6. Modern Tech & Deep Tech Formats (New Additions)
   {
@@ -645,12 +656,12 @@ export function detectRecommendedFormat(
     };
   }
 
-  // Default: Silicon Valley Tech for software engineering & tech
+  // Default: Executive Monolith (Authentic Photo Layout)
   return {
-    formatId: 'tech-engineering',
-    name: 'Silicon Valley Tech',
-    reason: 'FAANG / Silicon Valley standard layout with 99%+ ATS pass rate across all modern applicant tracking engines.',
-    tag: 'Big Tech ATS',
-    category: 'Tech & Engineering',
+    formatId: 'executive-monolith',
+    name: 'Executive Monolith',
+    reason: 'Authentic Executive Photo Layout with bold two-line hierarchy, verified single-page ATS architecture, and dual-column credentials.',
+    tag: 'Executive Photo Layout',
+    category: 'Executive & Leadership',
   };
 }

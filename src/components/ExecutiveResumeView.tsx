@@ -59,6 +59,14 @@ export type ResumeFormatType =
   | 'international-hybrid'
   | 'marketing-growth'
   | 'operations-scrum'
+  | 'cloud-devops'
+  | 'cybersecurity-soc'
+  | 'blockchain-web3'
+  | 'biotech-pharma'
+  | 'fullstack-modern'
+  | 'mobile-app-eng'
+  | 'quant-algorithmic'
+  | 'product-growth'
   | string;
 
 interface ExecutiveResumeViewProps {
@@ -78,7 +86,7 @@ interface ExecutiveResumeViewProps {
 export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
   profile,
   optimizedText,
-  initialFormat = 'cobalt-split',
+  initialFormat = 'executive-monolith',
   targetJobTitle,
   targetCompany,
   atsScore = 95,
@@ -89,7 +97,7 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
   onFormatChange,
 }) => {
   const [selectedFormat, setSelectedFormat] = useState<ResumeFormatType>(
-    (initialFormat as ResumeFormatType) || 'cobalt-split'
+    (initialFormat as ResumeFormatType) || 'executive-monolith'
   );
 
   React.useEffect(() => {
@@ -352,8 +360,16 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
         'international-hybrid': 'international-resume-sheet',
         'marketing-growth': 'marketing-resume-sheet',
         'operations-scrum': 'operations-resume-sheet',
+        'cloud-devops': 'cloud-resume-sheet',
+        'cybersecurity-soc': 'cybersecurity-resume-sheet',
+        'blockchain-web3': 'blockchain-resume-sheet',
+        'biotech-pharma': 'biotech-resume-sheet',
+        'fullstack-modern': 'fullstack-resume-sheet',
+        'mobile-app-eng': 'mobile-resume-sheet',
+        'quant-algorithmic': 'quant-resume-sheet',
+        'product-growth': 'growth-resume-sheet',
       };
-      const activeSheetId = sheetIdMap[selectedFormat] || 'cobalt-resume-sheet';
+      const activeSheetId = sheetIdMap[selectedFormat] || 'executive-resume-sheet';
       const success = await exportResumeToPdf({
         elementId: activeSheetId,
         format: selectedFormat,
@@ -412,7 +428,7 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-white">21-Format Executive Resume Engine</h3>
+                <h3 className="text-sm font-bold text-white">{RESUME_FORMATS_LIST.length}-Format Executive Resume Engine</h3>
                 <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
                   ATS Score: {atsScore}% Guaranteed
                 </span>
@@ -423,7 +439,7 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
                 )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Choose from 21 verified professional formats or let AI select the ideal ATS-optimized design for your target industry.
+                Choose from {RESUME_FORMATS_LIST.length} verified professional formats or let AI select the ideal ATS-optimized design for your target industry.
               </p>
             </div>
           </div>
@@ -3542,6 +3558,564 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-blue-950 mb-2">
                 CREDENTIALS & DEGREES
+              </h2>
+              <div className="space-y-2 text-xs">
+                {data.education.map((edu, eIdx) => (
+                  <div key={eIdx} className="flex justify-between items-baseline">
+                    <div>
+                      <h4 className="font-bold text-slate-900 uppercase">{edu.degree}</h4>
+                      <p className="text-slate-600">{edu.institution}</p>
+                    </div>
+                    <span className="font-mono text-slate-600 text-xs">{edu.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: CLOUD & SITE RELIABILITY ARCHITECT (AWS/GCP & SRE)                */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'cloud-devops' && (
+          <div
+            id="cloud-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-10 sm:p-14 font-sans select-text border-t-8 border-t-sky-800 leading-normal"
+            style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="pb-4 border-b-2 border-sky-800 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <span className="text-[9.5px] font-mono font-bold uppercase px-2.5 py-0.5 rounded bg-sky-900 text-white tracking-wider inline-block mb-1.5 shadow-sm">
+                  CLOUD & SITE RELIABILITY ARCHITECT &bull; K8S & TERRAFORM
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 uppercase tracking-tight">
+                  {data.firstName} <span className="text-sky-800">{data.lastName}</span>
+                </h1>
+                <p className="text-xs font-bold text-sky-900 uppercase pt-1">
+                  {data.headline}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right text-xs text-slate-600 space-y-1 font-mono">
+                <p className="font-bold text-slate-950">{data.email}</p>
+                <p>{data.phone} &bull; {data.location}</p>
+                <p className="text-sky-700 font-bold">{data.website}</p>
+              </div>
+            </div>
+
+            {/* Infrastructure Reliability & SLA Dashboard */}
+            <div className="my-4 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-sky-50/70 border border-sky-200 rounded-xl text-center">
+              <div>
+                <span className="text-[10px] font-bold text-sky-950 uppercase block tracking-wider">Uptime SLA</span>
+                <span className="text-sm font-extrabold text-sky-900 font-mono">99.99% Availability</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-sky-950 uppercase block tracking-wider">Incident MTTR</span>
+                <span className="text-sm font-extrabold text-emerald-700 font-mono">&lt; 4.5 Mins Auto-Remediated</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-sky-950 uppercase block tracking-wider">Cloud Efficiency</span>
+                <span className="text-sm font-extrabold text-slate-900 font-mono">-$48,000 Annual Savings</span>
+              </div>
+            </div>
+
+            {/* Charter */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-2">
+                SITE RELIABILITY & DISTRIBUTED INFRASTRUCTURE CHARTER
+              </h2>
+              <p className="text-[11.5px] leading-relaxed text-slate-700 text-justify">
+                {data.aboutMe}
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-3">
+                CHRONOLOGICAL SRE, KUBERNETES & CLOUD PRODUCTION RECORD
+              </h2>
+              <div className="space-y-4">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline flex-wrap gap-1">
+                      <h3 className="text-xs font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="text-[10px] font-mono font-bold text-sky-900 bg-sky-100 px-2 py-0.5 rounded border border-sky-200">
+                        {exp.duration}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-sky-800">{exp.company}</p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Cloud & DevOps Toolkit */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-2">
+                CONTAINER ORCHESTRATION, TERRAFORM & SRE TOOLKIT
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {data.skillsList.map((skill, sIdx) => (
+                  <span key={sIdx} className="text-[10px] font-medium px-2.5 py-1 rounded bg-sky-50 text-sky-950 border border-sky-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-sky-950 mb-2">
+                DEGREES & CLOUD CERTIFICATIONS
+              </h2>
+              <div className="space-y-2 text-xs">
+                {data.education.map((edu, eIdx) => (
+                  <div key={eIdx} className="flex justify-between items-baseline">
+                    <div>
+                      <h4 className="font-bold text-slate-900 uppercase">{edu.degree}</h4>
+                      <p className="text-slate-600">{edu.institution}</p>
+                    </div>
+                    <span className="font-mono text-slate-600 text-xs">{edu.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: CYBERSECURITY & INFOSEC GUARDIAN (Cyber & DevSecOps)              */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'cybersecurity-soc' && (
+          <div
+            id="cybersecurity-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-10 sm:p-14 font-sans select-text border-t-8 border-t-emerald-900 leading-normal"
+            style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="pb-4 border-b-2 border-emerald-900 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <span className="text-[9.5px] font-mono font-bold uppercase px-2.5 py-0.5 rounded bg-emerald-900 text-white tracking-wider inline-block mb-1.5 shadow-sm">
+                  CYBERSECURITY & INFOSEC GUARDIAN &bull; ZERO-TRUST ARCHITECTURE
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 uppercase tracking-tight">
+                  {data.firstName} <span className="text-emerald-800">{data.lastName}</span>
+                </h1>
+                <p className="text-xs font-bold text-emerald-900 uppercase pt-1">
+                  {data.headline}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right text-xs text-slate-600 space-y-1 font-mono">
+                <p className="font-bold text-slate-950">{data.email}</p>
+                <p>{data.phone} &bull; {data.location}</p>
+                <p className="text-emerald-700 font-bold">{data.website}</p>
+              </div>
+            </div>
+
+            {/* Security Defense & Compliance Metrics */}
+            <div className="my-4 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl text-center">
+              <div>
+                <span className="text-[10px] font-bold text-emerald-950 uppercase block tracking-wider">Critical Breaches</span>
+                <span className="text-sm font-extrabold text-emerald-800 font-mono">0 Breaches (100% Defense)</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-emerald-950 uppercase block tracking-wider">Audit Compliance</span>
+                <span className="text-sm font-extrabold text-teal-800 font-mono">100% SOC2 / ISO 27001</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-emerald-950 uppercase block tracking-wider">Threat Neutralization</span>
+                <span className="text-sm font-extrabold text-slate-900 font-mono">&lt; 8 Mins Automated SOAR</span>
+              </div>
+            </div>
+
+            {/* Security Charter */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950 mb-2">
+                INFORMATION SECURITY & ZERO-TRUST ARCHITECTURE CHARTER
+              </h2>
+              <p className="text-[11.5px] leading-relaxed text-slate-700 text-justify">
+                {data.aboutMe}
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950 mb-3">
+                CHRONOLOGICAL DEVSECOPS, PEN-TESTING & SOC OPERATIONAL RECORD
+              </h2>
+              <div className="space-y-4">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline flex-wrap gap-1">
+                      <h3 className="text-xs font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="text-[10px] font-mono font-bold text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
+                        {exp.duration}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-emerald-800">{exp.company}</p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Security Toolkit */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950 mb-2">
+                THREAT DEFENSE, SIEM, SOAR & CRYPTOGRAPHIC TOOLKIT
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {data.skillsList.map((skill, sIdx) => (
+                  <span key={sIdx} className="text-[10px] font-medium px-2.5 py-1 rounded bg-emerald-50 text-emerald-950 border border-emerald-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-950 mb-2">
+                DEGREES & PROFESSIONAL SECURITY CREDENTIALS
+              </h2>
+              <div className="space-y-2 text-xs">
+                {data.education.map((edu, eIdx) => (
+                  <div key={eIdx} className="flex justify-between items-baseline">
+                    <div>
+                      <h4 className="font-bold text-slate-900 uppercase">{edu.degree}</h4>
+                      <p className="text-slate-600">{edu.institution}</p>
+                    </div>
+                    <span className="font-mono text-slate-600 text-xs">{edu.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: WEB3 & SMART CONTRACT ENGINEER (Solidity & EVM)                  */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'blockchain-web3' && (
+          <div
+            id="blockchain-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-10 sm:p-14 font-sans select-text border-t-8 border-t-purple-900 leading-normal"
+            style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="pb-4 border-b-2 border-purple-900 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <span className="text-[9.5px] font-mono font-bold uppercase px-2.5 py-0.5 rounded bg-purple-900 text-white tracking-wider inline-block mb-1.5 shadow-sm">
+                  WEB3 & SMART CONTRACT ENGINEER &bull; EVM & DECENTRALIZED PROTOCOLS
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 uppercase tracking-tight">
+                  {data.firstName} <span className="text-purple-800">{data.lastName}</span>
+                </h1>
+                <p className="text-xs font-bold text-purple-900 uppercase pt-1">
+                  {data.headline}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right text-xs text-slate-600 space-y-1 font-mono">
+                <p className="font-bold text-slate-950">{data.email}</p>
+                <p>{data.phone} &bull; {data.location}</p>
+                <p className="text-purple-700 font-bold">{data.website}</p>
+              </div>
+            </div>
+
+            {/* Protocol & Smart Contract Metrics */}
+            <div className="my-4 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-purple-50/70 border border-purple-200 rounded-xl text-center">
+              <div>
+                <span className="text-[10px] font-bold text-purple-950 uppercase block tracking-wider">Total Value Locked</span>
+                <span className="text-sm font-extrabold text-purple-900 font-mono">$40M+ TVL Secured</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-purple-950 uppercase block tracking-wider">Security Audits</span>
+                <span className="text-sm font-extrabold text-emerald-700 font-mono">0 Exploits / 6 Audits</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-purple-950 uppercase block tracking-wider">Gas Optimization</span>
+                <span className="text-sm font-extrabold text-slate-900 font-mono">-28% Gas Efficiency</span>
+              </div>
+            </div>
+
+            {/* Protocol Charter */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-purple-950 mb-2">
+                DECENTRALIZED ARCHITECTURE & PROTOCOL ENGINEERING CHARTER
+              </h2>
+              <p className="text-[11.5px] leading-relaxed text-slate-700 text-justify">
+                {data.aboutMe}
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-purple-950 mb-3">
+                CHRONOLOGICAL SOLIDITY, SMART CONTRACT & PROTOCOL RECORD
+              </h2>
+              <div className="space-y-4">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline flex-wrap gap-1">
+                      <h3 className="text-xs font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="text-[10px] font-mono font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-200">
+                        {exp.duration}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-purple-800">{exp.company}</p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Web3 Toolkit */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-purple-950 mb-2">
+                SOLIDITY, EVM, ZERO-KNOWLEDGE & PROTOCOL TOOLKIT
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {data.skillsList.map((skill, sIdx) => (
+                  <span key={sIdx} className="text-[10px] font-medium px-2.5 py-1 rounded bg-purple-50 text-purple-950 border border-purple-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-purple-950 mb-2">
+                DEGREES & PEER-REVIEWED PROTOCOL AUDITS
+              </h2>
+              <div className="space-y-2 text-xs">
+                {data.education.map((edu, eIdx) => (
+                  <div key={eIdx} className="flex justify-between items-baseline">
+                    <div>
+                      <h4 className="font-bold text-slate-900 uppercase">{edu.degree}</h4>
+                      <p className="text-slate-600">{edu.institution}</p>
+                    </div>
+                    <span className="font-mono text-slate-600 text-xs">{edu.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* FORMAT: BIOTECH & GENOMIC ENGINEERING (Genomics & Biotech)                */}
+        {/* ========================================================================= */}
+        {selectedFormat === 'biotech-pharma' && (
+          <div
+            id="biotech-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-10 sm:p-14 font-serif select-text border-t-8 border-t-teal-900 leading-normal"
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
+          >
+            {/* Header */}
+            <div className="pb-4 border-b-2 border-teal-900 flex flex-col sm:flex-row sm:items-start justify-between gap-4 font-sans">
+              <div>
+                <span className="text-[9.5px] font-mono font-bold uppercase px-2.5 py-0.5 rounded bg-teal-900 text-white tracking-wider inline-block mb-1.5 shadow-sm">
+                  BIOTECH & COMPUTATIONAL GENOMICS &bull; BIOINFORMATICS PIPELINES
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 uppercase tracking-tight">
+                  {data.firstName} <span className="text-teal-800">{data.lastName}</span>
+                </h1>
+                <p className="text-xs font-bold text-teal-900 uppercase pt-1">
+                  {data.headline}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right text-xs text-slate-600 space-y-1 font-mono">
+                <p className="font-bold text-slate-950">{data.email}</p>
+                <p>{data.phone} &bull; {data.location}</p>
+                <p className="text-teal-700 font-bold">{data.website}</p>
+              </div>
+            </div>
+
+            {/* Genomic Research Metrics */}
+            <div className="my-4 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-teal-50/70 border border-teal-200 rounded-xl text-center font-sans">
+              <div>
+                <span className="text-[10px] font-bold text-teal-950 uppercase block tracking-wider">Sequencing Volume</span>
+                <span className="text-sm font-extrabold text-teal-900 font-mono">1.2B Base Pairs Processed</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-teal-950 uppercase block tracking-wider">Variant Pipeline</span>
+                <span className="text-sm font-extrabold text-emerald-700 font-mono">3.8x Faster Inference</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-teal-950 uppercase block tracking-wider">Compliance</span>
+                <span className="text-sm font-extrabold text-slate-900 font-mono">100% HIPAA & GxP Audited</span>
+              </div>
+            </div>
+
+            {/* Charter */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-teal-950 mb-2 font-sans">
+                COMPUTATIONAL BIOLOGY & GENOMIC PIPELINES CHARTER
+              </h2>
+              <p className="text-[12px] leading-relaxed text-slate-800 text-justify">
+                {data.aboutMe}
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-teal-950 mb-3 font-sans">
+                CHRONOLOGICAL BIOINFORMATICS & GENOMIC RESEARCH RECORD
+              </h2>
+              <div className="space-y-4">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline flex-wrap gap-1 font-sans">
+                      <h3 className="text-xs font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="text-[10px] font-mono font-bold text-teal-900 bg-teal-100 px-2 py-0.5 rounded border border-teal-200">
+                        {exp.duration}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-teal-800 font-sans">{exp.company}</p>
+                    <p className="text-[12px] text-slate-800 leading-relaxed text-justify">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Scientific Stack */}
+            <div className="mb-5 pb-4 border-b border-slate-200 font-sans">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-teal-950 mb-2">
+                BIOINFORMATICS, NEXTFLOW & COMPUTATIONAL TOOLKIT
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {data.skillsList.map((skill, sIdx) => (
+                  <span key={sIdx} className="text-[10px] font-medium px-2.5 py-1 rounded bg-teal-50 text-teal-950 border border-teal-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Education */}
+            <div className="font-sans">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-teal-950 mb-2">
+                ACADEMIC DEGREES & RESEARCH CREDENTIALS
+              </h2>
+              <div className="space-y-2 text-xs">
+                {data.education.map((edu, eIdx) => (
+                  <div key={eIdx} className="flex justify-between items-baseline">
+                    <div>
+                      <h4 className="font-bold text-slate-900 uppercase">{edu.degree}</h4>
+                      <p className="text-slate-600">{edu.institution}</p>
+                    </div>
+                    <span className="font-mono text-slate-600 text-xs">{edu.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* UNIVERSAL FALLBACK TEMPLATE (Ensures ANY format ALWAYS renders)           */}
+        {/* ========================================================================= */}
+        {![
+          'fullstack-modern', 'mobile-app-eng', 'quant-algorithmic', 'product-growth',
+          'executive-monolith', 'cobalt-split', 'minimalist-two-col', 'editorial-grid',
+          'tech-engineering', 'modern-nordic', 'ivy-executive', 'datascience-ai',
+          'product-leader', 'startup-founder', 'fintech-quant', 'consulting-mckinsey',
+          'creative-director', 'healthcare-clinical', 'corporate-legal', 'sales-enterprise',
+          'federal-gov', 'academic-scholar', 'international-hybrid', 'marketing-growth',
+          'operations-scrum', 'cloud-devops', 'cybersecurity-soc', 'blockchain-web3',
+          'biotech-pharma',
+        ].includes(selectedFormat) && (
+          <div
+            id="fallback-resume-sheet"
+            className="print-sheet bg-white text-slate-900 w-full max-w-[820px] shadow-2xl p-10 sm:p-14 font-sans select-text border-t-8 border-t-indigo-700 leading-normal"
+            style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="pb-4 border-b-2 border-indigo-700 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div>
+                <span className="text-[9.5px] font-mono font-bold uppercase px-2.5 py-0.5 rounded bg-indigo-900 text-white tracking-wider inline-block mb-1.5 shadow-sm">
+                  {RESUME_FORMATS_LIST.find((f) => f.id === selectedFormat)?.name || selectedFormat}
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 uppercase tracking-tight">
+                  {data.firstName} <span className="text-indigo-700">{data.lastName}</span>
+                </h1>
+                <p className="text-xs font-bold text-slate-700 uppercase pt-1">
+                  {data.headline}
+                </p>
+              </div>
+
+              <div className="text-left sm:text-right text-xs text-slate-600 space-y-1 font-mono">
+                <p className="font-bold text-slate-950">{data.email}</p>
+                <p>{data.phone} &bull; {data.location}</p>
+                <p className="text-indigo-700 font-bold">{data.website}</p>
+              </div>
+            </div>
+
+            {/* Profile Charter */}
+            <div className="my-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-950 mb-2">
+                EXECUTIVE SUMMARY & PROFESSIONAL CHARTER
+              </h2>
+              <p className="text-[11.5px] leading-relaxed text-slate-700 text-justify">
+                {data.aboutMe}
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-950 mb-3">
+                PROFESSIONAL EXPERIENCE & ACHIEVEMENTS
+              </h2>
+              <div className="space-y-4">
+                {data.experience.map((exp, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between items-baseline flex-wrap gap-1">
+                      <h3 className="text-xs font-bold text-slate-950 uppercase">{exp.title}</h3>
+                      <span className="text-[10px] font-mono font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                        {exp.duration}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-indigo-800">{exp.company}</p>
+                    <p className="text-[11px] text-slate-700 leading-relaxed text-justify">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Technical Skills */}
+            <div className="mb-5 pb-4 border-b border-slate-200">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-950 mb-2">
+                CORE TECHNICAL COMPETENCIES & TOOLKIT
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {data.skillsList.map((skill, sIdx) => (
+                  <span key={sIdx} className="text-[10px] font-medium px-2.5 py-1 rounded bg-indigo-50 text-indigo-950 border border-indigo-200">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Education */}
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-indigo-950 mb-2">
+                EDUCATION & CREDENTIALS
               </h2>
               <div className="space-y-2 text-xs">
                 {data.education.map((edu, eIdx) => (

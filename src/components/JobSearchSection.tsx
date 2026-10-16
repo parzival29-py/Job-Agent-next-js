@@ -419,7 +419,7 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
           company: job.company,
           jobTitle: job.title,
           atsScore: data.final_ats_score || data.receipt.ats_score || 95,
-          resumeFormat: data.resume_format || data.receipt.format_used || 'tech-engineering',
+          resumeFormat: data.resume_format || data.receipt.format_used || 'executive-monolith',
           resumeText: data.application?.custom_resume_text || data.receipt?.custom_resume_text,
           pdfUrl: data.pdf_download_url || data.receipt?.pdf_url,
           docxUrl: data.docx_download_url || data.receipt?.docx_url,

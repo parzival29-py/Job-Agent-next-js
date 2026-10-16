@@ -23,7 +23,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded })
   const [firestoreStatus, setFirestoreStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [syncingFirestore, setSyncingFirestore] = useState(false);
   const [viewMode, setViewMode] = useState<'executive' | 'audit' | 'raw'>('executive');
-  const [resumeFormat, setResumeFormat] = useState<string>('cobalt-split');
+  const [resumeFormat, setResumeFormat] = useState<string>('executive-monolith');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const fetchProfile = async () => {
@@ -255,7 +255,7 @@ HONORS & CERTIFICATIONS
   const handleDownloadPdf = async (format?: string) => {
     try {
       setLoading(true);
-      const resolvedFormat = format && format !== 'auto' ? format : resumeFormat || 'cobalt-split';
+      const resolvedFormat = format && format !== 'auto' ? format : resumeFormat || 'executive-monolith';
 
       // Fast server-side dedicated format renderer
       try {
@@ -690,7 +690,7 @@ HONORS & CERTIFICATIONS
           <div className="flex items-center gap-2">
             <button
               onClick={async () => {
-                const resolvedFormat = resumeFormat || 'cobalt-split';
+                const resolvedFormat = resumeFormat || 'executive-monolith';
                 try {
                   const renderRes = await fetch('/ai/render-resume-pdf', {
                     method: 'POST',

@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Coins,
   ChevronDown,
+  Mail,
 } from 'lucide-react';
 
 import { ResumeSection } from './components/ResumeSection.tsx';
@@ -29,7 +30,11 @@ import { CoverLetterSection } from './components/CoverLetterSection.tsx';
 import { JobSearchSection } from './components/JobSearchSection.tsx';
 import { TrackerSection } from './components/TrackerSection.tsx';
 import { TestSuiteSection } from './components/TestSuiteSection.tsx';
+import { EmailActivityDrawer } from './components/EmailActivityDrawer.tsx';
 import { useCurrency } from './context/CurrencyContext.tsx';
+import { initAuth, getCurrentUser, DEFAULT_NOTIFICATION_EMAIL } from './services/googleAuth.ts';
+import { onEmailDispatched } from './services/emailNotification.ts';
+import type { User } from 'firebase/auth';
 
 import type { ResumeProfile, JobItem } from './types.ts';
 
@@ -46,6 +51,13 @@ export default function App() {
   const [aiStatusMsg, setAiStatusMsg] = useState<string>('');
   const [e2eRunning, setE2eRunning] = useState(false);
   const [e2eMessage, setE2eMessage] = useState<string | null>(null);
+
+  // Email Notification & Gmail Activity Center State
+  const [emailDrawerOpen, setEmailDrawerOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(getCurrentUser());
+  const [hasGoogleAuth, setHasGoogleAuth] = useState(false);
+  const [emailAlertToast, setEmailAlertToast] = useState<{ subject: string; recipient: string } | null>(null);
+  const [emailActivitiesCount, setEmailActivitiesCount] = useState<number>(0);
 
   // Shared context between tabs
   const [currentJobDescription, setCurrentJobDescription] = useState<string>(
@@ -83,6 +95,40 @@ Requirements:
 
   useEffect(() => {
     checkAiHealth();
+
+    // Google Auth State tracking
+    const unsubAuth = initAuth(
+      (user, token) => {
+        setCurrentUser(user);
+        setHasGoogleAuth(Boolean(token));
+      },
+      () => {
+        setCurrentUser(null);
+        setHasGoogleAuth(false);
+      }
+    );
+
+    // Initial stats for email activities
+    fetch('/api/notifications/stats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.stats) {
+          setEmailActivitiesCount(data.stats.total || 0);
+        }
+      })
+      .catch(() => {});
+
+    // Real-time toast on email dispatched
+    const unsubEmail = onEmailDispatched((res) => {
+      setEmailActivitiesCount((prev) => prev + 1);
+      setEmailAlertToast({ subject: res.subject, recipient: res.recipient });
+      setTimeout(() => setEmailAlertToast(null), 6000);
+    });
+
+    return () => {
+      unsubAuth();
+      unsubEmail();
+    };
   }, []);
 
   const handleRunE2eTest = async () => {
@@ -259,6 +305,29 @@ Requirements:
               )}
             </button>
 
+            {/* Gmail Activity & Notification Center Button */}
+            <button
+              onClick={() => setEmailDrawerOpen(true)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition shadow-sm ${
+                currentUser && hasGoogleAuth
+                  ? 'bg-sky-950/70 border-sky-800 text-sky-200 hover:bg-sky-900/60 hover:border-sky-700'
+                  : 'bg-slate-900 border-slate-700/80 hover:border-sky-500 text-slate-200 hover:text-white'
+              }`}
+              title="Email alerts for every company applied & every tailored resume created"
+            >
+              <Mail className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span className="truncate max-w-[170px] sm:max-w-none">
+                {currentUser && hasGoogleAuth
+                  ? `Gmail: ${currentUser.email?.split('@')[0]}`
+                  : 'Email Alerts Active'}
+              </span>
+              {emailActivitiesCount > 0 && (
+                <span className="font-mono font-bold text-[10px] px-1.5 py-0.2 rounded-full bg-sky-900 text-sky-200 border border-sky-700">
+                  {emailActivitiesCount}
+                </span>
+              )}
+            </button>
+
             {/* Run Test 25 E2E Pipeline */}
             <button
               onClick={handleRunE2eTest}
@@ -272,6 +341,22 @@ Requirements:
           </div>
         </div>
       </header>
+
+      {/* Real-time Email Dispatch Toast Banner */}
+      {emailAlertToast && (
+        <div className="bg-emerald-950 border-b border-emerald-800 px-4 py-2.5 text-xs text-emerald-200 text-center flex items-center justify-center gap-2 animate-fade-in">
+          <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            <strong>Dispatched to {emailAlertToast.recipient}:</strong> {emailAlertToast.subject}
+          </span>
+          <button
+            onClick={() => setEmailDrawerOpen(true)}
+            className="underline font-bold ml-2 hover:text-white text-emerald-300 cursor-pointer"
+          >
+            View Activity Log
+          </button>
+        </div>
+      )}
 
       {/* Global Pipeline notification if active */}
       {e2eMessage && (
@@ -355,6 +440,12 @@ Requirements:
           </span>
         </div>
       </footer>
+
+      {/* Email Activity & Notification Center Drawer */}
+      <EmailActivityDrawer
+        isOpen={emailDrawerOpen}
+        onClose={() => setEmailDrawerOpen(false)}
+      />
     </div>
   );
 }

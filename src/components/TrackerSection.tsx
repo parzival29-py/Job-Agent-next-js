@@ -680,6 +680,9 @@ export const TrackerSection: React.FC = () => {
                           resumeText: selectedApp.custom_resume_text,
                           atsScore: selectedApp.ats_score || 95,
                           docxUrl: selectedApp.custom_docx_url,
+                          targetCompany: selectedApp.company,
+                          jobTitle: selectedApp.job_title,
+                          applied: selectedApp.status !== 'Ready to Apply' && selectedApp.status !== 'Saved',
                         });
                       }
                     }}

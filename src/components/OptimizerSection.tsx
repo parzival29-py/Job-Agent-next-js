@@ -3,6 +3,7 @@ import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, Trend
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
 import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
+import { sendResumeTailoredEmail } from '../services/emailNotification.ts';
 
 interface OptimizerSectionProps {
   jobDescription: string;
@@ -176,6 +177,21 @@ Requirements:
         } else if (data.resume?.download_url) {
           await triggerUrlDownload(data.resume.download_url, data.resume.filename);
         }
+
+        // Email dispatch for every tailored resume made
+        try {
+          const finalScore = data.optimization?.final_score?.ats_score || 93;
+          sendResumeTailoredEmail({
+            company: 'Target Employer (Custom Optimized)',
+            jobTitle: 'Target Role',
+            atsScore: finalScore,
+            initialScore: data.optimization?.initial_score?.ats_score,
+            resumeFormat: formatToUse,
+            resumeText: data.optimization?.optimized_resume || '',
+            pdfUrl: targetPdfUrl,
+            docxUrl: data.resume?.download_url,
+          }).catch((err) => console.warn('Email dispatch warning:', err));
+        } catch {}
       } else {
         setError(data.message || 'Document generation failed.');
       }

@@ -22,12 +22,17 @@ import {
   Bookmark,
   BookmarkCheck,
   Check,
+  Mail,
 } from 'lucide-react';
 import type { JobItem, JobPreferences, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 import { useCurrency } from '../context/CurrencyContext.tsx';
+import {
+  sendApplicationActivityEmail,
+  sendResumeTailoredEmail,
+} from '../services/emailNotification.ts';
 
 interface JobSearchSectionProps {
   onSelectJob: (job: JobItem) => void;
@@ -408,6 +413,28 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
         setTrackedJobIds((prev) => new Set([...prev, job.id]));
         setApplicationReceipt({ job, receipt: data.receipt });
         showToast(`🎉 Applied directly to ${job.company}! No redirection needed.`, 'success');
+
+        // Automatically dispatch application activity email with tailored resume to user's mail
+        sendApplicationActivityEmail({
+          company: job.company,
+          jobTitle: job.title,
+          atsScore: data.final_ats_score || data.receipt.ats_score || 95,
+          resumeFormat: data.resume_format || data.receipt.format_used || 'tech-engineering',
+          resumeText: data.application?.custom_resume_text || data.receipt?.custom_resume_text,
+          pdfUrl: data.pdf_download_url || data.receipt?.pdf_url,
+          docxUrl: data.docx_download_url || data.receipt?.docx_url,
+          coverLetter: data.receipt?.cover_letter,
+          screeningAnswers: data.receipt?.screening_answers,
+          platform: job.platform || 'Company Direct Portal',
+        }).then((dispatchRes) => {
+          if (dispatchRes.channel === 'gmail_api') {
+            showToast(`📧 Application confirmation & tailored resume delivered to your Gmail!`, 'success');
+          } else {
+            showToast(`📧 Application activity recorded for ${dispatchRes.recipient}`, 'success');
+          }
+        }).catch((err) => {
+          console.warn('Email dispatch notice:', err);
+        });
       } else {
         showToast(data.message || 'Auto-application failed. Retrying with tailored packet...', 'error');
       }
@@ -437,6 +464,26 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
       if (data.success) {
         setCustomResumeModal({ job, data });
         showToast(`Tailored 90+ ATS Resume generated in ${data.resume_format} format!`);
+
+        // Automatically dispatch email with the newly created custom tailored resume
+        sendResumeTailoredEmail({
+          company: job.company,
+          jobTitle: job.title,
+          atsScore: data.final_ats_score || 94,
+          initialScore: data.initial_ats_score,
+          resumeFormat: data.resume_format,
+          resumeText: data.application?.custom_resume_text || '',
+          pdfUrl: data.pdf_download_url,
+          docxUrl: data.download_url,
+        }).then((dispatchRes) => {
+          if (dispatchRes.channel === 'gmail_api') {
+            showToast(`📧 Custom tailored resume sent to your Gmail inbox!`, 'success');
+          } else {
+            showToast(`📧 Custom resume activity logged for ${dispatchRes.recipient}`, 'success');
+          }
+        }).catch((err) => {
+          console.warn('Resume email dispatch notice:', err);
+        });
       } else {
         showToast(data.message || 'Failed to tailor custom resume.', 'error');
       }
@@ -1704,7 +1751,19 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                       const targetFilename =
                         customResumeModal.data.pdf_filename ||
                         `Tailored_Resume_${customResumeModal.data.resume_format}.pdf`;
-                      openPdfViewerModal(targetUrl, targetFilename);
+                      openPdfViewerModal(targetUrl, targetFilename, {
+                        resumeText: customResumeModal.data.application?.custom_resume_text,
+                        resumeData: profile,
+                        atsScore: customResumeModal.data.final_ats_score || 95,
+                        format: customResumeModal.data.resume_format,
+                        docxUrl: customResumeModal.data.download_url,
+                        jobTitle: customResumeModal.job.title,
+                        targetCompany: customResumeModal.job.company,
+                        jobId: customResumeModal.job.id,
+                        jobData: customResumeModal.job,
+                        onApply: () => handleAutoApplyJob(customResumeModal.job),
+                        applied: autoAppliedJobIds.has(customResumeModal.job.id),
+                      });
                     }}
                     className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition cursor-pointer"
                     title="Open and view resume directly in browser"
@@ -1713,6 +1772,27 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                     Open & View
                   </button>
                 )}
+
+                {/* 1-Click Apply CTA directly in custom tailored resume modal */}
+                <button
+                  onClick={() => handleAutoApplyJob(customResumeModal.job)}
+                  disabled={applyingJobId === customResumeModal.job.id || autoAppliedJobIds.has(customResumeModal.job.id)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition cursor-pointer ${
+                    autoAppliedJobIds.has(customResumeModal.job.id)
+                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                      : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white active:scale-95'
+                  }`}
+                  title="Submit your 1-click autonomous application to this company with your tailored resume. Zero redirection."
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>
+                    {autoAppliedJobIds.has(customResumeModal.job.id)
+                      ? 'Applied ✓'
+                      : applyingJobId === customResumeModal.job.id
+                      ? 'Submitting...'
+                      : `1-Click Apply to ${customResumeModal.job.company}`}
+                  </span>
+                </button>
                 {(customResumeModal.data.pdf_download_url || customResumeModal.data.download_url) && (
                   <a
                     href={

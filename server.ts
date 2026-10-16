@@ -38,6 +38,11 @@ import {
   getNextResumeFormat,
   RESUME_FORMATS,
 } from './server/applicationsTracker.js';
+import {
+  recordEmailActivity,
+  loadEmailActivities,
+  getEmailActivityStats,
+} from './server/emailActivityTracker.js';
 
 dotenv.config();
 
@@ -1592,6 +1597,77 @@ app.post(['/workflow/e2e-test', '/api/workflow/e2e-test'], async (req, res) => {
       message: 'End-to-end workflow failed.',
       error: error.message,
     });
+  }
+});
+
+// ============================================================
+// EMAIL ACTIVITY & DISPATCH NOTIFICATION ENDPOINTS
+// ============================================================
+
+app.post('/api/notifications/log', (req, res) => {
+  try {
+    const {
+      type = 'application_applied',
+      recipient = 'aryamanharshdewangan@gmail.com',
+      subject = 'Activity Notification',
+      company,
+      job_title,
+      ats_score,
+      resume_format,
+      resume_preview,
+      status = 'sent',
+      channel = 'gmail_api',
+      message_id,
+      html_body,
+      metadata,
+    } = req.body || {};
+
+    const record = recordEmailActivity({
+      type,
+      recipient,
+      subject,
+      company,
+      job_title,
+      ats_score,
+      resume_format,
+      resume_preview,
+      status,
+      channel,
+      message_id,
+      html_body,
+      metadata,
+    });
+
+    return res.json({
+      success: true,
+      activity: record,
+      message: `Activity recorded: ${subject}`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/notifications/history', (_req, res) => {
+  try {
+    const activities = loadEmailActivities();
+    const stats = getEmailActivityStats();
+    return res.json({
+      success: true,
+      activities,
+      stats,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/notifications/stats', (_req, res) => {
+  try {
+    const stats = getEmailActivityStats();
+    return res.json({ success: true, stats });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

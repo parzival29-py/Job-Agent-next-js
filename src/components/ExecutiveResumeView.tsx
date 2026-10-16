@@ -108,6 +108,7 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
     profile || optimizedText ? 'candidate' : 'mockup'
   );
   const [isEditing, setIsEditing] = useState(false);
+  const [canvasZoom, setCanvasZoom] = useState<number>(1.0);
 
   // Exact data from Image 1 (David Anderson)
   const mockupData = {
@@ -609,7 +610,7 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
           </div>
 
           {/* Quick Format Badges */}
-          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+          <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1.5 py-1">
             {filteredFormats.map((opt) => {
               const isRec = opt.id === recommended.formatId;
               const isSelected = selectedFormat === opt.id;
@@ -617,18 +618,27 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
                 <button
                   key={opt.id}
                   onClick={() => handleSelectFormat(opt.id as any)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
                     isSelected
-                      ? 'bg-indigo-600 text-white font-bold shadow-sm ring-1 ring-indigo-400'
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold shadow-md shadow-indigo-600/30 ring-2 ring-indigo-400 ring-offset-1 ring-offset-slate-900 scale-[1.02]'
                       : isRec
-                      ? 'bg-amber-950/40 text-amber-300 border border-amber-800/60 hover:bg-amber-900/40'
-                      : 'bg-slate-950 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+                      ? 'bg-amber-950/70 text-amber-200 border border-amber-600/80 hover:bg-amber-900/60 hover:text-white hover:border-amber-500'
+                      : 'bg-slate-950 text-slate-200 hover:text-white hover:bg-slate-800/90 border border-slate-700/80 hover:border-indigo-500/60'
                   }`}
                   title={`${opt.description} (Best for: ${opt.bestFor})`}
                 >
-                  <span>{opt.name}</span>
-                  <span className="text-[10px] opacity-75 font-mono">({opt.tag})</span>
-                  {isRec && <span className="text-amber-400 font-bold">★</span>}
+                  <span className="font-medium tracking-tight">{opt.name}</span>
+                  <span
+                    className={`text-[10px] font-mono px-1 py-0.2 rounded ${
+                      isSelected ? 'bg-white/20 text-white font-bold' : 'bg-slate-800/80 text-slate-400'
+                    }`}
+                  >
+                    {opt.tag}
+                  </span>
+                  {isRec && <span className="text-amber-400 font-bold ml-0.5">★</span>}
+                  {isSelected && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                  )}
                 </button>
               );
             })}
@@ -637,7 +647,62 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
       </div>
 
       {/* PAPER CANVAS CONTAINER */}
-      <div className="flex justify-center bg-slate-200/60 p-4 sm:p-8 rounded-2xl overflow-x-auto">
+      <div className="flex flex-col items-center justify-start bg-slate-950/90 border border-slate-800/80 rounded-2xl p-4 sm:p-8 overflow-x-auto shadow-2xl relative min-h-[640px] transition-all">
+        {/* Paper Canvas Interactive Control Bar */}
+        <div className="w-full max-w-[840px] mb-6 pb-3 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-bold text-white tracking-wide">
+              {RESUME_FORMATS_LIST.find((f) => f.id === selectedFormat)?.name || selectedFormat}
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/70 font-semibold">
+              Recruiter-Verified Single-Page Layout
+            </span>
+          </div>
+
+          {/* Zoom & Scale Controls */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 font-medium">Preview Scale:</span>
+            <div className="flex items-center bg-slate-900 border border-slate-700/80 rounded-lg p-0.5 text-xs shadow-inner">
+              <button
+                type="button"
+                onClick={() => setCanvasZoom((z) => Math.max(0.65, Math.round((z - 0.1) * 10) / 10))}
+                className="px-2 py-0.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded font-bold cursor-pointer transition"
+                title="Zoom Out"
+              >
+                −
+              </button>
+              <span className="px-2 font-mono text-[11px] font-bold text-indigo-300 min-w-[42px] text-center">
+                {Math.round(canvasZoom * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setCanvasZoom((z) => Math.min(1.3, Math.round((z + 0.1) * 10) / 10))}
+                className="px-2 py-0.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded font-bold cursor-pointer transition"
+                title="Zoom In"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                onClick={() => setCanvasZoom(1.0)}
+                className="px-2 py-0.5 text-[10px] text-slate-400 hover:text-white hover:bg-slate-800 rounded font-semibold ml-0.5 cursor-pointer transition"
+                title="Reset Scale"
+              >
+                100%
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scaled Resume Sheet Wrapper */}
+        <div
+          className="w-full flex justify-center transition-transform duration-150 origin-top"
+          style={{ transform: `scale(${canvasZoom})` }}
+        >
         {/* ========================================================================= */}
         {/* FORMAT: MODERN FULLSTACK & MICROSERVICES                                  */}
         {/* ========================================================================= */}
@@ -3492,6 +3557,7 @@ export const ExecutiveResumeView: React.FC<ExecutiveResumeViewProps> = ({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,11 @@
+[
+  {
+    "id": "eml_1792166640912_pqm1h",
+    "timestamp": "2026-10-16T16:04:00.912Z",
+    "type": "test_dispatch",
+    "recipient": "aryamanharshdewangan@gmail.com",
+    "subject": "Integration Test Verification",
+    "status": "sent",
+    "channel": "gmail_api"
+  }
+]

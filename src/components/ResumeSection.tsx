@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, RefreshCw, User, Briefcase, GraduationCap, Award, Database, Cloud, X, Layout, Eye, Code, Download } from 'lucide-react';
-import type { ResumeProfile } from '../types.ts';
+import type { ResumeProfile, JobItem } from '../types.ts';
 import { db, testFirestoreConnection } from '../firebase.ts';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
+import { RecommendedJobsWidget } from './RecommendedJobsWidget.tsx';
 import { detectRecommendedFormat, RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 
 interface ResumeSectionProps {
   onProfileLoaded?: (profile: ResumeProfile) => void;
+  onSelectJob?: (job: JobItem) => void;
+  onNavigateToJobs?: () => void;
+  onNavigateToOptimizer?: (job: JobItem) => void;
 }
 
-export const ResumeSection: React.FC<ResumeSectionProps> = ({ onProfileLoaded }) => {
+export const ResumeSection: React.FC<ResumeSectionProps> = ({
+  onProfileLoaded,
+  onSelectJob,
+  onNavigateToJobs,
+  onNavigateToOptimizer,
+}) => {
   const [profile, setProfile] = useState<ResumeProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -256,30 +265,6 @@ HONORS & CERTIFICATIONS
     try {
       setLoading(true);
       const resolvedFormat = format && format !== 'auto' ? format : resumeFormat || 'executive-monolith';
-
-      // Fast server-side dedicated format renderer
-      try {
-        const renderRes = await fetch('/ai/render-resume-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            resume_text: profile?.raw_text || '',
-            resume_format: resolvedFormat,
-            ats_score: 95,
-            resume_data: profile,
-          }),
-        });
-        const renderData = await renderRes.json();
-        if (renderData.success && renderData.pdf_download_url) {
-          const outName = renderData.pdf_filename || `${(profile?.name || 'Resume').replace(/\s+/g, '_')}_${resolvedFormat}.pdf`;
-          await triggerUrlDownload(renderData.pdf_download_url, outName);
-          return;
-        }
-      } catch (fastErr) {
-        console.warn('Fast render fallback:', fastErr);
-      }
-
-      // Fallback DOM PDF capture
       await exportResumeToPdf({
         format: resolvedFormat,
         atsScore: 95,
@@ -647,6 +632,16 @@ HONORS & CERTIFICATIONS
           )}
         </div>
       </div>
+
+      {/* Recommended Jobs Widget based on uploaded resume profile */}
+      {profile && (
+        <RecommendedJobsWidget
+          profile={profile}
+          onSelectJob={onSelectJob}
+          onNavigateToJobs={onNavigateToJobs}
+          onNavigateToOptimizer={onNavigateToOptimizer}
+        />
+      )}
 
       {/* Sub-view switcher for Profile */}
       {profile && (

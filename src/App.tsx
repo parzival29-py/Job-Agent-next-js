@@ -398,7 +398,16 @@ Requirements:
       {/* Tab Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8">
         {activeTab === 'resume' && (
-          <ResumeSection />
+          <ResumeSection
+            onSelectJob={handleSelectJobFromSearch}
+            onNavigateToJobs={() => setActiveTab('jobs')}
+            onNavigateToOptimizer={(job) => {
+              setCurrentJobDescription(
+                `${job.title} at ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`
+              );
+              setActiveTab('optimizer');
+            }}
+          />
         )}
 
         {activeTab === 'ats' && (

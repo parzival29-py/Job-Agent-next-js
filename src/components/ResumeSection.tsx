@@ -69,6 +69,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({
         experience: profileToSave.experience || [],
         education: profileToSave.education || [],
         projects: profileToSave.projects || [],
+        preferences: profileToSave.preferences || {},
         updated_at: new Date().toISOString(),
       }, { merge: true });
     } catch (err) {
@@ -640,6 +641,9 @@ HONORS & CERTIFICATIONS
           onSelectJob={onSelectJob}
           onNavigateToJobs={onNavigateToJobs}
           onNavigateToOptimizer={onNavigateToOptimizer}
+          onUpdatePreferences={(newPrefs) => {
+            setProfile((prev) => (prev ? { ...prev, preferences: newPrefs } : null));
+          }}
         />
       )}
 

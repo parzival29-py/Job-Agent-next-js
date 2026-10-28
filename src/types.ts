@@ -36,6 +36,7 @@ export interface ResumeProfile {
     link?: string;
   }>;
   raw_text?: string;
+  preferences?: JobPreferences;
 }
 
 export interface AtsScoreResult {

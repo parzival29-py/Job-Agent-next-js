@@ -28,6 +28,9 @@ export interface ApplicationRecord {
   timeline?: StatusTransition[];
   created_at: string;
   updated_at: string;
+  salary_amount?: number;
+  salary_period?: 'year' | 'month';
+  salary_text?: string;
 }
 
 export const RESUME_FORMATS = [
@@ -144,6 +147,30 @@ export function generateDefaultTimeline(app: Partial<ApplicationRecord>): Status
   return events;
 }
 
+function inferApplicationSalary(app: ApplicationRecord): number {
+  if (app.salary_amount && app.salary_amount > 0) return app.salary_amount;
+  const company = (app.company || '').toLowerCase();
+  const title = (app.job_title || '').toLowerCase();
+  const notes = (app.notes || '').toLowerCase();
+
+  const kMatch = notes.match(/\$(\d{2,3})k/i) || notes.match(/(\d{2,3})k/i);
+  if (kMatch) {
+    return parseInt(kMatch[1], 10) * 1000;
+  }
+
+  if (company.includes('anthropic')) return 170000;
+  if (company.includes('meta')) return 165000;
+  if (company.includes('google')) return title.includes('intern') ? 105000 : 180000;
+  if (company.includes('apex')) return 145000;
+  if (company.includes('groww')) return title.includes('intern') ? 65000 : 125000;
+
+  if (title.includes('intern')) return 75000;
+  if (title.includes('architect') || title.includes('lead') || title.includes('principal')) return 185000;
+  if (title.includes('ai') || title.includes('machine learning') || title.includes('systems')) return 160000;
+  if (title.includes('backend') || title.includes('cloud') || title.includes('devops')) return 145000;
+  return 135000;
+}
+
 function readApplications(): ApplicationRecord[] {
   if (!fs.existsSync(APPLICATIONS_FILE)) {
     return [];
@@ -153,10 +180,16 @@ function readApplications(): ApplicationRecord[] {
     const apps: ApplicationRecord[] = JSON.parse(raw);
     let changed = false;
 
-    // Ensure all apps have a structured timeline
+    // Ensure all apps have a structured timeline and salary metadata
     for (const app of apps) {
       if (!app.timeline || !Array.isArray(app.timeline) || app.timeline.length === 0) {
         app.timeline = generateDefaultTimeline(app);
+        changed = true;
+      }
+      if (!app.salary_amount || app.salary_amount <= 0) {
+        app.salary_amount = inferApplicationSalary(app);
+        app.salary_period = 'year';
+        app.salary_text = `$${Math.round(app.salary_amount / 1000)}k/year`;
         changed = true;
       }
     }
@@ -194,6 +227,9 @@ export function createApplication(params: {
   status?: string;
   notes?: string;
   timeline?: StatusTransition[];
+  salary_amount?: number;
+  salary_period?: 'year' | 'month';
+  salary_text?: string;
 }): ApplicationRecord {
   const apps = readApplications();
   const now = new Date().toISOString();
@@ -216,6 +252,10 @@ export function createApplication(params: {
     });
   }
 
+  const assignedSalary = params.salary_amount && params.salary_amount > 0
+    ? params.salary_amount
+    : inferApplicationSalary({ company: params.company, job_title: params.job_title, notes: params.notes } as any);
+
   const newApp: ApplicationRecord = {
     id: 'app_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
     company: params.company,
@@ -235,6 +275,9 @@ export function createApplication(params: {
     timeline: initialTimeline,
     created_at: now,
     updated_at: now,
+    salary_amount: assignedSalary,
+    salary_period: params.salary_period || 'year',
+    salary_text: params.salary_text || `$${Math.round(assignedSalary / 1000)}k/year`,
   };
   apps.unshift(newApp);
   writeApplications(apps);

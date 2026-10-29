@@ -104,6 +104,9 @@ export interface ApplicationRecord {
   timeline?: StatusTransition[];
   created_at: string;
   updated_at: string;
+  salary_amount?: number;
+  salary_period?: 'year' | 'month';
+  salary_text?: string;
 }
 
 export interface JobPreferences {

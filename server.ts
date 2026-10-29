@@ -1161,6 +1161,9 @@ app.post(['/applications', '/api/applications'], (req, res) => {
       cover_letter: req.body?.cover_letter,
       status: req.body?.status,
       notes: req.body?.notes,
+      salary_amount: req.body?.salary_amount ? Number(req.body.salary_amount) : undefined,
+      salary_period: req.body?.salary_period,
+      salary_text: req.body?.salary_text,
     });
     return res.json({
       success: true,

@@ -5,6 +5,8 @@ import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 import { ApplicationProgressTimeline, MiniTimelineBar, PIPELINE_STAGES } from './ApplicationProgressTimeline.tsx';
+import { SalaryDistributionChart } from './SalaryDistributionChart.tsx';
+import { useCurrency } from '../context/CurrencyContext.tsx';
 
 export const TrackerSection: React.FC = () => {
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
@@ -21,10 +23,12 @@ export const TrackerSection: React.FC = () => {
 
   // New Application Modal
   const [isAdding, setIsAdding] = useState(false);
+  const { formatSalary } = useCurrency();
   const [newCompany, setNewCompany] = useState('');
   const [newJobTitle, setNewJobTitle] = useState('');
   const [newStatus, setNewStatus] = useState('Saved');
   const [newAtsScore, setNewAtsScore] = useState<number | ''>('');
+  const [newSalary, setNewSalary] = useState<number | ''>('');
   const [newNotes, setNewNotes] = useState('');
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [appToDelete, setAppToDelete] = useState<string | null>(null);
@@ -226,6 +230,7 @@ export const TrackerSection: React.FC = () => {
           job_title: newJobTitle,
           status: newStatus,
           ats_score: newAtsScore ? Number(newAtsScore) : null,
+          salary_amount: newSalary ? Number(newSalary) : undefined,
           notes: newNotes,
         }),
       });
@@ -235,6 +240,7 @@ export const TrackerSection: React.FC = () => {
         setNewCompany('');
         setNewJobTitle('');
         setNewAtsScore('');
+        setNewSalary('');
         setNewNotes('');
         await fetchData();
       }
@@ -383,6 +389,15 @@ export const TrackerSection: React.FC = () => {
         </div>
       )}
 
+      {/* Interactive D3.js Salary Distribution & Market Trends Chart */}
+      <SalaryDistributionChart
+        applications={applications}
+        onSelectApplication={(app) => {
+          setSelectedApp(app);
+          setShowResumePreview(false);
+        }}
+      />
+
       {/* Main Table & Actions */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -474,6 +489,7 @@ export const TrackerSection: React.FC = () => {
                 <tr>
                   <th className="py-3 px-4">Company & Role</th>
                   <th className="py-3 px-4">ATS Score</th>
+                  <th className="py-3 px-4">Compensation</th>
                   <th className="py-3 px-4">Pipeline Progress</th>
                   <th className="py-3 px-4">Resume Format</th>
                   <th className="py-3 px-4">Status</th>
@@ -518,6 +534,11 @@ export const TrackerSection: React.FC = () => {
                         ) : (
                           <span className="text-slate-600">—</span>
                         )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-mono text-slate-300 font-medium">
+                          {app.salary_amount ? formatSalary(app.salary_amount, 'year') : '—'}
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <div className="space-y-1">
@@ -759,6 +780,12 @@ export const TrackerSection: React.FC = () => {
                 <span className="font-semibold text-white">{selectedApp.status}</span>
               </div>
               <div>
+                <span className="text-slate-500 block">Target Salary:</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {selectedApp.salary_amount ? formatSalary(selectedApp.salary_amount, 'year') : '—'}
+                </span>
+              </div>
+              <div>
                 <span className="text-slate-500 block">ATS Score:</span>
                 <span className="font-semibold text-emerald-400">{selectedApp.ats_score ?? '95'}%</span>
               </div>
@@ -841,7 +868,7 @@ export const TrackerSection: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="text-xs text-slate-400 block mb-1">Initial Status</label>
                 <select
@@ -858,7 +885,18 @@ export const TrackerSection: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs text-slate-400 block mb-1">ATS Score (Optional)</label>
+                <label className="text-xs text-slate-400 block mb-1">Target Salary ($/yr)</label>
+                <input
+                  type="number"
+                  value={newSalary}
+                  onChange={(e) => setNewSalary(e.target.value === '' ? '' : Number(e.target.value))}
+                  placeholder="e.g. 150000"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">ATS Score</label>
                 <input
                   type="number"
                   value={newAtsScore}

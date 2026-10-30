@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Target, CheckCircle2, AlertTriangle, Sparkles, ArrowRight, BarChart3, ListFilter } from 'lucide-react';
+import { Target, CheckCircle2, AlertTriangle, Sparkles, ArrowRight, BarChart3, ListFilter, GitCompare } from 'lucide-react';
 import type { AtsScoreResult } from '../types.ts';
+import { ResumeCompareSection } from './ResumeCompareSection.tsx';
 
 interface AtsSectionProps {
   jobDescription: string;
@@ -15,6 +16,7 @@ export const AtsSection: React.FC<AtsSectionProps> = ({
   onSendToOptimizer,
   onSendToCoverLetter,
 }) => {
+  const [subTab, setSubTab] = useState<'single' | 'compare'>('single');
   const [loadingAts, setLoadingAts] = useState(false);
   const [loadingJd, setLoadingJd] = useState(false);
   const [loadingMatch, setLoadingMatch] = useState(false);
@@ -127,20 +129,55 @@ Requirements:
 
   return (
     <div className="space-y-6">
-      {/* Top Description Input */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Target className="w-5 h-5 text-indigo-400" />
-              Target Job Description & ATS Benchmark
-            </h2>
-            <p className="text-sm text-slate-400 mt-1">
-              Paste the target job description to evaluate keyword saturation, structural alignment, and ATS match percentage against your current resume.
-            </p>
-          </div>
+      {/* Mode Switcher: Single ATS Scorer vs Dual Resume Compare */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-850 pb-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setSubTab('single')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              subTab === 'single'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
+            }`}
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span>Single ATS Benchmark & Match</span>
+          </button>
+          <button
+            onClick={() => setSubTab('compare')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+              subTab === 'compare'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
+            }`}
+          >
+            <GitCompare className="w-3.5 h-3.5 text-violet-400" />
+            <span>A/B Compare Two Resumes</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-violet-950/90 border border-violet-800 text-violet-300 font-bold">
+              2 ATS Scores
+            </span>
+          </button>
+        </div>
+      </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+      {subTab === 'compare' ? (
+        <ResumeCompareSection onSendToOptimizer={onSendToOptimizer} />
+      ) : (
+        <>
+          {/* Top Description Input */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Target className="w-5 h-5 text-indigo-400" />
+                  Target Job Description & ATS Benchmark
+                </h2>
+                <p className="text-sm text-slate-400 mt-1">
+                  Paste the target job description to evaluate keyword saturation, structural alignment, and ATS match percentage against your current resume.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-500 font-medium">Prefill Sample:</span>
             {sampleJDs.map((sample, idx) => (
               <button
@@ -425,6 +462,8 @@ Requirements:
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

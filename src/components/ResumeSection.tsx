@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, RefreshCw, User, Briefcase, GraduationCap, Award, Database, Cloud, X, Layout, Eye, Code, Download, History } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, RefreshCw, User, Briefcase, GraduationCap, Award, Database, Cloud, X, Layout, Eye, Code, Download, History, GitCompare } from 'lucide-react';
 import type { ResumeProfile, JobItem } from '../types.ts';
 import { db, testFirestoreConnection } from '../firebase.ts';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { RecommendedJobsWidget } from './RecommendedJobsWidget.tsx';
 import { ResumeVersionsView } from './ResumeVersionsView.tsx';
+import { ResumeCompareSection } from './ResumeCompareSection.tsx';
 import { detectRecommendedFormat, RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 
@@ -32,7 +33,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [firestoreStatus, setFirestoreStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [syncingFirestore, setSyncingFirestore] = useState(false);
-  const [viewMode, setViewMode] = useState<'executive' | 'versions' | 'audit' | 'raw'>('executive');
+  const [viewMode, setViewMode] = useState<'executive' | 'versions' | 'compare' | 'audit' | 'raw'>('executive');
   const [resumeFormat, setResumeFormat] = useState<string>('executive-monolith');
   const [versionsCount, setVersionsCount] = useState<number>(2);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -703,6 +704,20 @@ HONORS & CERTIFICATIONS
               )}
             </button>
             <button
+              onClick={() => setViewMode('compare')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                viewMode === 'compare'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <GitCompare className="w-3.5 h-3.5 text-violet-400" />
+              <span>A/B Compare Resumes</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-violet-950/80 border border-violet-850 text-violet-300 font-bold">
+                2 ATS Scores
+              </span>
+            </button>
+            <button
               onClick={() => setViewMode('audit')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
                 viewMode === 'audit'
@@ -817,6 +832,16 @@ HONORS & CERTIFICATIONS
           <ResumeVersionsView
             currentProfile={profile}
             onProfileReverted={(newProfile) => {
+              setProfile(newProfile);
+              if (onProfileLoaded) onProfileLoaded(newProfile);
+              syncToFirestore(newProfile);
+              fetchVersionsCount();
+            }}
+          />
+        ) : viewMode === 'compare' ? (
+          <ResumeCompareSection
+            currentProfile={profile}
+            onSelectActiveProfile={(newProfile) => {
               setProfile(newProfile);
               if (onProfileLoaded) onProfileLoaded(newProfile);
               syncToFirestore(newProfile);

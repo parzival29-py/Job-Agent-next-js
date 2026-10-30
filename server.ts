@@ -787,7 +787,7 @@ app.post(['/ai/job-analysis', '/api/ai/job-analysis'], async (req, res) => {
 // ============================================================
 
 app.post(['/ai/ats-score', '/api/ai/ats-score'], async (req, res) => {
-  const resumeText = loadResumeText();
+  const resumeText = req.body?.resume_text || loadResumeText();
   if (!resumeText) {
     return res.json({
       success: false,
@@ -811,6 +811,90 @@ app.post(['/ai/ats-score', '/api/ai/ats-score'], async (req, res) => {
     return res.json({
       success: false,
       message: 'ATS scoring failed.',
+      error: error.message,
+    });
+  }
+});
+
+// ============================================================
+// DUAL RESUME A/B ATS COMPARISON
+// ============================================================
+
+app.post(['/ai/compare-resumes', '/api/ai/compare-resumes'], async (req, res) => {
+  const jobDescription = req.body?.job_description || '';
+  if (!jobDescription.trim()) {
+    return res.json({
+      success: false,
+      message: 'Job description cannot be empty.',
+    });
+  }
+
+  const textA = (req.body?.resume_a?.text || req.body?.resume_a_text || loadResumeText() || '').trim();
+  const textB = (req.body?.resume_b?.text || req.body?.resume_b_text || '').trim();
+
+  if (!textA || !textB) {
+    return res.json({
+      success: false,
+      message: 'Please provide two different resumes to compare.',
+    });
+  }
+
+  const nameA = req.body?.resume_a?.name || req.body?.resume_a_name || 'Resume A';
+  const nameB = req.body?.resume_b?.name || req.body?.resume_b_name || 'Resume B';
+
+  try {
+    const [resultA, resultB] = await Promise.all([
+      calculateAtsScore(textA, jobDescription),
+      calculateAtsScore(textB, jobDescription),
+    ]);
+
+    const setA = new Set((resultA.matched_keywords || []).map((k) => k.toLowerCase()));
+    const setB = new Set((resultB.matched_keywords || []).map((k) => k.toLowerCase()));
+
+    const commonKeywords = (resultA.matched_keywords || []).filter((k) => setB.has(k.toLowerCase()));
+    const uniqueKeywordsA = (resultA.matched_keywords || []).filter((k) => !setB.has(k.toLowerCase()));
+    const uniqueKeywordsB = (resultB.matched_keywords || []).filter((k) => !setA.has(k.toLowerCase()));
+
+    const scoreDelta = resultB.ats_score - resultA.ats_score;
+    let winner: 'resume_a' | 'resume_b' | 'tie' = 'tie';
+    if (scoreDelta > 0) winner = 'resume_b';
+    else if (scoreDelta < 0) winner = 'resume_a';
+
+    let verdict = '';
+    if (winner === 'resume_b') {
+      verdict = `${nameB} outperforms ${nameA} by +${scoreDelta}% ATS match, matching ${resultB.matched_keywords.length} keywords compared to ${resultA.matched_keywords.length}.`;
+    } else if (winner === 'resume_a') {
+      verdict = `${nameA} outperforms ${nameB} by +${Math.abs(scoreDelta)}% ATS match with superior skills alignment.`;
+    } else {
+      verdict = `Both resumes tied at ${resultA.ats_score}% ATS match score with comparable keyword and structural coverage.`;
+    }
+
+    return res.json({
+      success: true,
+      name_a: nameA,
+      name_b: nameB,
+      result_a: resultA,
+      result_b: resultB,
+      comparison: {
+        winner,
+        score_delta: scoreDelta,
+        verdict,
+        common_keywords: commonKeywords,
+        unique_keywords_a: uniqueKeywordsA,
+        unique_keywords_b: uniqueKeywordsB,
+        metrics: {
+          ats_score: { a: resultA.ats_score, b: resultB.ats_score, diff: scoreDelta },
+          keyword_score: { a: resultA.keyword_score, b: resultB.keyword_score, diff: resultB.keyword_score - resultA.keyword_score },
+          skills_score: { a: resultA.skills_score, b: resultB.skills_score, diff: resultB.skills_score - resultA.skills_score },
+          experience_score: { a: resultA.experience_score, b: resultB.experience_score, diff: resultB.experience_score - resultA.experience_score },
+          formatting_score: { a: resultA.formatting_score, b: resultB.formatting_score, diff: resultB.formatting_score - resultA.formatting_score },
+        },
+      },
+    });
+  } catch (error: any) {
+    return res.json({
+      success: false,
+      message: 'Resume comparison failed.',
       error: error.message,
     });
   }

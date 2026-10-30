@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, RefreshCw, User, Briefcase, GraduationCap, Award, Database, Cloud, X, Layout, Eye, Code, Download } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, RefreshCw, User, Briefcase, GraduationCap, Award, Database, Cloud, X, Layout, Eye, Code, Download, History } from 'lucide-react';
 import type { ResumeProfile, JobItem } from '../types.ts';
 import { db, testFirestoreConnection } from '../firebase.ts';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { RecommendedJobsWidget } from './RecommendedJobsWidget.tsx';
+import { ResumeVersionsView } from './ResumeVersionsView.tsx';
 import { detectRecommendedFormat, RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 
@@ -31,9 +32,20 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [firestoreStatus, setFirestoreStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
   const [syncingFirestore, setSyncingFirestore] = useState(false);
-  const [viewMode, setViewMode] = useState<'executive' | 'audit' | 'raw'>('executive');
+  const [viewMode, setViewMode] = useState<'executive' | 'versions' | 'audit' | 'raw'>('executive');
   const [resumeFormat, setResumeFormat] = useState<string>('executive-monolith');
+  const [versionsCount, setVersionsCount] = useState<number>(2);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const fetchVersionsCount = async () => {
+    try {
+      const res = await fetch('/resume/versions');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.versions)) {
+        setVersionsCount(data.versions.length);
+      }
+    } catch {}
+  };
 
   const fetchProfile = async () => {
     try {
@@ -43,6 +55,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({
         setProfile(data.profile);
         if (onProfileLoaded) onProfileLoaded(data.profile);
       }
+      fetchVersionsCount();
     } catch (e) {
       console.error(e);
     }
@@ -50,6 +63,7 @@ export const ResumeSection: React.FC<ResumeSectionProps> = ({
 
   useEffect(() => {
     fetchProfile();
+    fetchVersionsCount();
     testFirestoreConnection().then((connected) => {
       setFirestoreStatus(connected ? 'connected' : 'disconnected');
     });
@@ -565,10 +579,20 @@ HONORS & CERTIFICATIONS
                     <span className="text-[11px] text-indigo-300 font-mono">({profile.headline || 'AIML Engineer'})</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-semibold font-mono">
                     90+ ATS Score Ready
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewMode('versions');
+                    }}
+                    className="text-xs text-amber-300 hover:text-amber-200 underline font-semibold transition flex items-center gap-1"
+                  >
+                    <History className="w-3.5 h-3.5" />
+                    <span>Resume Versions ({versionsCount})</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -661,6 +685,22 @@ HONORS & CERTIFICATIONS
             >
               <Layout className="w-3.5 h-3.5" />
               Executive Designer Resume (Print & PDF)
+            </button>
+            <button
+              onClick={() => setViewMode('versions')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                viewMode === 'versions'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <History className="w-3.5 h-3.5 text-amber-300" />
+              <span>Resume Versions</span>
+              {versionsCount > 0 && (
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-slate-950 border border-slate-700 text-indigo-300">
+                  {versionsCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setViewMode('audit')}
@@ -773,6 +813,16 @@ HONORS & CERTIFICATIONS
               onDownloadTxt={handleDownloadTxt}
             />
           </div>
+        ) : viewMode === 'versions' ? (
+          <ResumeVersionsView
+            currentProfile={profile}
+            onProfileReverted={(newProfile) => {
+              setProfile(newProfile);
+              if (onProfileLoaded) onProfileLoaded(newProfile);
+              syncToFirestore(newProfile);
+              fetchVersionsCount();
+            }}
+          />
         ) : viewMode === 'raw' ? (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
             <div className="flex items-center justify-between">

@@ -120,3 +120,22 @@ export interface JobPreferences {
   ppo_only?: boolean;
   experience_level: string;
 }
+
+export interface ResumeVersion {
+  id: string;
+  name: string;
+  created_at: string;
+  source: 'upload' | 'sample' | 'optimization' | 'manual';
+  target_role?: string;
+  target_company?: string;
+  ats_score?: number;
+  format_used?: string;
+  summary?: string;
+  skills_count?: number;
+  word_count?: number;
+  raw_text: string;
+  profile_snapshot: ResumeProfile;
+  changes_summary?: string[];
+  is_active?: boolean;
+}
+

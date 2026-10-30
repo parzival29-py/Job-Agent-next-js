@@ -1,38 +1,68 @@
-import React, { useState } from 'react';
-import { Terminal, Play, CheckCircle2, AlertCircle, RefreshCw, Layers, Sparkles, Check, X } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import {
+  Terminal,
+  Play,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  Layers,
+  Sparkles,
+  Check,
+  X,
+  Search,
+  Copy,
+  ArrowUpDown,
+  Filter,
+  RotateCcw,
+} from 'lucide-react';
+
+export interface TestCase {
+  id: string;
+  testNumber: number;
+  name: string;
+  category: 'system' | 'resume' | 'synthesis' | 'jobs' | 'pipeline';
+  categoryLabel: string;
+  endpoint: string;
+  description: string;
+  pipelineOrder: number;
+  run: () => Promise<any>;
+}
 
 export const TestSuiteSection: React.FC = () => {
   const [runningTest, setRunningTest] = useState<string | null>(null);
   const [runningAll, setRunningAll] = useState(false);
   const [testResults, setTestResults] = useState<Record<string, { status: 'success' | 'error'; data: any }>>({});
-  const [testOutput, setTestOutput] = useState<{ name: string; status: 'success' | 'error'; data: any } | null>(null);
+  const [testOutput, setTestOutput] = useState<{ name: string; endpoint: string; status: 'success' | 'error'; data: any } | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortMode, setSortMode] = useState<'numerical' | 'pipeline'>('numerical');
+  const [copied, setCopied] = useState(false);
 
-  const tests = [
+  // All 13 Automated Backend Tests arranged in strict canonical sequence
+  const allTests: TestCase[] = [
     {
       id: 'test-health',
+      testNumber: 1,
+      pipelineOrder: 1,
+      category: 'system',
+      categoryLabel: 'System Health',
       name: 'Test 1: Health & Root Check',
       endpoint: 'GET /health',
-      description: 'Verifies FastAPI/Express service health and readiness.',
+      description: 'Verifies FastAPI/Express service health, uptime, and server readiness.',
       run: async () => {
         const res = await fetch('/health');
         return await res.json();
       },
     },
     {
-      id: 'test-24',
-      name: 'Test 24: AI Connection Test',
-      endpoint: 'GET /ai/test',
-      description: 'Checks Gemini 3.8 model connectivity and ping response.',
-      run: async () => {
-        const res = await fetch('/ai/test');
-        return await res.json();
-      },
-    },
-    {
       id: 'test-profile',
+      testNumber: 3,
+      pipelineOrder: 3,
+      category: 'resume',
+      categoryLabel: 'Resume & Profile',
       name: 'Test 3: Resume Profile Retrieval',
       endpoint: 'GET /resume/profile',
-      description: 'Retrieves parsed contact info, skills, experience, and education.',
+      description: 'Retrieves parsed candidate contact info, skills, experience, and education.',
       run: async () => {
         const res = await fetch('/resume/profile');
         return await res.json();
@@ -40,6 +70,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-resume-analysis',
+      testNumber: 4,
+      pipelineOrder: 4,
+      category: 'resume',
+      categoryLabel: 'Resume & Profile',
       name: 'Test 4: AI Resume Analysis',
       endpoint: 'GET /ai/resume-analysis',
       description: 'Deep audit of candidate profile strengths, gaps, and readiness.',
@@ -50,6 +84,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-ats-score',
+      testNumber: 6,
+      pipelineOrder: 5,
+      category: 'synthesis',
+      categoryLabel: 'ATS & Synthesis',
       name: 'Test 6: ATS Scoring Engine',
       endpoint: 'POST /ai/ats-score',
       description: 'Evaluates resume text against job description for match percentage.',
@@ -67,6 +105,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-pdf-render',
+      testNumber: 7,
+      pipelineOrder: 6,
+      category: 'synthesis',
+      categoryLabel: 'ATS & Synthesis',
       name: 'Test 7: 21-Format Vector PDF Synthesis',
       endpoint: 'POST /ai/render-resume-pdf',
       description: 'Compiles vector PDF in executive-monolith format with 98+ ATS formatting.',
@@ -84,6 +126,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-search-jobs',
+      testNumber: 12,
+      pipelineOrder: 9,
+      category: 'jobs',
+      categoryLabel: 'Jobs & Tracking',
       name: 'Test 12: Job Search & Filtering',
       endpoint: 'GET /jobs/search',
       description: 'Filters curated jobs matching opportunity type, work mode, and stipend.',
@@ -94,6 +140,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-app-stats',
+      testNumber: 13,
+      pipelineOrder: 10,
+      category: 'jobs',
+      categoryLabel: 'Jobs & Tracking',
       name: 'Test 13: Application Statistics',
       endpoint: 'GET /applications/stats',
       description: 'Retrieves pipeline metrics, average ATS score, and status counts.',
@@ -104,6 +154,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-cover-letter',
+      testNumber: 20,
+      pipelineOrder: 7,
+      category: 'synthesis',
+      categoryLabel: 'ATS & Synthesis',
       name: 'Test 20: Cover Letter Synthesis',
       endpoint: 'POST /ai/cover-letter',
       description: 'Generates tailored 3-paragraph executive cover letter for Apex Cloud Systems.',
@@ -122,6 +176,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-qa-answers',
+      testNumber: 21,
+      pipelineOrder: 8,
+      category: 'synthesis',
+      categoryLabel: 'ATS & Synthesis',
       name: 'Test 21: Interview Q&A Generation',
       endpoint: 'POST /ai/application-answers',
       description: 'Generates STAR-method responses to behavioral and technical interview questions.',
@@ -139,7 +197,25 @@ export const TestSuiteSection: React.FC = () => {
       },
     },
     {
+      id: 'test-24',
+      testNumber: 24,
+      pipelineOrder: 2,
+      category: 'system',
+      categoryLabel: 'System Health',
+      name: 'Test 24: AI Connection Test',
+      endpoint: 'GET /ai/test',
+      description: 'Checks Gemini 3.8 model connectivity and ping response.',
+      run: async () => {
+        const res = await fetch('/ai/test');
+        return await res.json();
+      },
+    },
+    {
       id: 'test-25',
+      testNumber: 25,
+      pipelineOrder: 12,
+      category: 'pipeline',
+      categoryLabel: 'Autonomous Pipeline',
       name: 'Test 25: End-to-End Workflow Pipeline',
       endpoint: 'POST /workflow/e2e-test',
       description: 'Executes entire autonomous pipeline: Job Analysis -> ATS Score -> 90+ Optimize -> DOCX -> Cover Letter -> Save Application.',
@@ -160,6 +236,10 @@ export const TestSuiteSection: React.FC = () => {
     },
     {
       id: 'test-26',
+      testNumber: 26,
+      pipelineOrder: 13,
+      category: 'pipeline',
+      categoryLabel: 'Autonomous Pipeline',
       name: 'Test 26: 1-Click Autonomous Agent Application (Zero Redirection)',
       endpoint: 'POST /jobs/auto-apply',
       description: 'Validates 1-click autonomous direct application with ATS >90 optimization, vector PDF generation, cover letter, screening answers, and zero-redirection receipt creation.',
@@ -176,10 +256,15 @@ export const TestSuiteSection: React.FC = () => {
             requirements: ['Go or TypeScript proficiency', 'Distributed systems design', 'High reliability'],
           }),
         });
+        return await res.json();
       },
     },
     {
       id: 'test-27',
+      testNumber: 27,
+      pipelineOrder: 11,
+      category: 'jobs',
+      categoryLabel: 'Jobs & Tracking',
       name: 'Test 27: Visual Progress Timeline & Status Transitions',
       endpoint: 'PATCH /applications/:id/status & POST /applications/:id/timeline',
       description: 'Tests full lifecycle status transition pipeline (Saved -> Ready -> Applied -> Screening -> Interview -> Offer) with timestamped milestone history logging.',
@@ -261,14 +346,55 @@ export const TestSuiteSection: React.FC = () => {
     },
   ];
 
-  const executeTest = async (testItem: typeof tests[0]) => {
+  // Categories configuration
+  const categories = [
+    { id: 'all', label: 'All Tests', count: allTests.length },
+    { id: 'system', label: 'System & Connectivity', count: allTests.filter((t) => t.category === 'system').length },
+    { id: 'resume', label: 'Resume & Audit', count: allTests.filter((t) => t.category === 'resume').length },
+    { id: 'synthesis', label: 'ATS & Synthesis', count: allTests.filter((t) => t.category === 'synthesis').length },
+    { id: 'jobs', label: 'Jobs & Tracking', count: allTests.filter((t) => t.category === 'jobs').length },
+    { id: 'pipeline', label: 'Autonomous Pipelines', count: allTests.filter((t) => t.category === 'pipeline').length },
+  ];
+
+  // Filtered and sorted tests
+  const displayedTests = useMemo(() => {
+    let list = [...allTests];
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      list = list.filter((t) => t.category === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.endpoint.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort order
+    if (sortMode === 'numerical') {
+      list.sort((a, b) => a.testNumber - b.testNumber);
+    } else {
+      list.sort((a, b) => a.pipelineOrder - b.pipelineOrder);
+    }
+
+    return list;
+  }, [allTests, selectedCategory, searchQuery, sortMode]);
+
+  const executeTest = async (testItem: TestCase) => {
     setRunningTest(testItem.id);
     setTestOutput(null);
     try {
       const data = await testItem.run();
-      const isSuccess = data.success !== false && data.status !== 'error';
+      const isSuccess = data?.success !== false && data?.status !== 'error';
       const resultObj = {
         name: testItem.name,
+        endpoint: testItem.endpoint,
         status: isSuccess ? ('success' as const) : ('error' as const),
         data,
       };
@@ -280,8 +406,9 @@ export const TestSuiteSection: React.FC = () => {
     } catch (e: any) {
       const resultObj = {
         name: testItem.name,
+        endpoint: testItem.endpoint,
         status: 'error' as const,
-        data: { error: e.message },
+        data: { error: e.message || 'Execution error' },
       };
       setTestOutput(resultObj);
       setTestResults((prev) => ({
@@ -296,10 +423,22 @@ export const TestSuiteSection: React.FC = () => {
   const handleRunAllTests = async () => {
     setRunningAll(true);
     setTestResults({});
-    for (const t of tests) {
+    for (const t of displayedTests) {
       await executeTest(t);
     }
     setRunningAll(false);
+  };
+
+  const handleCopyOutput = () => {
+    if (!testOutput?.data) return;
+    navigator.clipboard.writeText(JSON.stringify(testOutput.data, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleClearResults = () => {
+    setTestResults({});
+    setTestOutput(null);
   };
 
   const passCount = Object.values(testResults).filter((r) => r.status === 'success').length;
@@ -307,23 +446,27 @@ export const TestSuiteSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Terminal className="w-5 h-5 text-indigo-400" />
-              Test Suite & Live API Execution Bench
+              API & Test Bench
             </h2>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800 text-emerald-300 font-bold">
-              11 Automated Tests
+              {allTests.length} Automated Tests
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950 border border-indigo-800 text-indigo-300 font-semibold">
+              Ordered: Test 1 → Test 27
             </span>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Execute and inspect responses for all test cases (Test 1 through Test 25) directly against the backend endpoints.
+            Execute and inspect responses for all automated test cases in sequential order directly against the backend endpoints.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-3">
           {Object.keys(testResults).length > 0 && (
             <div className="flex items-center gap-2 text-xs font-mono">
               <span className="px-2 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1">
@@ -334,12 +477,20 @@ export const TestSuiteSection: React.FC = () => {
                   <X className="w-3 h-3" /> {failCount} Failed
                 </span>
               )}
+              <button
+                onClick={handleClearResults}
+                className="px-2 py-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition flex items-center gap-1"
+                title="Clear test results"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset</span>
+              </button>
             </div>
           )}
 
           <button
             onClick={handleRunAllTests}
-            disabled={runningAll || runningTest !== null}
+            disabled={runningAll || runningTest !== null || displayedTests.length === 0}
             className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/20 disabled:opacity-50 transition flex items-center gap-2"
           >
             {runningAll ? (
@@ -347,89 +498,235 @@ export const TestSuiteSection: React.FC = () => {
             ) : (
               <Sparkles className="w-4 h-4 text-amber-300" />
             )}
-            <span>{runningAll ? 'Running Test Suite...' : 'Run All 11 Tests'}</span>
+            <span>
+              {runningAll
+                ? `Running (${Object.keys(testResults).length}/${displayedTests.length})...`
+                : `Run ${displayedTests.length === allTests.length ? `All ${allTests.length}` : `${displayedTests.length}`} Tests`}
+            </span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Controls Bar: Order Mode Toggle, Category Tabs, and Search */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Order Toggle */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 text-xs text-slate-400 mr-1">
+            <ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="font-semibold">Order:</span>
+          </div>
+          <div className="bg-slate-950 border border-slate-800 rounded-lg p-0.5 flex items-center">
+            <button
+              onClick={() => setSortMode('numerical')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                sortMode === 'numerical'
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Numerical Order (1 → 27)
+            </button>
+            <button
+              onClick={() => setSortMode('pipeline')}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition ${
+                sortMode === 'pipeline'
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Pipeline Flow Order
+            </button>
+          </div>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative min-w-[240px]">
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search test name or endpoint..."
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Category Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
+        <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
+        {categories.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setSelectedCategory(c.id)}
+            className={`px-3 py-1.5 rounded-lg border font-medium whitespace-nowrap transition flex items-center gap-1.5 ${
+              selectedCategory === c.id
+                ? 'bg-indigo-950/80 border-indigo-600 text-indigo-300 font-semibold'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            <span>{c.label}</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                selectedCategory === c.id ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {c.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Main Grid: Test List on Left, Live Output Inspector on Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Test List */}
         <div className="space-y-3">
-          {tests.map((t) => {
-            const result = testResults[t.id];
-            return (
-              <div
-                key={t.id}
-                className={`bg-slate-900 border rounded-xl p-4 flex items-center justify-between gap-4 transition ${
-                  result?.status === 'success'
-                    ? 'border-emerald-800/80 bg-slate-900/90'
-                    : result?.status === 'error'
-                    ? 'border-rose-800/80 bg-rose-950/20'
-                    : 'border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    {result?.status === 'success' && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    )}
-                    {result?.status === 'error' && (
-                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                    )}
-                    <h4 className="text-sm font-bold text-white">{t.name}</h4>
-                    <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 rounded">
-                      {t.endpoint}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">{t.description}</p>
-                </div>
+          {displayedTests.length === 0 ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center text-slate-500 text-xs">
+              No tests match your filter criteria.
+            </div>
+          ) : (
+            displayedTests.map((t, idx) => {
+              const result = testResults[t.id];
+              const isSelected = testOutput?.name === t.name;
 
-                <button
-                  onClick={() => executeTest(t)}
-                  disabled={runningTest !== null || runningAll}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shrink-0 disabled:opacity-50 transition"
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => {
+                    if (result?.data) {
+                      setTestOutput({
+                        name: t.name,
+                        endpoint: t.endpoint,
+                        status: result.status,
+                        data: result.data,
+                      });
+                    }
+                  }}
+                  className={`bg-slate-900 border rounded-xl p-4 flex items-center justify-between gap-4 cursor-pointer transition ${
+                    isSelected
+                      ? 'ring-1 ring-indigo-500 border-indigo-500/80 bg-slate-900'
+                      : result?.status === 'success'
+                      ? 'border-emerald-800/80 bg-slate-900/90'
+                      : result?.status === 'error'
+                      ? 'border-rose-800/80 bg-rose-950/20'
+                      : 'border-slate-800 hover:border-slate-700'
+                  }`}
                 >
-                  {runningTest === t.id ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Play className="w-3.5 h-3.5" />
-                  )}
-                  Run
-                </button>
-              </div>
-            );
-          })}
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Sequential Order Badge */}
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 bg-slate-950 border border-slate-700/80 text-indigo-300 font-bold rounded">
+                        #{String(idx + 1).padStart(2, '0')}
+                      </span>
+
+                      {/* Status Icon */}
+                      {result?.status === 'success' && (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      )}
+                      {result?.status === 'error' && (
+                        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                      )}
+
+                      <h4 className="text-sm font-bold text-white truncate">{t.name}</h4>
+
+                      <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 rounded">
+                        {t.endpoint}
+                      </span>
+
+                      <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                        {t.categoryLabel}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-400 line-clamp-1">{t.description}</p>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      executeTest(t);
+                    }}
+                    disabled={runningTest !== null || runningAll}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shrink-0 disabled:opacity-50 transition shadow-sm"
+                  >
+                    {runningTest === t.id ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Play className="w-3.5 h-3.5" />
+                    )}
+                    <span>Run</span>
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Live Output Inspector */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-emerald-400" />
-              Response Inspector
-            </h3>
-            {testOutput && (
-              <span
-                className={`text-xs px-2.5 py-0.5 rounded font-mono font-semibold ${
-                  testOutput.status === 'success'
-                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                    : 'bg-rose-950 text-rose-300 border border-rose-800'
-                }`}
-              >
-                {testOutput.status.toUpperCase()}
-              </span>
-            )}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col sticky top-4 max-h-[calc(100vh-120px)]">
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Layers className="w-4 h-4 text-emerald-400" />
+                Live Response Inspector
+              </h3>
+              {testOutput && (
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+                  {testOutput.name} • {testOutput.endpoint}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {testOutput && (
+                <button
+                  onClick={handleCopyOutput}
+                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition flex items-center gap-1 font-mono"
+                  title="Copy JSON response"
+                >
+                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                </button>
+              )}
+
+              {testOutput && (
+                <span
+                  className={`text-xs px-2.5 py-0.5 rounded font-mono font-semibold ${
+                    testOutput.status === 'success'
+                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                      : 'bg-rose-950 text-rose-300 border border-rose-800'
+                  }`}
+                >
+                  {testOutput.status.toUpperCase()}
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-emerald-400 overflow-y-auto max-h-[500px]">
+          <div className="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-emerald-400 overflow-y-auto min-h-[380px] max-h-[580px]">
             {testOutput ? (
-              <pre className="whitespace-pre-wrap leading-relaxed">
+              <pre className="whitespace-pre-wrap leading-relaxed select-text font-mono">
                 {JSON.stringify(testOutput.data, null, 2)}
               </pre>
             ) : (
-              <span className="text-slate-600">
-                Click "Run" on any test case on the left or "Run All 11 Tests" to execute the endpoints and inspect live JSON payload here.
-              </span>
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
+                <Terminal className="w-8 h-8 text-slate-700 mb-2" />
+                <p className="text-xs">
+                  Click "Run" on any test in the ordered list or "Run All {allTests.length} Tests" to execute and inspect live JSON payloads here.
+                </p>
+                <p className="text-[11px] text-slate-600 mt-1">
+                  Tests are arranged sequentially from Test 1 to Test 27.
+                </p>
+              </div>
             )}
           </div>
         </div>

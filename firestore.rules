@@ -54,10 +54,22 @@ service cloud.firestore {
              (!('updated_at' in data) || (data.updated_at is string && data.updated_at.size() <= 100));
     }
 
+    function isValidVersion(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             (!('raw_text' in data) || (data.raw_text is string && data.raw_text.size() <= 500000)) &&
+             (!('created_at' in data) || (data.created_at is string && data.created_at.size() <= 100));
+    }
+
     match /resume_profiles/{profileId} {
       allow read: if true;
       allow create, update: if isValidId(profileId) && isValidProfile(request.resource.data);
       allow delete: if isValidId(profileId);
+    }
+
+    match /resume_versions/{versionId} {
+      allow read: if true;
+      allow create, update: if isValidId(versionId) && isValidVersion(request.resource.data);
+      allow delete: if isValidId(versionId);
     }
 
     match /applications/{applicationId} {

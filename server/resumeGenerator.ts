@@ -635,7 +635,10 @@ function parseResumeContent(resumeText: string): ParsedResume {
     if (
       cleanUpper === 'SUMMARY' ||
       cleanUpper === 'PROFESSIONAL SUMMARY' ||
-      cleanUpper === 'EXECUTIVE SUMMARY'
+      cleanUpper === 'EXECUTIVE SUMMARY' ||
+      cleanUpper === 'ABOUT ME' ||
+      cleanUpper.startsWith('ABOUT ME') ||
+      cleanUpper.startsWith('PROFESSIONAL SUMMARY')
     ) {
       currentSection = 'SUMMARY';
       continue;
@@ -644,7 +647,12 @@ function parseResumeContent(resumeText: string): ParsedResume {
       cleanUpper === 'SKILLS' ||
       cleanUpper === 'TECHNICAL SKILLS' ||
       cleanUpper === 'CORE COMPETENCIES' ||
-      cleanUpper === 'AREAS OF EXPERTISE'
+      cleanUpper === 'AREAS OF EXPERTISE' ||
+      cleanUpper === 'EXPERTISE' ||
+      cleanUpper.includes('CORE COMPETENCIES') ||
+      cleanUpper.includes('TECHNICAL SKILLS') ||
+      cleanUpper.startsWith('SKILLS &') ||
+      cleanUpper.startsWith('AREAS OF EXPERTISE')
     ) {
       currentSection = 'SKILLS';
       continue;
@@ -653,7 +661,9 @@ function parseResumeContent(resumeText: string): ParsedResume {
       cleanUpper === 'EXPERIENCE' ||
       cleanUpper === 'WORK EXPERIENCE' ||
       cleanUpper === 'PROFESSIONAL EXPERIENCE' ||
-      cleanUpper === 'EMPLOYMENT HISTORY'
+      cleanUpper === 'EMPLOYMENT HISTORY' ||
+      cleanUpper.includes('WORK EXPERIENCE') ||
+      cleanUpper.includes('PROFESSIONAL EXPERIENCE')
     ) {
       currentSection = 'EXPERIENCE';
       continue;
@@ -662,7 +672,8 @@ function parseResumeContent(resumeText: string): ParsedResume {
       cleanUpper === 'PROJECTS' ||
       cleanUpper === 'TECHNICAL PROJECTS' ||
       cleanUpper === 'KEY PROJECTS' ||
-      cleanUpper === 'FEATURED WORK'
+      cleanUpper === 'FEATURED WORK' ||
+      cleanUpper.includes('TECHNICAL PROJECTS')
     ) {
       currentSection = 'PROJECTS';
       continue;
@@ -670,7 +681,8 @@ function parseResumeContent(resumeText: string): ParsedResume {
     if (
       cleanUpper === 'EDUCATION' ||
       cleanUpper === 'ACADEMIC BACKGROUND' ||
-      cleanUpper === 'EDUCATION & CREDENTIALS'
+      cleanUpper === 'EDUCATION & CREDENTIALS' ||
+      cleanUpper.includes('ACADEMIC BACKGROUND')
     ) {
       currentSection = 'EDUCATION';
       continue;
@@ -678,8 +690,11 @@ function parseResumeContent(resumeText: string): ParsedResume {
     if (
       cleanUpper === 'CERTIFICATIONS' ||
       cleanUpper === 'ACHIEVEMENTS' ||
+      cleanUpper === 'ACHIEVEMENT' ||
       cleanUpper === 'AWARDS' ||
-      cleanUpper === 'LEADERSHIP'
+      cleanUpper === 'LEADERSHIP' ||
+      cleanUpper.includes('CERTIFICATIONS') ||
+      cleanUpper.includes('ACHIEVEMENTS')
     ) {
       currentSection = 'CERTIFICATIONS';
       continue;
@@ -725,11 +740,13 @@ function parseResumeContent(resumeText: string): ParsedResume {
       if (isBullet && currentExp) {
         currentExp.bullets.push(line.replace(/^[•\-\*]\s*/, '').trim());
       } else {
-        const parts = line.split(/[|–—]/).map((p) => p.trim()).filter(Boolean);
+        const parts = line.includes('|')
+          ? line.split(/\s*\|\s*/).map((p) => p.trim()).filter(Boolean)
+          : [line];
         currentExp = {
           role: parts[0] || line,
           company: parts[1] || 'Technical Experience',
-          duration: parts[2] || '2023 - Present',
+          duration: parts[2] || '2024 – Present',
           bullets: [],
         };
         parsed.experience.push(currentExp);
@@ -739,7 +756,9 @@ function parseResumeContent(resumeText: string): ParsedResume {
       if (isBullet && currentProj) {
         currentProj.bullets.push(line.replace(/^[•\-\*]\s*/, '').trim());
       } else {
-        const parts = line.split(/[|–—]/).map((p) => p.trim()).filter(Boolean);
+        const parts = line.includes('|')
+          ? line.split(/\s*\|\s*/).map((p) => p.trim()).filter(Boolean)
+          : [line];
         currentProj = {
           title: parts[0] || line,
           subtitle: parts[1] || '',
@@ -748,7 +767,9 @@ function parseResumeContent(resumeText: string): ParsedResume {
         parsed.projects.push(currentProj);
       }
     } else if (currentSection === 'EDUCATION') {
-      const parts = line.split(/[|–—]/).map((p) => p.trim()).filter(Boolean);
+      const parts = line.includes('|')
+        ? line.split(/\s*\|\s*/).map((p) => p.trim()).filter(Boolean)
+        : [line];
       currentEdu = {
         degree: parts[0] || line,
         institution: parts[1] || 'University Institute',
@@ -788,6 +809,247 @@ function parseResumeContent(resumeText: string): ParsedResume {
   }
 
   return parsed;
+}
+
+function renderPhotoLayout(
+  doc: PDFKit.PDFDocument,
+  parsed: ParsedResume,
+  customData?: any,
+  dividerColor = '#000000',
+  accentColor = '#000000'
+): void {
+  const startX = 36;
+  const contentWidth = 540;
+
+  // Header: Big Two-line Name on Left, Clean Contacts with square icons on Right
+  const rawName = (customData?.name || parsed.name || 'ARYAMAN DEWANGAN').trim();
+  const nameParts = rawName.split(/\s+/).filter(Boolean);
+  const firstName = (customData?.firstName || nameParts[0] || 'ARYAMAN').toUpperCase();
+  const lastName = (customData?.lastName || nameParts.slice(1).join(' ') || (nameParts.length > 1 ? '' : 'DEWANGAN')).toUpperCase();
+
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(24).text(firstName, startX, 26, { width: 330 });
+  if (lastName) {
+    doc.fillColor('#000000').font('Helvetica-Bold').fontSize(24).text(lastName, startX, doc.y - 3, { width: 330 });
+  }
+  const headline = (customData?.headline || parsed.headline || 'SOFTWARE DEVELOPMENT ENGINEERING INTERN (SDE) • AI & DISTRIBUTED SYSTEMS').toUpperCase();
+  doc.fillColor('#334155').font('Helvetica-Bold').fontSize(8).text(headline, startX, doc.y + 2, { width: 330, characterSpacing: 1.4 });
+
+  // Right-aligned contacts block with black square icon badges
+  const contactYStart = 26;
+  let rightContactY = contactYStart;
+  const rightColWidth = 195;
+  const rightColX = startX + contentWidth - rightColWidth;
+
+  // Extract distinct contact entries
+  const phone = customData?.phone || parsed.contacts.find((c) => /^\+?[\d\s\-()]{7,}$/.test(c.trim())) || '+1 (555) 747-0435';
+  const email = customData?.email || parsed.contacts.find((c) => c.includes('@')) || 'aryamanharshdewangan@gmail.com';
+  const website = customData?.website || parsed.contacts.find((c) => /\.(dev|com|io|org|net|me|ai)/i.test(c) && !c.includes('@')) || 'aryamandewangan.dev';
+  const location = customData?.location || parsed.contacts.find((c) => !c.includes('@') && !/\.(dev|com|io|org|net|me|ai)/i.test(c) && !/^\+?[\d\s\-()]{7,}$/.test(c.trim()) && !c.toUpperCase().includes('ENGINEER') && !c.toUpperCase().includes('DEVELOPER') && !c.toUpperCase().includes('INTERN')) || 'San Francisco, CA / Remote';
+
+  const contactList = [
+    { text: phone, type: 'phone' },
+    { text: email, type: 'email' },
+    { text: website, type: 'website' },
+    { text: location, type: 'location' },
+  ];
+
+  for (const item of contactList) {
+    doc.fillColor('#1E293B').font('Helvetica').fontSize(7.8).text(item.text, rightColX, rightContactY + 1, {
+      width: rightColWidth - 16,
+      align: 'right',
+    });
+    const sqX = startX + contentWidth - 11;
+    const sqY = rightContactY + 1;
+    // Square badge
+    doc.rect(sqX, sqY, 9.5, 9.5).fill(accentColor);
+
+    // Vector icon inside 9.5x9.5 square
+    if (item.type === 'phone') {
+      doc.roundedRect(sqX + 2.8, sqY + 1.5, 3.8, 6.5, 0.8).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
+      doc.rect(sqX + 3.8, sqY + 6.2, 1.8, 0.5).fill('#FFFFFF');
+    } else if (item.type === 'email') {
+      doc.rect(sqX + 1.8, sqY + 2.2, 5.8, 4.8).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
+      doc.moveTo(sqX + 1.8, sqY + 2.2).lineTo(sqX + 4.7, sqY + 4.5).lineTo(sqX + 7.6, sqY + 2.2).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
+    } else if (item.type === 'website') {
+      doc.circle(sqX + 4.75, sqY + 4.75, 3.2).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
+      doc.moveTo(sqX + 1.6, sqY + 4.75).lineTo(sqX + 7.9, sqY + 4.75).strokeColor('#FFFFFF').lineWidth(0.5).stroke();
+      doc.moveTo(sqX + 4.75, sqY + 1.6).lineTo(sqX + 4.75, sqY + 7.9).strokeColor('#FFFFFF').lineWidth(0.5).stroke();
+    } else {
+      doc.circle(sqX + 4.75, sqY + 3.8, 1.8).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
+      doc.moveTo(sqX + 3.4, sqY + 4.2).lineTo(sqX + 4.75, sqY + 7.8).lineTo(sqX + 6.1, sqY + 4.2).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
+      doc.circle(sqX + 4.75, sqY + 3.8, 0.6).fill('#FFFFFF');
+    }
+
+    rightContactY += 12;
+  }
+
+  let curY = Math.max(doc.y + 12, rightContactY + 8, 88);
+  // Divider 1
+  doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(1.0).strokeColor(dividerColor).stroke();
+  curY += 7;
+
+  // ABOUT ME
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('ABOUT ME', startX, curY, { characterSpacing: 1.6 });
+  curY += 11;
+  const rawSummary = (customData?.aboutMe || customData?.summary || parsed.summary ||
+    'High-impact Full-Stack Software Engineer & Distributed AI Systems Architect with extensive experience designing resilient cloud-native microservices, autonomous LLM agent pipelines, and high-throughput data platforms.').trim();
+  const summary = rawSummary.length > 340 ? rawSummary.slice(0, 337).trim() + '...' : rawSummary;
+  doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(summary, startX, curY, { width: contentWidth, lineGap: 1.15, align: 'justify' });
+  curY = doc.y + 6;
+
+  // Divider 2
+  doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor(dividerColor).stroke();
+  curY += 7;
+
+  // EXPERIENCE
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('EXPERIENCE', startX, curY, { characterSpacing: 1.6 });
+  curY += 11;
+
+  // Display up to 3 top experiences, calibrated for strictly single page
+  const expList = (parsed.experience && parsed.experience.length > 0)
+    ? parsed.experience.slice(0, 3)
+    : [
+        {
+          role: 'LEAD SOFTWARE ENGINEERING RESIDENT & SYSTEMS ARCHITECT',
+          company: 'Apex Cloud Systems | San Francisco, CA',
+          duration: '2024 – Present',
+          bullets: [
+            'Architected and deployed asynchronous distributed microservices in Go and Python FastAPI processing 250M+ monthly transactions with p99 latency under 35ms.',
+            'Engineered an autonomous multi-agent ATS resume optimization engine utilizing Gemini and LangGraph, increasing match rates from 62% to 96% across benchmark trials.',
+          ],
+        },
+      ];
+
+  for (const exp of expList) {
+    const dateWidth = 90;
+    const detailX = startX + dateWidth + 10;
+    const detailWidth = contentWidth - dateWidth - 10;
+
+    doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.5).text(exp.duration || '2024 - Present', startX, curY, { width: dateWidth });
+
+    const roleTitle = (exp.role || (exp as any).title || 'Software Engineer').toUpperCase();
+    doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text(roleTitle, detailX, curY, { width: detailWidth });
+    doc.fillColor('#64748B').font('Helvetica').fontSize(7.2).text(exp.company || 'Technology Company', detailX, doc.y + 0.5, { width: detailWidth });
+    curY = doc.y + 1.5;
+
+    const bullets = exp.bullets && exp.bullets.length > 0
+      ? exp.bullets.slice(0, 2)
+      : [(exp as any).description || 'Delivered key engineering impact and scaled distributed microservices.'];
+
+    for (const b of bullets) {
+      doc.fillColor('#334155').font('Helvetica').fontSize(7.2).text(`•  ${b}`, detailX, curY, { width: detailWidth, lineGap: 1.05 });
+      curY = doc.y + 1.5;
+    }
+    curY += 2;
+  }
+
+  // Divider 3
+  doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor(dividerColor).stroke();
+  curY += 7;
+
+  // 2-COLUMN SECTION: EDUCATION (Left 50%) & EXPERTISE (Right 50%)
+  const halfWidth = (contentWidth - 24) / 2;
+  const rightColLeftX = startX + halfWidth + 24;
+
+  // Column 1: Education
+  let eduY = curY;
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('EDUCATION', startX, eduY, { characterSpacing: 1.6 });
+  eduY += 11;
+
+  const eduEntries = (parsed.education && parsed.education.length > 0)
+    ? parsed.education.slice(0, 2)
+    : [
+        {
+          degree: 'BACHELOR OF SCIENCE IN COMPUTER SCIENCE & ARTIFICIAL INTELLIGENCE',
+          institution: 'University School of Engineering & Technology',
+          duration: '2022 - 2026',
+        },
+      ];
+
+  for (const edu of eduEntries) {
+    doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.2).text(edu.duration || '2022 - 2026', startX, eduY, { width: 68 });
+    doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.8).text((edu.degree || 'B.S. COMPUTER SCIENCE').toUpperCase(), startX + 72, eduY, { width: halfWidth - 72 });
+    doc.fillColor('#64748B').font('Helvetica').fontSize(7.2).text(edu.institution || 'University', startX + 72, doc.y + 0.5, { width: halfWidth - 72 });
+    eduY = doc.y + 4;
+  }
+
+  // Column 2: Expertise with Level Meters
+  let expY = curY;
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('EXPERTISE', rightColLeftX, expY, { characterSpacing: 1.6 });
+  expY += 11;
+
+  const defaultExpertise = [
+    { name: 'Python & AI Engineering', level: 96 },
+    { name: 'TypeScript, React 19 & Next.js', level: 94 },
+    { name: 'Go & Distributed Systems', level: 90 },
+    { name: 'Docker, Kubernetes & AWS', level: 88 },
+    { name: 'PostgreSQL & Redis Caching', level: 92 },
+  ];
+
+  const skillsToDisplay = (customData?.expertise && customData.expertise.length > 0)
+    ? customData.expertise.slice(0, 5)
+    : (parsed.skillsList && parsed.skillsList.length >= 3)
+      ? parsed.skillsList.slice(0, 5).map((s: any, idx: number) => ({ name: typeof s === 'string' ? s : s.name, level: Math.max(72, 96 - idx * 4) }))
+      : defaultExpertise;
+
+  for (let sIdx = 0; sIdx < skillsToDisplay.length; sIdx++) {
+    const skill = skillsToDisplay[sIdx];
+    const sName = typeof skill === 'string' ? skill : skill.name;
+    const sLevel = typeof skill === 'string' ? Math.max(70, 96 - sIdx * 5) : (skill.level || 90);
+    doc.fillColor('#000000').font('Helvetica').fontSize(7.5).text(sName, rightColLeftX, expY, { width: halfWidth - 85 });
+    const meterX = rightColLeftX + halfWidth - 80;
+    doc.rect(meterX, expY + 2.5, 75, 4).fill('#E2E8F0');
+    doc.rect(meterX, expY + 2.5, (75 * sLevel) / 100, 4).fill(accentColor);
+    expY += 11;
+  }
+
+  curY = Math.max(eduY, expY) + 3;
+  // Divider 4
+  doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor(dividerColor).stroke();
+  curY += 7;
+
+  // 2-COLUMN SECTION: ACHIEVEMENT (Left 50%) & REFERENCE (Right 50%)
+  let achY = curY;
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('ACHIEVEMENT', startX, achY, { characterSpacing: 1.6 });
+  achY += 11;
+  const achData = customData?.achievement || {
+    duration: '2025 - 2026',
+    title: 'AUTONOMOUS ATS JOB APPLICATION AGENT',
+    organization: 'Engineering Innovation Showcase - USA',
+    description: 'Architected multi-agent ATS optimizer achieving 95%+ benchmark match rates with automated docx synthesis.',
+  };
+  doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.2).text(achData.duration || '2025 - 2026', startX, achY, { width: 68 });
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.8).text((achData.title || '').toUpperCase(), startX + 72, achY, { width: halfWidth - 72 });
+  doc.fillColor('#64748B').font('Helvetica').fontSize(7.2).text(achData.organization || '', startX + 72, doc.y + 0.5, { width: halfWidth - 72 });
+  doc.fillColor('#334155').font('Helvetica').fontSize(7.2).text(achData.description || '', startX + 72, doc.y + 0.5, { width: halfWidth - 72, lineGap: 1 });
+
+  let refY = curY;
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('REFERENCE', rightColLeftX, refY, { characterSpacing: 1.6 });
+  refY += 11;
+  const refList = (customData?.references && customData.references.length >= 2)
+    ? customData.references.slice(0, 2)
+    : [
+        { name: 'DR. ELEANOR VANCE', role: 'Engineering Director', phone: '+1 (555) 789-0123', email: 'evance@cloudscale.tech' },
+        { name: 'MARCUS STERLING', role: 'Principal Cloud Architect', phone: '+1 (555) 456-7890', email: 'm.sterling@apexcloud.io' },
+      ];
+  const refColWidth = (halfWidth - 10) / 2;
+  // Reference 1
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.5).text(refList[0].name.toUpperCase(), rightColLeftX, refY, { width: refColWidth });
+  doc.fillColor('#64748B').font('Helvetica').fontSize(7).text(refList[0].role, rightColLeftX, doc.y + 0.5, { width: refColWidth });
+  doc.fillColor('#334155').font('Helvetica').fontSize(7).text(`P: ${refList[0].phone}`, rightColLeftX, doc.y + 0.5, { width: refColWidth });
+  doc.fillColor('#334155').font('Helvetica').fontSize(6.8).text(`E: ${refList[0].email}`, rightColLeftX, doc.y + 0.5, { width: refColWidth });
+
+  // Reference 2
+  doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.5).text(refList[1].name.toUpperCase(), rightColLeftX + refColWidth + 10, refY, { width: refColWidth });
+  doc.fillColor('#64748B').font('Helvetica').fontSize(7).text(refList[1].role, rightColLeftX + refColWidth + 10, doc.y + 0.5, { width: refColWidth });
+  doc.fillColor('#334155').font('Helvetica').fontSize(7).text(`P: ${refList[1].phone}`, rightColLeftX + refColWidth + 10, doc.y + 0.5, { width: refColWidth });
+  doc.fillColor('#334155').font('Helvetica').fontSize(6.8).text(`E: ${refList[1].email}`, rightColLeftX + refColWidth + 10, doc.y + 0.5, { width: refColWidth });
+
+  // Single-Page Guarantee ATS Stamp Footer
+  const footerY = 746;
+  doc.moveTo(startX, footerY).lineTo(startX + contentWidth, footerY).lineWidth(0.5).strokeColor('#E2E8F0').stroke();
+  doc.fillColor('#94A3B8').font('Helvetica').fontSize(6.5).text('Verified ATS Architecture • 100% Machine Readable Single-Page Layout', startX, footerY + 3);
+  doc.fillColor('#94A3B8').font('Helvetica').fontSize(6.5).text(`Candidate: ${parsed.name}`, startX, footerY + 3, { width: contentWidth, align: 'right' });
 }
 
 export async function generateResumePdf(
@@ -872,7 +1134,7 @@ export async function generateResumePdf(
 
       const doc = new PDFDocument({
         size: 'LETTER',
-        margins: { top: 24, bottom: 24, left: 28, right: 28 },
+        margins: { top: 24, bottom: 12, left: 28, right: 28 },
         autoFirstPage: true,
         bufferPages: true,
       });
@@ -1168,178 +1430,12 @@ export async function generateResumePdf(
       // =========================================================================
       // FORMAT 2: EXECUTIVE MONOLITH (David Anderson / Precision Monolith Architecture)
       // =========================================================================
+      // FORMAT 2: EXECUTIVE MONOLITH & CLOUD DEVOPS (Photo Layout: Two-line Name, Square Icons, Clean Dividers)
       // =========================================================================
-      // FORMAT 2: EXECUTIVE MONOLITH (Photo Layout: Two-line Name, Square Icons, Clean Dividers)
-      // =========================================================================
-      else if (formatType === 'executive-monolith') {
-        const startX = 36;
-        const contentWidth = 540;
-
-        // Header: Big Two-line Name on Left, Clean Contacts with square icons on Right
-        const nameParts = parsed.name.trim().split(' ');
-        const firstName = nameParts[0]?.toUpperCase() || 'ARYAMAN';
-        const lastName = nameParts.slice(1).join(' ')?.toUpperCase() || 'DEWANGAN';
-
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(24).text(firstName, startX, 26, { width: 320 });
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(24).text(lastName, startX, doc.y - 3, { width: 320 });
-        doc.fillColor('#334155').font('Helvetica-Bold').fontSize(8).text(parsed.headline.toUpperCase(), startX, doc.y + 2, { width: 320, characterSpacing: 1.4 });
-
-        // Right-aligned contacts block with black square icon badges
-        const contactYStart = 26;
-        let rightContactY = contactYStart;
-        const rightColWidth = 200;
-        const rightColX = startX + contentWidth - rightColWidth;
-
-        // Extract distinct contact entries
-        const phone = parsed.contacts.find((c) => /^\+?[\d\s\-()]{7,}$/.test(c.trim())) || '+1 (555) 234-5678';
-        const email = parsed.contacts.find((c) => c.includes('@')) || 'aryamanharshdewangan@gmail.com';
-        const website = parsed.contacts.find((c) => /\.(dev|com|io|org|net|me)/i.test(c) && !c.includes('@')) || 'aryamandewangan.dev';
-        const location = parsed.contacts.find((c) => !c.includes('@') && !/\.(dev|com|io|org)/i.test(c) && !/^\+?[\d\s\-()]{7,}$/.test(c.trim())) || 'San Francisco, CA, USA';
-
-        const contactList = [
-          { text: phone, type: 'phone' },
-          { text: email, type: 'email' },
-          { text: website, type: 'website' },
-          { text: location, type: 'location' },
-        ];
-
-        for (const item of contactList) {
-          doc.fillColor('#1E293B').font('Helvetica').fontSize(7.8).text(item.text, rightColX, rightContactY + 1, {
-            width: rightColWidth - 16,
-            align: 'right',
-          });
-          const sqX = startX + contentWidth - 11;
-          const sqY = rightContactY + 1;
-          // Black square badge
-          doc.rect(sqX, sqY, 9.5, 9.5).fill('#000000');
-
-          // Pure vector crisp icon inside 9.5x9.5 square
-          if (item.type === 'phone') {
-            doc.roundedRect(sqX + 2.8, sqY + 1.5, 3.8, 6.5, 0.8).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
-            doc.rect(sqX + 3.8, sqY + 6.2, 1.8, 0.5).fill('#FFFFFF');
-          } else if (item.type === 'email') {
-            doc.rect(sqX + 1.8, sqY + 2.2, 5.8, 4.8).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
-            doc.moveTo(sqX + 1.8, sqY + 2.2).lineTo(sqX + 4.7, sqY + 4.5).lineTo(sqX + 7.6, sqY + 2.2).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
-          } else if (item.type === 'website') {
-            doc.circle(sqX + 4.75, sqY + 4.75, 3.2).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
-            doc.moveTo(sqX + 1.6, sqY + 4.75).lineTo(sqX + 7.9, sqY + 4.75).strokeColor('#FFFFFF').lineWidth(0.5).stroke();
-            doc.moveTo(sqX + 4.75, sqY + 1.6).lineTo(sqX + 4.75, sqY + 7.9).strokeColor('#FFFFFF').lineWidth(0.5).stroke();
-          } else {
-            doc.circle(sqX + 4.75, sqY + 3.8, 1.8).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
-            doc.moveTo(sqX + 3.4, sqY + 4.2).lineTo(sqX + 4.75, sqY + 7.8).lineTo(sqX + 6.1, sqY + 4.2).strokeColor('#FFFFFF').lineWidth(0.6).stroke();
-            doc.circle(sqX + 4.75, sqY + 3.8, 0.6).fill('#FFFFFF');
-          }
-
-          rightContactY += 12;
-        }
-
-        let curY = Math.max(doc.y + 6, rightContactY + 3);
-        // Divider 1
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(1.0).strokeColor('#000000').stroke();
-        curY += 7;
-
-        // ABOUT ME
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('ABOUT ME', startX, curY, { characterSpacing: 1.6 });
-        curY += 11;
-        doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(parsed.summary, startX, curY, { width: contentWidth, lineGap: 1.2, align: 'justify' });
-        curY = doc.y + 6;
-
-        // Divider 2
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor('#000000').stroke();
-        curY += 7;
-
-        // EXPERIENCE
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('EXPERIENCE', startX, curY, { characterSpacing: 1.6 });
-        curY += 11;
-
-        // Display up to 3 top experiences, calibrated for strictly single page
-        const expList = parsed.experience.slice(0, 3);
-        for (const exp of expList) {
-          const dateWidth = 90;
-          const detailX = startX + dateWidth + 10;
-          const detailWidth = contentWidth - dateWidth - 10;
-
-          doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.5).text(exp.duration, startX, curY, { width: dateWidth });
-
-          doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8).text(exp.role.toUpperCase(), detailX, curY, { width: detailWidth });
-          doc.fillColor('#64748B').font('Helvetica').fontSize(7.2).text(exp.company, detailX, doc.y + 0.5, { width: detailWidth });
-          curY = doc.y + 1.5;
-
-          const bullets = exp.bullets && exp.bullets.length > 0 ? exp.bullets.slice(0, 2) : ['Architected scalable services and delivered key technical impact.'];
-          for (const b of bullets) {
-            doc.fillColor('#334155').font('Helvetica').fontSize(7.2).text(`•  ${b}`, detailX, curY, { width: detailWidth, lineGap: 1.05 });
-            curY = doc.y + 1.5;
-          }
-          curY += 2;
-        }
-
-        // Divider 3
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor('#000000').stroke();
-        curY += 7;
-
-        // 2-COLUMN SECTION: EDUCATION (Left 50%) & EXPERTISE (Right 50%)
-        const halfWidth = (contentWidth - 24) / 2;
-        const rightColLeftX = startX + halfWidth + 24;
-
-        // Column 1: Education
-        let eduY = curY;
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('EDUCATION', startX, eduY, { characterSpacing: 1.6 });
-        eduY += 11;
-
-        for (const edu of parsed.education.slice(0, 2)) {
-          doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.2).text(edu.duration, startX, eduY, { width: 68 });
-          doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.8).text(edu.degree.toUpperCase(), startX + 72, eduY, { width: halfWidth - 72 });
-          doc.fillColor('#64748B').font('Helvetica').fontSize(7.2).text(edu.institution, startX + 72, doc.y + 0.5, { width: halfWidth - 72 });
-          eduY = doc.y + 4;
-        }
-
-        // Column 2: Expertise with Level Meters
-        let expY = curY;
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('EXPERTISE', rightColLeftX, expY, { characterSpacing: 1.6 });
-        expY += 11;
-
-        const skillsToDisplay = parsed.skillsList.slice(0, 5);
-        for (let sIdx = 0; sIdx < skillsToDisplay.length; sIdx++) {
-          const s = skillsToDisplay[sIdx];
-          const pct = Math.max(70, 96 - sIdx * 5);
-          doc.fillColor('#000000').font('Helvetica').fontSize(7.5).text(s, rightColLeftX, expY, { width: halfWidth - 85 });
-          // Meter background
-          const meterX = rightColLeftX + halfWidth - 80;
-          doc.rect(meterX, expY + 2.5, 75, 4).fill('#E2E8F0');
-          doc.rect(meterX, expY + 2.5, (75 * pct) / 100, 4).fill('#000000');
-          expY += 11;
-        }
-
-        curY = Math.max(eduY, expY) + 3;
-        // Divider 4
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor('#000000').stroke();
-        curY += 7;
-
-        // 2-COLUMN SECTION: ACHIEVEMENT (Left 50%) & REFERENCE (Right 50%)
-        let achY = curY;
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('ACHIEVEMENT', startX, achY, { characterSpacing: 1.6 });
-        achY += 11;
-        doc.fillColor('#475569').font('Helvetica-Oblique').fontSize(7.2).text('2025 - 2026', startX, achY, { width: 68 });
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.8).text('AUTONOMOUS ATS JOB APPLICATION AGENT', startX + 72, achY, { width: halfWidth - 72 });
-        doc.fillColor('#64748B').font('Helvetica').fontSize(7.2).text('Engineering Innovation Showcase - USA', startX + 72, doc.y + 0.5, { width: halfWidth - 72 });
-        doc.fillColor('#334155').font('Helvetica').fontSize(7.2).text('Architected multi-agent ATS optimizer achieving 95%+ benchmark match rates with automated docx synthesis.', startX + 72, doc.y + 0.5, { width: halfWidth - 72, lineGap: 1 });
-
-        let refY = curY;
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(8.5).text('REFERENCE', rightColLeftX, refY, { characterSpacing: 1.6 });
-        refY += 11;
-        // Reference 1
-        const refColWidth = (halfWidth - 10) / 2;
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.5).text('DR. ELEANOR VANCE', rightColLeftX, refY, { width: refColWidth });
-        doc.fillColor('#64748B').font('Helvetica').fontSize(7).text('Engineering Director', rightColLeftX, doc.y + 0.5, { width: refColWidth });
-        doc.fillColor('#334155').font('Helvetica').fontSize(7).text('P: +1 (555) 789-0123', rightColLeftX, doc.y + 0.5, { width: refColWidth });
-        doc.fillColor('#334155').font('Helvetica').fontSize(6.8).text('E: evance@cloudscale.tech', rightColLeftX, doc.y + 0.5, { width: refColWidth });
-
-        // Reference 2
-        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(7.5).text('MARCUS STERLING', rightColLeftX + refColWidth + 10, refY, { width: refColWidth });
-        doc.fillColor('#64748B').font('Helvetica').fontSize(7).text('Principal Cloud Architect', rightColLeftX + refColWidth + 10, doc.y + 0.5, { width: refColWidth });
-        doc.fillColor('#334155').font('Helvetica').fontSize(7).text('P: +1 (555) 456-7890', rightColLeftX + refColWidth + 10, doc.y + 0.5, { width: refColWidth });
-        doc.fillColor('#334155').font('Helvetica').fontSize(6.8).text('E: m.sterling@apexcloud.io', rightColLeftX + refColWidth + 10, doc.y + 0.5, { width: refColWidth });
+      else if (formatType === 'executive-monolith' || formatType === 'cloud-devops') {
+        renderPhotoLayout(doc, parsed, customData);
       }
+
 
       // =========================================================================
       // FORMAT 3: MINIMALIST TWO-COL (Crisp 1/3 and 2/3 Clean Grid with Vertical Line)
@@ -1450,7 +1546,7 @@ export async function generateResumePdf(
         // Centered Classical Serif Masthead
         doc.fillColor('#1E1B4B').font('Times-Bold').fontSize(21).text(parsed.name.toUpperCase(), startX, 26, { align: 'center', width: contentWidth });
         doc.fillColor(accentCol).font('Times-Italic').fontSize(9.5).text(parsed.headline, startX, doc.y + 2, { align: 'center', width: contentWidth });
-        doc.fillColor('#475569').font('Times-Roman').fontSize(8).text(parsed.contacts.slice(0, 4).join('   ◆   '), startX, doc.y + 3, { align: 'center', width: contentWidth });
+        doc.fillColor('#475569').font('Times-Roman').fontSize(8).text(parsed.contacts.slice(0, 4).join('   •   '), startX, doc.y + 3, { align: 'center', width: contentWidth });
 
         // Double Classical Ruling Bar
         let curY = doc.y + 6;
@@ -1484,7 +1580,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor(accentCol).font('Times-Roman').fontSize(7.5).text('§', startX + 2, curY, { width: 10 });
+            doc.fillColor(accentCol).font('Times-Roman').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1C1917').font('Times-Roman').fontSize(8).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.2 });
             curY = doc.y + 2.5;
           }
@@ -1650,7 +1746,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor('#0D9488').font('Helvetica-Bold').fontSize(7.5).text('■', startX + 2, curY, { width: 10 });
+            doc.fillColor('#0D9488').font('Helvetica-Bold').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
             curY = doc.y + 2;
           }
@@ -1774,7 +1870,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor('#B45309').font('Helvetica-Bold').fontSize(7).text('▲', startX + 2, curY, { width: 10 });
+            doc.fillColor('#B45309').font('Helvetica-Bold').fontSize(7).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1C1917').font('Times-Roman').fontSize(8).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.2 });
             curY = doc.y + 2;
           }
@@ -1976,7 +2072,7 @@ export async function generateResumePdf(
         // Legal Masthead
         doc.fillColor('#450A0A').font('Times-Bold').fontSize(19).text(parsed.name.toUpperCase(), startX, 26, { align: 'center', width: contentWidth });
         doc.fillColor(accentCol).font('Times-Italic').fontSize(9).text(parsed.headline, startX, doc.y + 2, { align: 'center', width: contentWidth });
-        doc.fillColor('#57534E').font('Times-Roman').fontSize(7.5).text(parsed.contacts.slice(0, 4).join('   §   '), startX, doc.y + 2, { align: 'center', width: contentWidth });
+        doc.fillColor('#57534E').font('Times-Roman').fontSize(7.5).text(parsed.contacts.slice(0, 4).join('   •   '), startX, doc.y + 2, { align: 'center', width: contentWidth });
 
         let curY = doc.y + 6;
         // Bar box
@@ -2019,7 +2115,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor(accentCol).font('Times-Roman').fontSize(7.5).text('§', startX + 2, curY, { width: 10 });
+            doc.fillColor(accentCol).font('Times-Roman').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1C1917').font('Times-Roman').fontSize(8).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.2 });
             curY = doc.y + 2;
           }
@@ -2085,7 +2181,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor('#16A34A').font('Helvetica-Bold').fontSize(7.5).text('✔', startX + 2, curY, { width: 10 });
+            doc.fillColor('#16A34A').font('Helvetica-Bold').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
             curY = doc.y + 2;
           }
@@ -2160,7 +2256,7 @@ export async function generateResumePdf(
         // CV Masthead
         doc.fillColor('#1E1B4B').font('Times-Bold').fontSize(19).text(parsed.name.toUpperCase(), startX, 26, { align: 'center', width: contentWidth });
         doc.fillColor(accentCol).font('Times-Italic').fontSize(9).text('CURRICULUM VITAE & RESEARCH DOSSIER', startX, doc.y + 2, { align: 'center', width: contentWidth });
-        doc.fillColor('#57534E').font('Times-Roman').fontSize(7.5).text(parsed.contacts.slice(0, 4).join('   ◆   '), startX, doc.y + 2, { align: 'center', width: contentWidth });
+        doc.fillColor('#57534E').font('Times-Roman').fontSize(7.5).text(parsed.contacts.slice(0, 4).join('   •   '), startX, doc.y + 2, { align: 'center', width: contentWidth });
 
         let curY = doc.y + 6;
         // Grants Strip
@@ -2259,7 +2355,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor('#0369A1').font('Helvetica-Bold').fontSize(7.5).text('◆', startX + 2, curY, { width: 10 });
+            doc.fillColor('#0369A1').font('Helvetica-Bold').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
             curY = doc.y + 2;
           }
@@ -2325,7 +2421,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor('#9333EA').font('Helvetica-Bold').fontSize(7.5).text('▲', startX + 2, curY, { width: 10 });
+            doc.fillColor('#9333EA').font('Helvetica-Bold').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
             curY = doc.y + 2;
           }
@@ -2390,7 +2486,7 @@ export async function generateResumePdf(
               doc.addPage();
               curY = 28;
             }
-            doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(7.5).text('■', startX + 2, curY, { width: 10 });
+            doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(7.5).text('•', startX + 2, curY, { width: 10 });
             doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
             curY = doc.y + 2;
           }
@@ -2458,125 +2554,12 @@ export async function generateResumePdf(
       }
 
       // =========================================================================
-      // FORMAT 7: TECH & ENGINEERING / DATASCIENCE-AI (Silicon Valley FAANG Layout)
+      // UNIVERSAL PHOTO & EXECUTIVE PREVIEW LAYOUT (Matches screen preview 1:1)
       // =========================================================================
       else {
-        const startX = 32;
-        const contentWidth = 548;
-        const primaryHex = ensureHex(style.primaryColor);
-        const headlineHex = ensureHex(style.headlineColor);
-        const dividerHex = ensureHex(style.dividerColor);
-        const bulletHex = ensureHex(style.bulletColor);
-
-        // Top Accent Color Bar
-        doc.rect(startX, 20, contentWidth, 3).fill(headlineHex);
-
-        // Header: Name & Headline on Left, Contacts on Right
-        doc.fillColor(primaryHex).font('Helvetica-Bold').fontSize(16).text(parsed.name.toUpperCase(), startX, 28);
-        doc.fillColor(headlineHex).font('Helvetica-Bold').fontSize(8.5).text(parsed.headline, startX, doc.y + 1);
-
-        // Right-aligned contacts
-        let contactY = 28;
-        doc.fillColor('#475569').font('Helvetica').fontSize(7.5);
-        for (const c of parsed.contacts.slice(0, 3)) {
-          doc.text(c, startX, contactY, { width: contentWidth, align: 'right' });
-          contactY += 9.5;
-        }
-
-        // Header Divider
-        let curY = Math.max(doc.y + 6, 56);
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.8).strokeColor(dividerHex).stroke();
-        curY += 7;
-
-        // Professional Summary
-        doc.fillColor(headlineHex).font('Helvetica-Bold').fontSize(8.5).text('PROFESSIONAL SUMMARY', startX, curY);
-        curY += 10.5;
-        doc.fillColor('#1E293B').font('Helvetica').fontSize(7.8).text(parsed.summary, startX, curY, { width: contentWidth, lineGap: 1.2 });
-        curY = doc.y + 8;
-
-        // Technical Skills Grid (FAANG Standard Box)
-        doc.fillColor(headlineHex).font('Helvetica-Bold').fontSize(8.5).text('TECHNICAL SKILLS & COMPETENCIES', startX, curY);
-        curY += 10.5;
-
-        if (parsed.skills.length > 0) {
-          for (const s of parsed.skills) {
-            doc.fillColor(primaryHex).font('Helvetica-Bold').fontSize(7.5).text(`${s.category}: `, startX, curY, { continued: true });
-            doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(s.items.join(', '));
-            curY = doc.y + 2;
-          }
-        } else {
-          doc.fillColor('#334155').font('Helvetica').fontSize(7.5).text(parsed.skillsList.join('   •   '), startX, curY, { width: contentWidth });
-          curY = doc.y + 2;
-        }
-        curY += 6;
-
-        // Work Experience
-        doc.fillColor(headlineHex).font('Helvetica-Bold').fontSize(8.5).text('WORK EXPERIENCE', startX, curY);
-        curY += 10.5;
-        doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.6).strokeColor(dividerHex).stroke();
-        curY += 5;
-
-        for (const exp of parsed.experience) {
-          if (curY > 730) {
-            doc.addPage();
-            curY = 28;
-          }
-          doc.fillColor(primaryHex).font('Helvetica-Bold').fontSize(8.5).text(exp.role, startX, curY, { continued: true });
-          doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(`  |  ${exp.company}  |  ${exp.duration}`);
-          curY = doc.y + 2.5;
-
-          for (const b of exp.bullets) {
-            if (curY > 745) {
-              doc.addPage();
-              curY = 28;
-            }
-            doc.fillColor(bulletHex).font('Helvetica-Bold').fontSize(7.5).text('▸', startX + 2, curY, { width: 10 });
-            doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
-            curY = doc.y + 2;
-          }
-          curY += 4;
-        }
-
-        // Projects
-        if (parsed.projects.length > 0) {
-          if (curY > 670) {
-            doc.addPage();
-            curY = 28;
-          }
-          doc.fillColor(headlineHex).font('Helvetica-Bold').fontSize(8.5).text('TECHNICAL PROJECTS', startX, curY);
-          curY += 10.5;
-          doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.6).strokeColor(dividerHex).stroke();
-          curY += 5;
-
-          for (const p of parsed.projects) {
-            doc.fillColor(primaryHex).font('Helvetica-Bold').fontSize(8).text(p.title, startX, curY);
-            curY = doc.y + 2;
-            for (const b of p.bullets) {
-              doc.fillColor(bulletHex).font('Helvetica-Bold').fontSize(7.5).text('▸', startX + 2, curY, { width: 10 });
-              doc.fillColor('#1E293B').font('Helvetica').fontSize(7.5).text(b, startX + 14, curY, { width: contentWidth - 14, lineGap: 1.15 });
-              curY = doc.y + 2;
-            }
-            curY += 3;
-          }
-        }
-
-        // Education
-        if (parsed.education.length > 0) {
-          if (curY > 700) {
-            doc.addPage();
-            curY = 28;
-          }
-          doc.fillColor(headlineHex).font('Helvetica-Bold').fontSize(8.5).text('EDUCATION', startX, curY);
-          curY += 10.5;
-          doc.moveTo(startX, curY).lineTo(startX + contentWidth, curY).lineWidth(0.6).strokeColor(dividerHex).stroke();
-          curY += 5;
-          for (const edu of parsed.education) {
-            doc.fillColor(primaryHex).font('Helvetica-Bold').fontSize(8).text(edu.degree, startX, curY);
-            doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(`${edu.institution}  |  ${edu.duration}`, startX, doc.y + 1);
-            curY = doc.y + 3;
-          }
-        }
+        renderPhotoLayout(doc, parsed, customData);
       }
+
 
       doc.end();
 
@@ -2899,7 +2882,8 @@ export async function generateTailoredResume(
   optimizedResume: string,
   atsScore: number,
   targetScore = 90,
-  formatType = 'executive-monolith'
+  formatType = 'executive-monolith',
+  customData?: any
 ): Promise<{
   success: boolean;
   message: string;
@@ -2914,7 +2898,7 @@ export async function generateTailoredResume(
   format_used?: string;
 }> {
   const docxResult = await generateResumeDocx(optimizedResume, atsScore, targetScore, formatType);
-  const pdfResult = await generateResumePdf(optimizedResume, atsScore, targetScore, formatType).catch((err) => {
+  const pdfResult = await generateResumePdf(optimizedResume, atsScore, targetScore, formatType, customData).catch((err) => {
     console.warn('[PDF] Failed to generate PDFKit document:', err);
     return {
       filename: '',

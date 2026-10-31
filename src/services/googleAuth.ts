@@ -80,3 +80,34 @@ export const logout = async () => {
   cachedAccessToken = null;
   cachedUser = null;
 };
+
+/**
+ * Returns user registered notification email with hierarchical fallback:
+ * 1. Explicitly configured localStorage override
+ * 2. Authenticated Google User email
+ * 3. DEFAULT_NOTIFICATION_EMAIL (aryamanharshdewangan@gmail.com)
+ */
+export const getRegisteredNotificationEmail = (): string => {
+  try {
+    const custom = localStorage.getItem('registered_notification_email');
+    if (custom && custom.trim() && custom.includes('@')) {
+      return custom.trim();
+    }
+  } catch {}
+  if (cachedUser?.email) {
+    return cachedUser.email;
+  }
+  return DEFAULT_NOTIFICATION_EMAIL;
+};
+
+/**
+ * Persists user registered notification email preference
+ */
+export const setRegisteredNotificationEmail = (email: string): void => {
+  try {
+    if (email && email.trim() && email.includes('@')) {
+      localStorage.setItem('registered_notification_email', email.trim());
+    }
+  } catch {}
+};
+

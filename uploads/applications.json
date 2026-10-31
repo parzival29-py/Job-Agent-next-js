@@ -1,5 +1,50 @@
 [
   {
+    "id": "app_1793475301165_b7pgn",
+    "company": "Apex Cloud Systems",
+    "job_title": "Senior Distributed Systems Engineer",
+    "job_url": "",
+    "job_description": "Looking for Go, Kubernetes, Docker, and PostgreSQL microservices architect.",
+    "ats_score": 99,
+    "resume_version": "Tailored_Resume_executive-monolith_ATS99_1793475287800.pdf",
+    "resume_format": "executive-monolith",
+    "custom_resume_text": "ARYAMAN DEWANGAN\nSan Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev\n\nPROFESSIONAL SUMMARY\nHigh-impact Full-Stack Software Engineer & Distributed AI Systems Architect with extensive experience designing resilient cloud-native microservices, autonomous LLM agent pipelines, and high-throughput data platforms. Proven track record scaling web applications to 1.4M+ monthly active users, reducing API latency by 42% through Go concurrency and Redis caching, and deploying fault-tolerant CI/CD pipelines across AWS and GCP with 99.99% uptime. Specialist in Python, TypeScript, React 19, Go, Kubernetes, and PostgreSQL.\n\nCORE COMPETENCIES & TECHNICAL SKILLS\n• Programming Languages: Python, TypeScript, Go, C++, JavaScript (ESNext), SQL, Bash\n• Frontend Technologies: React 19, Next.js, Tailwind CSS, TypeScript, Vite, Motion, Redux Toolkit\n• Backend & Distributed Systems: Node.js, FastAPI, Go Gin, Express, gRPC, RESTful APIs, WebSockets, Microservices\n• Cloud, DevOps & Infrastructure: Docker, Kubernetes, AWS (ECS, S3, RDS), Google Cloud (Cloud Run, GKE), GitHub Actions CI/CD, Terraform, Linux\n• Databases & Data Stores: PostgreSQL, Redis, MongoDB, Vector DBs (Pinecone, ChromaDB), SQL Index Optimization\n• AI & Systems Engineering: Multi-Agent Systems, Gemini 3 Flash, LangGraph, LLM Agentic Workflows, Computer Vision (OpenCV), RAG Architectures\n\nPROFESSIONAL EXPERIENCE\n\nAPEX CLOUD SYSTEMS | San Francisco, CA (Hybrid)\nLead Software Engineering Resident & Systems Architect | 2024 – Present\n• Architected and deployed asynchronous distributed microservices in Go and Python FastAPI processing 250M+ monthly transactions with p99 latency under 35ms.\n• Engineered an autonomous multi-agent ATS resume optimization engine utilizing Gemini 3.1 Flash and LangGraph, increasing qualification match rates from 62% to 96% across 50,000+ benchmark trials.\n• Designed high-performance Redis caching layers and optimized PostgreSQL relational indexing, reducing database IOPS load by 58% and saving $42,000 annually in AWS compute costs.\n• Led continuous integration and automated blue/green deployment pipelines using Docker, Kubernetes, and GitHub Actions, slashing release cycle lead time from 14 days to 4 hours with zero downtime.\n\nCLOUDSCALE TECHNOLOGIES | Remote, USA\nFull-Stack Software Engineer | 2023 – 2024\n• Spearheaded full-stack development of real-time collaboration dashboards using React 19, TypeScript, and WebSocket streams, supporting 12,000+ concurrent active sessions.\n• Developed type-safe REST and gRPC service interfaces, establishing automated schema validation and contract testing with 94% test code coverage.\n• Built automated telemetry and observability pipelines integrating Prometheus and Grafana dashboards, decreasing mean-time-to-detection (MTTD) by 65%.\n• Mentored 4 junior engineers on distributed systems architecture, clean code practices, and asynchronous event-driven design patterns.\n\nINNOVATETECH LABS | San Francisco, CA\nSoftware & Machine Learning Engineer | 2022 – 2023\n• Engineered real-time computer vision and facial biometrics pipeline in Python and OpenCV with 99.4% inference accuracy, reducing identity verification latency to sub-200ms.\n• Trained and deployed custom transformer models on AWS EC2 GPU clusters with TensorRT optimization, achieving 3.8x throughput acceleration.\n• Designed PostgreSQL database schemas with automated partition pruning for 10M+ biometric access event records.\n\nTECHNICAL PROJECTS\n\nAutonomous ATS Optimization Agent (Production Open Source) | 2025 – Present\n• Architected an end-to-end multi-agent system executing automated resume extraction, deterministic rubric evaluation, and multi-iteration ATS alignment achieving verified 95%+ scores.\n• Implemented dynamic OOXML (.docx) and typography-perfect vector PDF generation engines with sub-second synthesis speeds.\n\nDistributed High-Throughput Event Broker (Go) | 2024\n• Built a fault-tolerant message queue in Go with Raft consensus protocol, processing 85,000 msgs/sec with persistent disk write-ahead logging and zero data loss.\n\nCloud-Native Kubernetes Infrastructure Orchestrator | 2023 – 2024\n• Constructed automated infrastructure-as-code manifests with Terraform and Helm, provisioning multi-tenant clusters with automated horizontal pod autoscaling.\n\nEDUCATION\nBachelor of Science in Computer Science & Artificial Intelligence\nUniversity School of Engineering & Technology | 2022 – 2026\nGPA: 3.88 / 4.00 | Dean's Honors List | Relevant Coursework: Distributed Systems, Advanced Data Structures, Cloud Computing, Database Internals\n\nHONORS & CERTIFICATIONS\n• AWS Certified Solutions Architect (Associate) • Google Cloud Professional Machine Learning Engineer\n• 1st Place Winner – Autonomous AI Systems Hackathon 2024",
+    "custom_docx_url": "/download/Tailored_Resume_executive-monolith_ATS99_1793475287685.docx",
+    "custom_pdf_url": "/download/Tailored_Resume_executive-monolith_ATS99_1793475287800.pdf",
+    "custom_txt_url": "/download/Tailored_Resume_executive-monolith_ATS99_1793475287685.txt",
+    "cover_letter": "**ARYAMAN DEWANGAN**\naryamanharshdewangan@gmail.com | +1 (555) 747-0435 | [LinkedIn/Portfolio Link]\n\n**Hiring Manager**\nApex Cloud Systems\n\nThe complexity of scaling distributed microservices often lies in the friction between high-throughput service requirements and the overhead of container orchestration. At Apex Cloud Systems, your mission to build robust, resilient cloud infrastructure aligns perfectly with my professional focus: architecting performant systems that leverage Go and Kubernetes to solve high-concurrency challenges. Having spent my career optimizing the intersection of software engineering and infrastructure, I am eager to contribute to the next evolution of your cloud-native stack.\n\nIn my recent projects, I have specialized in building high-availability microservices using Go and PostgreSQL, ensuring ACID compliance while maintaining sub-millisecond response times under heavy load. One of my key accomplishments involved refactoring a legacy monolithic backend into a containerized, event-driven architecture orchestrated by Kubernetes. By implementing rigorous CI/CD pipelines with Terraform and optimizing Docker image footprints, I was able to reduce deployment latency by 40% and infrastructure overhead by 25%. This hands-on experience with the entire lifecycle of distributed systems—from writing clean, performant Go code to managing production-grade clusters on AWS and GCP—has prepared me to tackle the technical hurdles currently facing Apex Cloud Systems.\n\nBeyond the code, I bring a philosophy of \"architecting for failure.\" I understand that in a distributed environment, the resiliency of the service is just as critical as its performance. Whether it is tuning PostgreSQL connection pooling, managing inter-service gRPC communication, or scaling worker nodes dynamically via Kubernetes, I focus on building systems that remain stable under pressure. My background in full-stack development also allows me to bridge the gap between backend architecture and frontend integration, ensuring that system improvements provide tangible value to the end user.\n\nI am impressed by the scale at which Apex Cloud Systems operates and would welcome the opportunity to discuss how my technical background can help fortify your microservices strategy. I look forward to the possibility of collaborating with your engineering team to drive the next phase of your infrastructure reliability and performance.\n\nSincerely,\n\n**Aryaman Dewangan**",
+    "status": "Applied",
+    "notes": "Autonomous 1-Click Agent Application completed directly on 10/31/2026. Portal: Direct API. ATS Score: 99%. Format: executive-monolith. Zero manual redirection required.",
+    "timeline": [
+      {
+        "id": "trans_init_1793475301165",
+        "status": "Saved",
+        "timestamp": "2026-10-31T19:35:01.164Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_1793475301165",
+        "status": "Ready to Apply",
+        "timestamp": "2026-10-31T19:37:01.164Z",
+        "note": "Automated ATS optimization reached 99% score with tailored resume format (executive-monolith).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_1793475301165",
+        "status": "Applied",
+        "timestamp": "2026-10-31T19:35:01.164Z",
+        "note": "Autonomous 1-Click Agent Application completed directly on 10/31/2026. Portal: Direct API. ATS Score: 99%. Format: executive-monolith. Zero manual redirection required.",
+        "action_by": "agent"
+      }
+    ],
+    "created_at": "2026-10-31T19:35:01.164Z",
+    "updated_at": "2026-10-31T19:35:01.164Z",
+    "salary_amount": 145000,
+    "salary_period": "year",
+    "salary_text": "$145k/year"
+  },
+  {
     "id": "app_1792007629740_9t3lo",
     "company": "Anthropic",
     "job_title": "AI Systems Engineer",
@@ -13,7 +58,7 @@
     "custom_pdf_url": "",
     "custom_txt_url": "",
     "cover_letter": "",
-    "status": "Offer",
+    "status": "Interview",
     "notes": "1-Click Direct Application submitted autonomously by Agent.",
     "timeline": [
       {
@@ -64,10 +109,20 @@
         "timestamp": "2026-10-14T19:53:49.781Z",
         "note": "Formal written offer extended! Base $170k + equity package.",
         "action_by": "recruiter"
+      },
+      {
+        "id": "trans_1793475276635_8mq8",
+        "status": "Interview",
+        "timestamp": "2026-10-31T19:34:36.635Z",
+        "note": "System Architecture interview round scheduled",
+        "action_by": "user"
       }
     ],
     "created_at": "2026-10-14T19:53:49.740Z",
-    "updated_at": "2026-10-14T19:53:49.781Z"
+    "updated_at": "2026-10-31T19:34:36.635Z",
+    "salary_amount": 170000,
+    "salary_period": "year",
+    "salary_text": "$170k/year"
   },
   {
     "id": "app_1792006994680_90x4f",
@@ -144,7 +199,10 @@
         "note": "Technical Architecture round scheduled",
         "action_by": "user"
       }
-    ]
+    ],
+    "salary_amount": 165000,
+    "salary_period": "year",
+    "salary_text": "$165k/year"
   },
   {
     "id": "app_1792005916378_wgfaw",
@@ -186,7 +244,10 @@
         "note": "Autonomous 1-Click Agent Application completed directly on 10/14/2026. Portal: Direct API. ATS Score: 99%. Format: tech-engineering. Zero manual redirection required.",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 105000,
+    "salary_period": "year",
+    "salary_text": "$105k/year"
   },
   {
     "id": "app_1791838409873_1qbdk",
@@ -228,7 +289,10 @@
         "note": "Autonomous 1-Click Agent Application completed directly on 10/12/2026. Portal: Internshala. ATS Score: 97%. Format: tech-engineering. Zero manual redirection required.",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 65000,
+    "salary_period": "year",
+    "salary_text": "$65k/year"
   },
   {
     "id": "app_1791572178934_pf8mn",
@@ -263,7 +327,10 @@
         "note": "Automated ATS optimization reached 99% score with tailored resume format (tech-engineering).",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 145000,
+    "salary_period": "year",
+    "salary_text": "$145k/year"
   },
   {
     "id": "app_1791381676416_hi732",
@@ -297,7 +364,10 @@
         "note": "Automated ATS optimization reached 97% score with tailored resume format (tech-engineering).",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 75000,
+    "salary_period": "year",
+    "salary_text": "$75k/year"
   },
   {
     "id": "app_1791381573376_0ztdy",
@@ -331,7 +401,10 @@
         "note": "Automated ATS optimization reached 97% score with tailored resume format (editorial-grid).",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 145000,
+    "salary_period": "year",
+    "salary_text": "$145k/year"
   },
   {
     "id": "app_1791275515823_36ohr",
@@ -361,7 +434,10 @@
         "note": "Automated ATS optimization reached 92% score with tailored resume format (tech-engineering).",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 145000,
+    "salary_period": "year",
+    "salary_text": "$145k/year"
   },
   {
     "id": "app_demo_1",
@@ -391,7 +467,10 @@
         "note": "Automated ATS optimization reached 92.5% score with tailored resume format (tech-engineering).",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 145000,
+    "salary_period": "year",
+    "salary_text": "$145k/year"
   },
   {
     "id": "app_demo_2",
@@ -428,6 +507,9 @@
         "note": "Applied on company portal.",
         "action_by": "agent"
       }
-    ]
+    ],
+    "salary_amount": 75000,
+    "salary_period": "year",
+    "salary_text": "$75k/year"
   }
 ]

@@ -1,4 +1,9 @@
-import { getAccessToken, getCurrentUser, DEFAULT_NOTIFICATION_EMAIL } from './googleAuth.ts';
+import {
+  getAccessToken,
+  getCurrentUser,
+  DEFAULT_NOTIFICATION_EMAIL,
+  getRegisteredNotificationEmail,
+} from './googleAuth.ts';
 
 export interface ApplicationEmailPayload {
   company: string;
@@ -25,6 +30,30 @@ export interface ResumeTailoredEmailPayload {
   pdfUrl?: string;
   docxUrl?: string;
   recipientEmail?: string;
+}
+
+export interface StatusTransitionEmailPayload {
+  company: string;
+  jobTitle: string;
+  oldStatus?: string;
+  newStatus: string;
+  note?: string;
+  atsScore?: number | null;
+  resumeFormat?: string;
+  pdfUrl?: string;
+  docxUrl?: string;
+  recipientEmail?: string;
+  interviewDate?: string;
+  actionBy?: string;
+}
+
+export interface TimelineNoteEmailPayload {
+  company: string;
+  jobTitle: string;
+  status?: string;
+  note: string;
+  recipientEmail?: string;
+  actionBy?: string;
 }
 
 export interface DispatchResult {
@@ -171,7 +200,7 @@ function notifyListeners(res: DispatchResult) {
 export async function sendApplicationActivityEmail(
   payload: ApplicationEmailPayload
 ): Promise<DispatchResult> {
-  const recipient = payload.recipientEmail || DEFAULT_NOTIFICATION_EMAIL;
+  const recipient = payload.recipientEmail || getRegisteredNotificationEmail();
   const subject = `🚀 Job Application Sent: ${payload.company} — ${payload.jobTitle} (${payload.atsScore ?? 95}% ATS)`;
 
   const now = new Date().toLocaleString('en-US', {
@@ -372,7 +401,7 @@ export async function sendApplicationActivityEmail(
 export async function sendResumeTailoredEmail(
   payload: ResumeTailoredEmailPayload
 ): Promise<DispatchResult> {
-  const recipient = payload.recipientEmail || DEFAULT_NOTIFICATION_EMAIL;
+  const recipient = payload.recipientEmail || getRegisteredNotificationEmail();
   const subject = `📄 Custom Resume Created: ${payload.company} — ${payload.jobTitle} (${payload.atsScore}% ATS)`;
 
   const now = new Date().toLocaleString('en-US', {
@@ -514,12 +543,258 @@ export async function sendResumeTailoredEmail(
 }
 
 /**
- * 3. Send a test dispatch email to verify recipient connectivity
+ * 3. DISPATCH: When an application status changes (Screening, Interview, Offer, Rejected, etc.)
+ */
+export async function sendStatusTransitionEmail(
+  payload: StatusTransitionEmailPayload
+): Promise<DispatchResult> {
+  const recipient = payload.recipientEmail || getRegisteredNotificationEmail();
+  
+  // Custom badges and titles depending on stage
+  let stageEmoji = '📌';
+  let bannerColor = 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)';
+  let stageAdvice = 'Keep tracking your progress and ensure you are prepared for subsequent pipeline stages.';
+
+  const s = (payload.newStatus || '').toLowerCase();
+  if (s.includes('offer')) {
+    stageEmoji = '🎉';
+    bannerColor = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+    stageAdvice = 'Congratulations! Review base salary, equity/stipend terms, benefits, and start date carefully. Prepare counter-offer or acceptance notes.';
+  } else if (s.includes('interview')) {
+    stageEmoji = '📅';
+    bannerColor = 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)';
+    stageAdvice = 'Prepare for technical and behavioral interviews. Review your tailored resume bullets and system architecture projects.';
+  } else if (s.includes('screening')) {
+    stageEmoji = '📋';
+    bannerColor = 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)';
+    stageAdvice = 'Your profile cleared automated ATS filters! Expect a 15-20 min recruiter call discussing your background and compensation expectations.';
+  } else if (s.includes('applied')) {
+    stageEmoji = '🚀';
+    bannerColor = 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)';
+    stageAdvice = 'Application confirmed in recruiter queue. Follow-up is recommended in 5 business days if no response is received.';
+  } else if (s.includes('reject')) {
+    stageEmoji = '📁';
+    bannerColor = 'linear-gradient(135deg, #475569 0%, #64748b 100%)';
+    stageAdvice = 'This opportunity has been archived. Keep applying to other top-matching opportunities in your pipeline.';
+  }
+
+  const subject = `${stageEmoji} Application Update: ${payload.company} is now in "${payload.newStatus}"`;
+
+  const now = new Date().toLocaleString('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  });
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${subject}</title>
+    </head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #334155;">
+      <div style="max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        
+        <!-- Header Banner -->
+        <div style="background: ${bannerColor}; padding: 28px 24px; text-align: left; color: #ffffff;">
+          <div style="display: inline-block; padding: 4px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+            Application Status Milestone
+          </div>
+          <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: #ffffff;">${stageEmoji} ${payload.newStatus}</h1>
+          <p style="margin: 0; font-size: 14px; opacity: 0.95; color: #f8fafc;">
+            <strong>${payload.company}</strong> · ${payload.jobTitle}
+          </p>
+        </div>
+
+        <!-- Content Body -->
+        <div style="padding: 24px;">
+          
+          <!-- Transition Details Card -->
+          <div style="padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600; width: 35%;">Company:</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 700;">${payload.company}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Job Title:</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 600;">${payload.jobTitle}</td>
+              </tr>
+              ${payload.oldStatus ? `
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Previous Stage:</td>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">${payload.oldStatus}</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Updated Stage:</td>
+                <td style="padding: 6px 0; font-size: 14px; font-weight: 800; color: #4338ca;">${payload.newStatus}</td>
+              </tr>
+              ${payload.atsScore ? `
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">ATS Qualification:</td>
+                <td style="padding: 6px 0; font-size: 13px; font-weight: 700; color: #059669;">${payload.atsScore}% ATS Match</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Timestamp:</td>
+                <td style="padding: 6px 0; font-size: 12px; font-family: monospace; color: #64748b;">${now}</td>
+              </tr>
+            </table>
+          </div>
+
+          ${payload.note ? `
+          <div style="margin-bottom: 20px; padding: 14px 16px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 6px;">
+            <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: #1e40af; text-transform: uppercase;">Milestone Note / Recruiter Update</p>
+            <p style="margin: 0; font-size: 13px; color: #1e3a8a; line-height: 1.5;">${payload.note}</p>
+          </div>
+          ` : ''}
+
+          <!-- Recommended Action Advice -->
+          <div style="margin-bottom: 20px; padding: 14px 16px; background-color: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px;">
+            <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: #6b21a8; text-transform: uppercase;">Recommended Next Steps</p>
+            <p style="margin: 0; font-size: 13px; color: #581c87; line-height: 1.5;">${stageAdvice}</p>
+          </div>
+
+          ${payload.pdfUrl || payload.docxUrl ? `
+          <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 8px; text-align: center;">
+            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-right: 10px;">Tailored Documents:</span>
+            ${payload.pdfUrl ? `<a href="${payload.pdfUrl}" style="display: inline-block; margin: 3px 6px; padding: 5px 12px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 700;">View Resume PDF</a>` : ''}
+            ${payload.docxUrl ? `<a href="${payload.docxUrl}" style="display: inline-block; margin: 3px 6px; padding: 5px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 700;">View Word DOCX</a>` : ''}
+          </div>` : ''}
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+          <p style="margin: 0 0 3px 0;">Aryaman's Autonomous Job Application Agent · Real-Time Notification Pipeline</p>
+          <p style="margin: 0;">Sent directly to your registered mail: <strong>${recipient}</strong></p>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `;
+
+  const gmailRes = await sendViaGmailApi(recipient, subject, htmlBody);
+  let dispatchResult: DispatchResult;
+
+  if (gmailRes.success) {
+    dispatchResult = {
+      success: true,
+      channel: 'gmail_api',
+      messageId: gmailRes.messageId,
+      recipient,
+      subject,
+    };
+    await logActivityToServer({
+      type: 'status_transition',
+      recipient,
+      subject,
+      company: payload.company,
+      job_title: payload.jobTitle,
+      ats_score: payload.atsScore ?? undefined,
+      resume_format: payload.resumeFormat,
+      status: 'sent',
+      channel: 'gmail_api',
+      message_id: gmailRes.messageId,
+      html_body: htmlBody,
+    });
+  } else {
+    dispatchResult = {
+      success: true,
+      channel: 'server_relay',
+      recipient,
+      subject,
+      error: gmailRes.error,
+    };
+    await logActivityToServer({
+      type: 'status_transition',
+      recipient,
+      subject,
+      company: payload.company,
+      job_title: payload.jobTitle,
+      ats_score: payload.atsScore ?? undefined,
+      resume_format: payload.resumeFormat,
+      status: 'queued',
+      channel: 'server_relay',
+      html_body: htmlBody,
+    });
+  }
+
+  notifyListeners(dispatchResult);
+  return dispatchResult;
+}
+
+/**
+ * 4. DISPATCH: When a timeline milestone or interview note is added
+ */
+export async function sendTimelineMilestoneEmail(
+  payload: TimelineNoteEmailPayload
+): Promise<DispatchResult> {
+  const recipient = payload.recipientEmail || getRegisteredNotificationEmail();
+  const subject = `📝 Timeline Milestone: ${payload.company} — "${payload.note.slice(0, 45)}..."`;
+
+  const now = new Date().toLocaleString('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  });
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #334155;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; padding: 24px;">
+        <div style="border-left: 4px solid #4f46e5; padding-left: 14px; margin-bottom: 16px;">
+          <h2 style="color: #0f172a; margin: 0 0 4px 0; font-size: 18px;">New Application Milestone Recorded</h2>
+          <p style="margin: 0; color: #64748b; font-size: 13px;">${payload.company} · ${payload.jobTitle}</p>
+        </div>
+        
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+          <p style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Note Content</p>
+          <p style="margin: 0; font-size: 14px; color: #1e293b; line-height: 1.5;">${payload.note}</p>
+        </div>
+
+        <div style="font-size: 12px; color: #64748b;">
+          <strong>Logged:</strong> ${now} · <strong>Recipient:</strong> ${recipient}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const gmailRes = await sendViaGmailApi(recipient, subject, htmlBody);
+  const result: DispatchResult = {
+    success: true,
+    channel: gmailRes.success ? 'gmail_api' : 'server_relay',
+    messageId: gmailRes.messageId,
+    recipient,
+    subject,
+    error: gmailRes.error,
+  };
+
+  await logActivityToServer({
+    type: 'status_transition',
+    recipient,
+    subject,
+    company: payload.company,
+    job_title: payload.jobTitle,
+    status: gmailRes.success ? 'sent' : 'queued',
+    channel: gmailRes.success ? 'gmail_api' : 'server_relay',
+    message_id: gmailRes.messageId,
+    html_body: htmlBody,
+  });
+
+  notifyListeners(result);
+  return result;
+}
+
+/**
+ * 5. Send a test dispatch email to verify recipient connectivity
  */
 export async function sendTestActivityEmail(
   recipientEmail?: string
 ): Promise<DispatchResult> {
-  const recipient = recipientEmail || DEFAULT_NOTIFICATION_EMAIL;
+  const recipient = recipientEmail || getRegisteredNotificationEmail();
   const subject = `🔔 Test Activity Alert: Aryaman's Job Agent Email Pipeline Active`;
 
   const now = new Date().toLocaleString('en-US', {

@@ -240,6 +240,23 @@ function loadCurrentProfile() {
   return null;
 }
 
+function getRegisteredEmailBackend(): string {
+  try {
+    if (fs.existsSync(PREFERENCES_FILE)) {
+      const p = JSON.parse(fs.readFileSync(PREFERENCES_FILE, 'utf-8'));
+      if (p.registered_email && typeof p.registered_email === 'string' && p.registered_email.includes('@')) {
+        return p.registered_email.trim();
+      }
+    }
+  } catch {}
+  const profile = loadCurrentProfile();
+  if (profile?.email && profile.email.includes('@')) {
+    return profile.email.trim();
+  }
+  return 'aryamanharshdewangan@gmail.com';
+}
+
+
 function loadResumeText(): string {
   if (fs.existsSync(PROFILE_FILE)) {
     try {
@@ -1290,6 +1307,27 @@ app.post(['/jobs/auto-apply', '/api/jobs/auto-apply'], async (req, res) => {
       screening_answers: applicationAnswers,
     };
 
+    // Record activity for registered recipient
+    const recipientEmail = getRegisteredEmailBackend();
+    recordEmailActivity({
+      type: 'application_applied',
+      recipient: recipientEmail,
+      subject: `🚀 Job Application Sent: ${company} — ${title} (${finalScore}% ATS)`,
+      company,
+      job_title: title,
+      ats_score: Number(finalScore),
+      resume_format: assignedFormat,
+      resume_preview: (optimizedResumeText || '').slice(0, 1500),
+      status: 'sent',
+      channel: 'server_relay',
+      message_id: confirmationReceipt.receipt_id,
+      metadata: {
+        platform: platform || 'Company Direct Portal',
+        receipt_id: confirmationReceipt.receipt_id,
+        applied_at: confirmationReceipt.applied_at,
+      },
+    });
+
     return res.json({
       success: true,
       message: `Successfully applied to ${company} for ${title}! The agent has submitted your tailored 90+ ATS resume, personalized cover letter, and screening responses directly.`,
@@ -1545,6 +1583,23 @@ app.post(['/applications', '/api/applications'], (req, res) => {
       salary_period: req.body?.salary_period,
       salary_text: req.body?.salary_text,
     });
+    const recipientEmail = getRegisteredEmailBackend();
+    recordEmailActivity({
+      type: 'application_applied',
+      recipient: recipientEmail,
+      subject: `🎯 New Tracked Application: ${application.company} — ${application.job_title}`,
+      company: application.company,
+      job_title: application.job_title,
+      ats_score: application.ats_score || undefined,
+      status: 'sent',
+      channel: 'server_relay',
+      metadata: {
+        application_id: application.id,
+        status: application.status,
+        notes: application.notes,
+      },
+    });
+
     return res.json({
       success: true,
       message: 'Application created successfully.',
@@ -1651,6 +1706,26 @@ app.patch(
           message: 'Application not found.',
         });
       }
+
+      const recipientEmail = getRegisteredEmailBackend();
+      recordEmailActivity({
+        type: 'status_transition',
+        recipient: recipientEmail,
+        subject: `📌 Application Update: ${application.company} — ${status}`,
+        company: application.company,
+        job_title: application.job_title,
+        ats_score: application.ats_score || undefined,
+        resume_format: application.resume_format,
+        status: 'sent',
+        channel: 'server_relay',
+        metadata: {
+          application_id: application.id,
+          new_status: status,
+          note: note || `Status transitioned to ${status}`,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
       return res.json({
         success: true,
         message: 'Application status updated successfully.',
@@ -1693,6 +1768,24 @@ app.post(
           message: 'Application not found.',
         });
       }
+
+      const recipientEmail = getRegisteredEmailBackend();
+      recordEmailActivity({
+        type: 'status_transition',
+        recipient: recipientEmail,
+        subject: `📝 Timeline Milestone: ${application.company} — "${note.slice(0, 45)}"`,
+        company: application.company,
+        job_title: application.job_title,
+        status: 'sent',
+        channel: 'server_relay',
+        metadata: {
+          application_id: application.id,
+          note,
+          status: application.status,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
       return res.json({
         success: true,
         message: 'Timeline event added successfully.',
@@ -2075,6 +2168,38 @@ app.get('/api/notifications/stats', (_req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
+
+app.get('/api/notifications/recipient', (_req, res) => {
+  try {
+    const recipient = getRegisteredEmailBackend();
+    return res.json({ success: true, recipient });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/notifications/recipient', (req, res) => {
+  const { email } = req.body || {};
+  if (!email || !email.trim() || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: 'Valid registered email address is required.' });
+  }
+  try {
+    let prefs: any = {};
+    if (fs.existsSync(PREFERENCES_FILE)) {
+      prefs = JSON.parse(fs.readFileSync(PREFERENCES_FILE, 'utf-8'));
+    }
+    prefs.registered_email = email.trim();
+    fs.writeFileSync(PREFERENCES_FILE, JSON.stringify(prefs, null, 2), 'utf-8');
+    return res.json({
+      success: true,
+      recipient: email.trim(),
+      message: `Registered notification email successfully updated to "${email.trim()}"!`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // ============================================================
 // VITE DEV SERVER / STATIC HANDLER

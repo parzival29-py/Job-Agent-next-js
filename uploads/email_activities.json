@@ -1,5 +1,44 @@
 [
   {
+    "id": "eml_1793475301169_h9pw8",
+    "timestamp": "2026-10-31T19:35:01.169Z",
+    "type": "application_applied",
+    "recipient": "aryamanharshdewangan@gmail.com",
+    "subject": "🚀 Job Application Sent: Apex Cloud Systems — Senior Distributed Systems Engineer (99% ATS)",
+    "company": "Apex Cloud Systems",
+    "job_title": "Senior Distributed Systems Engineer",
+    "ats_score": 99,
+    "resume_format": "executive-monolith",
+    "resume_preview": "ARYAMAN DEWANGAN\nSan Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev\n\nPROFESSIONAL SUMMARY\nHigh-impact Full-Stack Software Engineer & Distributed AI Systems Architect with extensive experience designing resilient cloud-native microservices, autonomous LLM agent pipelines, and high-throughput data platforms. Proven track record scaling web applications to 1.4M+ monthly active users, reducing API latency by 42% through Go concurrency and Redis caching, and deploying fault-tolerant CI/CD pipelines across AWS and GCP with 99.99% uptime. Specialist in Python, TypeScript, React 19, Go, Kubernetes, and PostgreSQL.\n\nCORE COMPETENCIES & TECHNICAL SKILLS\n• Programming Languages: Python, TypeScript, Go, C++, JavaScript (ESNext), SQL, Bash\n• Frontend Technologies: React 19, Next.js, Tailwind CSS, TypeScript, Vite, Motion, Redux Toolkit\n• Backend & Distributed Systems: Node.js, FastAPI, Go Gin, Express, gRPC, RESTful APIs, WebSockets, Microservices\n• Cloud, DevOps & Infrastructure: Docker, Kubernetes, AWS (ECS, S3, RDS), Google Cloud (Cloud Run, GKE), GitHub Actions CI/CD, Terraform, Linux\n• Databases & Data Stores: PostgreSQL, Redis, MongoDB, Vector DBs (Pinecone, ChromaDB), SQL Index Optimization\n• AI & Systems Engineering: Multi-Agent Systems, Gemini 3 Flash, LangGraph, LLM Agentic Workflows, Computer Vision (OpenCV), RAG Architectures\n\nPROFESSIONAL EXPERIENCE\n\nAPEX CLOUD SYSTEMS | S",
+    "status": "sent",
+    "channel": "server_relay",
+    "message_id": "APP-TXN-0QBH6EV",
+    "metadata": {
+      "platform": "Company Direct Portal",
+      "receipt_id": "APP-TXN-0QBH6EV",
+      "applied_at": "2026-10-31T19:35:01.168Z"
+    }
+  },
+  {
+    "id": "eml_1793475276637_riz44",
+    "timestamp": "2026-10-31T19:34:36.637Z",
+    "type": "status_transition",
+    "recipient": "aryamanharshdewangan@gmail.com",
+    "subject": "📌 Application Update: Anthropic — Interview",
+    "company": "Anthropic",
+    "job_title": "AI Systems Engineer",
+    "ats_score": 96,
+    "resume_format": "creative-director",
+    "status": "sent",
+    "channel": "server_relay",
+    "metadata": {
+      "application_id": "app_1792007629740_9t3lo",
+      "new_status": "Interview",
+      "note": "System Architecture interview round scheduled",
+      "timestamp": "2026-10-31T19:34:36.637Z"
+    }
+  },
+  {
     "id": "eml_1792166640912_pqm1h",
     "timestamp": "2026-10-16T16:04:00.912Z",
     "type": "test_dispatch",

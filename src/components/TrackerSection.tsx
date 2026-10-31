@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers, Search, Filter } from 'lucide-react';
+import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers, Search, Filter, Mail } from 'lucide-react';
 import type { ApplicationRecord, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
@@ -7,6 +7,12 @@ import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 import { ApplicationProgressTimeline, MiniTimelineBar, PIPELINE_STAGES } from './ApplicationProgressTimeline.tsx';
 import { SalaryDistributionChart } from './SalaryDistributionChart.tsx';
 import { useCurrency } from '../context/CurrencyContext.tsx';
+import {
+  sendStatusTransitionEmail,
+  sendTimelineMilestoneEmail,
+  sendApplicationActivityEmail,
+} from '../services/emailNotification.ts';
+import { getRegisteredNotificationEmail } from '../services/googleAuth.ts';
 
 export const TrackerSection: React.FC = () => {
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
@@ -158,6 +164,9 @@ export const TrackerSection: React.FC = () => {
   };
 
   const handleStatusChange = async (appId: string, newStatusVal: string, note?: string) => {
+    const targetApp = applications.find((a) => a.id === appId);
+    const oldStatusVal = targetApp?.status;
+
     try {
       const res = await fetch(`/applications/${appId}/status`, {
         method: 'PATCH',
@@ -170,7 +179,27 @@ export const TrackerSection: React.FC = () => {
         if (selectedApp?.id === appId) {
           setSelectedApp(data.application);
         }
-        setToastMsg({ text: `Status updated to ${newStatusVal}`, type: 'success' });
+
+        const registeredMail = getRegisteredNotificationEmail();
+        setToastMsg({
+          text: `Status updated to ${newStatusVal} · Update sent to ${registeredMail}`,
+          type: 'success',
+        });
+
+        // Dispatch status transition email to registered email
+        if (targetApp) {
+          sendStatusTransitionEmail({
+            company: targetApp.company,
+            jobTitle: targetApp.job_title,
+            oldStatus: oldStatusVal,
+            newStatus: newStatusVal,
+            note,
+            atsScore: targetApp.ats_score,
+            resumeFormat: targetApp.resume_format,
+            pdfUrl: targetApp.custom_pdf_url,
+            docxUrl: targetApp.custom_docx_url,
+          }).catch((err) => console.warn('Email notification notice:', err));
+        }
       }
     } catch (e) {
       console.error(e);
@@ -179,6 +208,8 @@ export const TrackerSection: React.FC = () => {
   };
 
   const handleAddTimelineNote = async (appId: string, note: string, status?: string) => {
+    const targetApp = applications.find((a) => a.id === appId);
+
     try {
       const res = await fetch(`/applications/${appId}/timeline`, {
         method: 'POST',
@@ -191,7 +222,22 @@ export const TrackerSection: React.FC = () => {
         if (selectedApp?.id === appId) {
           setSelectedApp(data.application);
         }
-        setToastMsg({ text: 'Timeline milestone recorded successfully', type: 'success' });
+
+        const registeredMail = getRegisteredNotificationEmail();
+        setToastMsg({
+          text: `Timeline milestone recorded · Alert sent to ${registeredMail}`,
+          type: 'success',
+        });
+
+        // Dispatch milestone note email to registered email
+        if (targetApp) {
+          sendTimelineMilestoneEmail({
+            company: targetApp.company,
+            jobTitle: targetApp.job_title,
+            status: status || targetApp.status,
+            note,
+          }).catch((err) => console.warn('Milestone notification notice:', err));
+        }
       } else {
         setToastMsg({ text: data.message || 'Failed to add timeline event', type: 'error' });
       }
@@ -236,6 +282,20 @@ export const TrackerSection: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
+        const registeredMail = getRegisteredNotificationEmail();
+        setToastMsg({
+          text: `Application added for ${newCompany} · Notification sent to ${registeredMail}`,
+          type: 'success',
+        });
+
+        // Send email notification for newly tracked application
+        sendApplicationActivityEmail({
+          company: newCompany,
+          jobTitle: newJobTitle,
+          atsScore: newAtsScore ? Number(newAtsScore) : 90,
+          platform: 'Tracker (Manual Entry)',
+        }).catch((err) => console.warn('Email dispatch notice:', err));
+
         setIsAdding(false);
         setNewCompany('');
         setNewJobTitle('');
@@ -266,10 +326,26 @@ export const TrackerSection: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
+        const registeredMail = getRegisteredNotificationEmail();
         setToastMsg({
-          text: `🎉 Successfully applied directly to ${app.company} with 1-click! Status updated to Applied with 90+ ATS score.`,
+          text: `🎉 Applied directly to ${app.company}! Application details sent to ${registeredMail}`,
           type: 'success',
         });
+
+        // Dispatch application confirmation email to registered email
+        sendApplicationActivityEmail({
+          company: app.company,
+          jobTitle: app.job_title,
+          atsScore: data.final_ats_score || app.ats_score || 95,
+          resumeFormat: data.resume_format || app.resume_format || 'executive-monolith',
+          resumeText: data.application?.custom_resume_text || app.custom_resume_text,
+          pdfUrl: data.pdf_download_url || app.custom_pdf_url,
+          docxUrl: data.docx_download_url || app.custom_docx_url,
+          coverLetter: data.receipt?.cover_letter || app.cover_letter,
+          screeningAnswers: data.receipt?.screening_answers,
+          platform: 'Direct ATS Submission',
+        }).catch((err) => console.warn('Email notification notice:', err));
+
         await fetchData();
         if (selectedApp?.id === app.id) {
           setSelectedApp((prev) => (prev ? {
@@ -409,6 +485,17 @@ export const TrackerSection: React.FC = () => {
             <p className="text-sm text-slate-400 mt-0.5">
               Live database tracking all tailored resumes, ATS scores, visual progress timelines, and transition histories.
             </p>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 text-[11px] text-emerald-300 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <Mail className="w-3 h-3 text-emerald-400" />
+                <span>Registered Email:</span>
+                <strong className="font-mono text-white">{getRegisteredNotificationEmail()}</strong>
+              </span>
+              <span className="text-[11px] text-slate-400">
+                • Every application & stage change is sent directly to this address
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">

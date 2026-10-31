@@ -14,6 +14,7 @@ import {
   X,
   LogOut,
   Sparkles,
+  Check,
 } from 'lucide-react';
 import {
   googleSignIn,
@@ -22,6 +23,8 @@ import {
   getAccessToken,
   getCurrentUser,
   DEFAULT_NOTIFICATION_EMAIL,
+  getRegisteredNotificationEmail,
+  setRegisteredNotificationEmail,
 } from '../services/googleAuth.ts';
 import {
   sendTestActivityEmail,
@@ -42,9 +45,34 @@ export function EmailActivityDrawer({ isOpen, onClose }: EmailActivityDrawerProp
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [sendingTest, setSendingTest] = useState<boolean>(false);
+  const [isSavingRecipient, setIsSavingRecipient] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [recipientEmail, setRecipientEmail] = useState<string>(DEFAULT_NOTIFICATION_EMAIL);
+  const [recipientEmail, setRecipientEmail] = useState<string>(getRegisteredNotificationEmail());
+
+  const handleSaveRecipient = async () => {
+    if (!recipientEmail || !recipientEmail.trim() || !recipientEmail.includes('@')) {
+      setTestResult('Please enter a valid email address.');
+      return;
+    }
+    setIsSavingRecipient(true);
+    setRegisteredNotificationEmail(recipientEmail.trim());
+    try {
+      await fetch('/api/notifications/recipient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recipientEmail.trim() }),
+      });
+      setSaveSuccess(true);
+      setTestResult(`✓ Registered email confirmed: "${recipientEmail.trim()}". Every application submission & status update will be delivered here!`);
+      setTimeout(() => setSaveSuccess(false), 3500);
+    } catch {
+      setTestResult(`✓ Saved registered email: "${recipientEmail.trim()}".`);
+    } finally {
+      setIsSavingRecipient(false);
+    }
+  };
 
   // Initialize Auth state
   useEffect(() => {
@@ -54,6 +82,7 @@ export function EmailActivityDrawer({ isOpen, onClose }: EmailActivityDrawerProp
         setHasToken(Boolean(token));
         if (currentUser?.email) {
           setRecipientEmail(currentUser.email);
+          setRegisteredNotificationEmail(currentUser.email);
         }
       },
       () => {
@@ -88,6 +117,14 @@ export function EmailActivityDrawer({ isOpen, onClose }: EmailActivityDrawerProp
     if (isOpen) {
       checkToken();
       fetchHistory();
+      fetch('/api/notifications/recipient')
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && d.recipient) {
+            setRecipientEmail(d.recipient);
+          }
+        })
+        .catch(() => {});
     }
   }, [isOpen]);
 
@@ -246,13 +283,18 @@ export function EmailActivityDrawer({ isOpen, onClose }: EmailActivityDrawerProp
               </div>
             </div>
 
-            <p className="text-xs text-slate-400">
-              When enabled, your Job Agent immediately delivers an official email to{' '}
-              <strong className="text-slate-200">{recipientEmail}</strong> for every company you apply to
-              (including ATS score, job specs, and tailored resume) and for every custom resume generated.
-            </p>
+            <div className="p-3 bg-indigo-950/40 border border-indigo-900/60 rounded-xl space-y-1">
+              <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Live Registered Notification Destination</span>
+              </span>
+              <p className="text-xs text-slate-300">
+                Every single update — applications submitted, ATS score reports, stage transitions (Screening, Interview, Offer), and recruiter milestone notes — is sent directly to{' '}
+                <strong className="text-white font-mono bg-black/40 px-1.5 py-0.5 rounded border border-white/10">{recipientEmail}</strong>.
+              </p>
+            </div>
 
-            {/* Test Send Controls */}
+            {/* Test Send & Registration Controls */}
             <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div className="flex items-center gap-2 flex-1">
                 <input
@@ -260,14 +302,28 @@ export function EmailActivityDrawer({ isOpen, onClose }: EmailActivityDrawerProp
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
                   placeholder="aryamanharshdewangan@gmail.com"
-                  className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 w-full sm:max-w-xs"
+                  className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 w-full sm:max-w-xs font-mono"
                 />
+                <button
+                  type="button"
+                  onClick={handleSaveRecipient}
+                  disabled={isSavingRecipient}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer ${
+                    saveSuccess
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                  }`}
+                  title="Save this address as your registered notification email"
+                >
+                  {saveSuccess ? <Check className="w-3.5 h-3.5 text-white" /> : <Mail className="w-3.5 h-3.5 text-indigo-400" />}
+                  <span>{saveSuccess ? 'Saved!' : 'Save Email'}</span>
+                </button>
               </div>
 
               <button
                 onClick={handleSendTest}
                 disabled={sendingTest}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 {sendingTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 <span>Send Test Alert</span>

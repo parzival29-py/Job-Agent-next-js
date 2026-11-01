@@ -43,6 +43,12 @@ import {
   loadEmailActivities,
   getEmailActivityStats,
 } from './server/emailActivityTracker.js';
+import {
+  generateApplicationEmailHtml,
+  generateStatusTransitionEmailHtml,
+  generateApplicationUpdatedEmailHtml,
+  generateTimelineMilestoneEmailHtml,
+} from './server/emailHtmlGenerators.js';
 
 dotenv.config();
 
@@ -1307,8 +1313,35 @@ app.post(['/jobs/auto-apply', '/api/jobs/auto-apply'], async (req, res) => {
       screening_answers: applicationAnswers,
     };
 
-    // Record activity for registered recipient
-    const recipientEmail = getRegisteredEmailBackend();
+    // Record activity for applicant's registered recipient
+    const recipientEmail =
+      req.body?.candidate_email ||
+      req.body?.recipient_email ||
+      profile.email ||
+      getRegisteredEmailBackend();
+
+    const applicationEmailHtml = generateApplicationEmailHtml({
+      candidate_name: profile.name,
+      candidate_email: recipientEmail,
+      candidate_phone: profile.phone,
+      candidate_location: profile.location,
+      company,
+      job_title: title,
+      job_url: url,
+      location: location,
+      salary_text: stipend_or_salary,
+      platform: platform || 'Company Direct ATS Portal',
+      ats_score: Number(finalScore),
+      resume_format: assignedFormat,
+      pdf_url: documentResult.pdf_download_url,
+      docx_url: documentResult.download_url,
+      cover_letter: coverLetterText,
+      screening_answers: applicationAnswers,
+      resume_snippet: (optimizedResumeText || '').slice(0, 1500),
+      receipt_id: confirmationReceipt.receipt_id,
+      timestamp: confirmationReceipt.applied_at,
+    });
+
     recordEmailActivity({
       type: 'application_applied',
       recipient: recipientEmail,
@@ -1321,10 +1354,12 @@ app.post(['/jobs/auto-apply', '/api/jobs/auto-apply'], async (req, res) => {
       status: 'sent',
       channel: 'server_relay',
       message_id: confirmationReceipt.receipt_id,
+      html_body: applicationEmailHtml,
       metadata: {
         platform: platform || 'Company Direct Portal',
         receipt_id: confirmationReceipt.receipt_id,
         applied_at: confirmationReceipt.applied_at,
+        candidate_email: recipientEmail,
       },
     });
 
@@ -1583,7 +1618,26 @@ app.post(['/applications', '/api/applications'], (req, res) => {
       salary_period: req.body?.salary_period,
       salary_text: req.body?.salary_text,
     });
-    const recipientEmail = getRegisteredEmailBackend();
+    const recipientEmail = req.body?.candidate_email || getRegisteredEmailBackend();
+    const candidateProfile = loadCurrentProfile();
+    const appEmailHtml = generateApplicationEmailHtml({
+      candidate_name: candidateProfile?.name || 'Applicant',
+      candidate_email: recipientEmail,
+      candidate_phone: candidateProfile?.phone,
+      candidate_location: candidateProfile?.location,
+      company: application.company,
+      job_title: application.job_title,
+      job_url: application.job_url,
+      salary_text: application.salary_text,
+      platform: 'Application Tracker',
+      ats_score: application.ats_score || undefined,
+      resume_format: application.resume_format,
+      pdf_url: application.custom_pdf_url,
+      docx_url: application.custom_docx_url,
+      cover_letter: application.cover_letter,
+      resume_snippet: application.custom_resume_text?.slice(0, 1500),
+    });
+
     recordEmailActivity({
       type: 'application_applied',
       recipient: recipientEmail,
@@ -1593,10 +1647,12 @@ app.post(['/applications', '/api/applications'], (req, res) => {
       ats_score: application.ats_score || undefined,
       status: 'sent',
       channel: 'server_relay',
+      html_body: appEmailHtml,
       metadata: {
         application_id: application.id,
         status: application.status,
         notes: application.notes,
+        recipient: recipientEmail,
       },
     });
 
@@ -1667,6 +1723,7 @@ app.get(['/applications/:application_id', '/api/applications/:application_id'], 
 
 app.patch(['/applications/:application_id', '/api/applications/:application_id'], (req, res) => {
   try {
+    const existing = getApplication(req.params.application_id);
     const application = updateApplication(req.params.application_id, req.body);
     if (!application) {
       return res.json({
@@ -1674,6 +1731,43 @@ app.patch(['/applications/:application_id', '/api/applications/:application_id']
         message: 'Application not found.',
       });
     }
+
+    // Trigger update email to the registered recipient
+    try {
+      const recipientEmail = getRegisteredEmailBackend();
+      const updatedKeys = Object.keys(req.body || {}).filter((k) => k !== 'updated_at');
+      const updateHtml = generateApplicationUpdatedEmailHtml({
+        company: application.company,
+        job_title: application.job_title,
+        status: application.status,
+        updated_fields: updatedKeys,
+        salary_text: application.salary_text,
+        notes: application.notes,
+        ats_score: application.ats_score || undefined,
+        pdf_url: application.custom_pdf_url,
+        docx_url: application.custom_docx_url,
+        recipient: recipientEmail,
+      });
+
+      recordEmailActivity({
+        type: 'status_transition',
+        recipient: recipientEmail,
+        subject: `🔔 Application Updated: ${application.company} — ${application.job_title}`,
+        company: application.company,
+        job_title: application.job_title,
+        status: 'sent',
+        channel: 'server_relay',
+        html_body: updateHtml,
+        metadata: {
+          application_id: application.id,
+          updated_fields: updatedKeys,
+          status: application.status,
+        },
+      });
+    } catch (notifyErr) {
+      console.warn('Update notification warning:', notifyErr);
+    }
+
     return res.json({
       success: true,
       message: 'Application updated successfully.',
@@ -1708,16 +1802,30 @@ app.patch(
       }
 
       const recipientEmail = getRegisteredEmailBackend();
+      const statusHtml = generateStatusTransitionEmailHtml({
+        company: application.company,
+        job_title: application.job_title,
+        old_status: (application.timeline && application.timeline.length > 1) ? application.timeline[application.timeline.length - 2]?.status : undefined,
+        new_status: status,
+        note,
+        ats_score: application.ats_score || undefined,
+        resume_format: application.resume_format,
+        pdf_url: application.custom_pdf_url,
+        docx_url: application.custom_docx_url,
+        recipient: recipientEmail,
+      });
+
       recordEmailActivity({
         type: 'status_transition',
         recipient: recipientEmail,
-        subject: `📌 Application Update: ${application.company} — ${status}`,
+        subject: `📌 Application Update: ${application.company} is now in "${status}"`,
         company: application.company,
         job_title: application.job_title,
         ats_score: application.ats_score || undefined,
         resume_format: application.resume_format,
         status: 'sent',
         channel: 'server_relay',
+        html_body: statusHtml,
         metadata: {
           application_id: application.id,
           new_status: status,
@@ -1770,6 +1878,15 @@ app.post(
       }
 
       const recipientEmail = getRegisteredEmailBackend();
+      const timelineHtml = generateTimelineMilestoneEmailHtml({
+        company: application.company,
+        job_title: application.job_title,
+        status: application.status,
+        note: note.trim(),
+        action_by: action_by || 'Candidate Agent',
+        recipient: recipientEmail,
+      });
+
       recordEmailActivity({
         type: 'status_transition',
         recipient: recipientEmail,
@@ -1778,6 +1895,7 @@ app.post(
         job_title: application.job_title,
         status: 'sent',
         channel: 'server_relay',
+        html_body: timelineHtml,
         metadata: {
           application_id: application.id,
           note,

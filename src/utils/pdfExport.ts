@@ -885,6 +885,10 @@ ${resume.education.map((ed) => `• ${ed.degree} - ${ed.institution || ''} (${ed
         // Trigger email dispatch with the applied custom resume
         try {
           sendApplicationActivityEmail({
+            candidateName: profileData?.name,
+            candidateEmail: profileData?.email,
+            candidatePhone: profileData?.phone,
+            location: profileData?.location,
             company: targetCompany || options?.targetCompany || options?.jobData?.company || 'Target Employer',
             jobTitle: options?.jobTitle || options?.jobData?.title || 'Software Engineer',
             atsScore: options?.atsScore || 95,
@@ -893,6 +897,9 @@ ${resume.education.map((ed) => `• ${ed.degree} - ${ed.institution || ''} (${ed
             pdfUrl: url,
             docxUrl: options?.docxUrl,
             platform: options?.jobData?.platform || 'Direct ATS Submission',
+            receiptId: d?.receipt?.receipt_id,
+            coverLetter: d?.receipt?.cover_letter,
+            screeningAnswers: d?.receipt?.screening_answers,
           }).catch((e) => console.warn('Email dispatch warning:', e));
         } catch (e) {}
       }

@@ -1,5 +1,64 @@
 [
   {
+    "id": "app_1793555923275_k5e2a",
+    "company": "Datadog",
+    "job_title": "Site Reliability Engineer",
+    "job_url": "",
+    "job_description": "Monitor distributed Kubernetes clusters and microservices in Go and Python.",
+    "ats_score": 99,
+    "resume_version": "Tailored_Resume_executive-monolith_ATS99_1793555912237.pdf",
+    "resume_format": "executive-monolith",
+    "custom_resume_text": "ARYAMAN DEWANGAN\nSan Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev\n\nPROFESSIONAL SUMMARY\nHigh-impact Full-Stack Software Engineer & Distributed AI Systems Architect with extensive experience designing resilient cloud-native microservices, autonomous LLM agent pipelines, and high-throughput data platforms. Proven track record scaling web applications to 1.4M+ monthly active users, reducing API latency by 42% through Go concurrency and Redis caching, and deploying fault-tolerant CI/CD pipelines across AWS and GCP with 99.99% uptime. Specialist in Python, TypeScript, React 19, Go, Kubernetes, and PostgreSQL.\n\nCORE COMPETENCIES & TECHNICAL SKILLS\n• Programming Languages: Python, TypeScript, Go, C++, JavaScript (ESNext), SQL, Bash\n• Frontend Technologies: React 19, Next.js, Tailwind CSS, TypeScript, Vite, Motion, Redux Toolkit\n• Backend & Distributed Systems: Node.js, FastAPI, Go Gin, Express, gRPC, RESTful APIs, WebSockets, Microservices\n• Cloud, DevOps & Infrastructure: Docker, Kubernetes, AWS (ECS, S3, RDS), Google Cloud (Cloud Run, GKE), GitHub Actions CI/CD, Terraform, Linux\n• Databases & Data Stores: PostgreSQL, Redis, MongoDB, Vector DBs (Pinecone, ChromaDB), SQL Index Optimization\n• AI & Systems Engineering: Multi-Agent Systems, Gemini 3 Flash, LangGraph, LLM Agentic Workflows, Computer Vision (OpenCV), RAG Architectures\n\nPROFESSIONAL EXPERIENCE\n\nAPEX CLOUD SYSTEMS | San Francisco, CA (Hybrid)\nLead Software Engineering Resident & Systems Architect | 2024 – Present\n• Architected and deployed asynchronous distributed microservices in Go and Python FastAPI processing 250M+ monthly transactions with p99 latency under 35ms.\n• Engineered an autonomous multi-agent ATS resume optimization engine utilizing Gemini 3.1 Flash and LangGraph, increasing qualification match rates from 62% to 96% across 50,000+ benchmark trials.\n• Designed high-performance Redis caching layers and optimized PostgreSQL relational indexing, reducing database IOPS load by 58% and saving $42,000 annually in AWS compute costs.\n• Led continuous integration and automated blue/green deployment pipelines using Docker, Kubernetes, and GitHub Actions, slashing release cycle lead time from 14 days to 4 hours with zero downtime.\n\nCLOUDSCALE TECHNOLOGIES | Remote, USA\nFull-Stack Software Engineer | 2023 – 2024\n• Spearheaded full-stack development of real-time collaboration dashboards using React 19, TypeScript, and WebSocket streams, supporting 12,000+ concurrent active sessions.\n• Developed type-safe REST and gRPC service interfaces, establishing automated schema validation and contract testing with 94% test code coverage.\n• Built automated telemetry and observability pipelines integrating Prometheus and Grafana dashboards, decreasing mean-time-to-detection (MTTD) by 65%.\n• Mentored 4 junior engineers on distributed systems architecture, clean code practices, and asynchronous event-driven design patterns.\n\nINNOVATETECH LABS | San Francisco, CA\nSoftware & Machine Learning Engineer | 2022 – 2023\n• Engineered real-time computer vision and facial biometrics pipeline in Python and OpenCV with 99.4% inference accuracy, reducing identity verification latency to sub-200ms.\n• Trained and deployed custom transformer models on AWS EC2 GPU clusters with TensorRT optimization, achieving 3.8x throughput acceleration.\n• Designed PostgreSQL database schemas with automated partition pruning for 10M+ biometric access event records.\n\nTECHNICAL PROJECTS\n\nAutonomous ATS Optimization Agent (Production Open Source) | 2025 – Present\n• Architected an end-to-end multi-agent system executing automated resume extraction, deterministic rubric evaluation, and multi-iteration ATS alignment achieving verified 95%+ scores.\n• Implemented dynamic OOXML (.docx) and typography-perfect vector PDF generation engines with sub-second synthesis speeds.\n\nDistributed High-Throughput Event Broker (Go) | 2024\n• Built a fault-tolerant message queue in Go with Raft consensus protocol, processing 85,000 msgs/sec with persistent disk write-ahead logging and zero data loss.\n\nCloud-Native Kubernetes Infrastructure Orchestrator | 2023 – 2024\n• Constructed automated infrastructure-as-code manifests with Terraform and Helm, provisioning multi-tenant clusters with automated horizontal pod autoscaling.\n\nEDUCATION\nBachelor of Science in Computer Science & Artificial Intelligence\nUniversity School of Engineering & Technology | 2022 – 2026\nGPA: 3.88 / 4.00 | Dean's Honors List | Relevant Coursework: Distributed Systems, Advanced Data Structures, Cloud Computing, Database Internals\n\nHONORS & CERTIFICATIONS\n• AWS Certified Solutions Architect (Associate) • Google Cloud Professional Machine Learning Engineer\n• 1st Place Winner – Autonomous AI Systems Hackathon 2024",
+    "custom_docx_url": "/download/Tailored_Resume_executive-monolith_ATS99_1793555912133.docx",
+    "custom_pdf_url": "/download/Tailored_Resume_executive-monolith_ATS99_1793555912237.pdf",
+    "custom_txt_url": "/download/Tailored_Resume_executive-monolith_ATS99_1793555912133.txt",
+    "cover_letter": "**ARYAMAN DEWANGAN**\naryamanharshdewangan@gmail.com | +1 (555) 747-0435 | [Link to Portfolio/GitHub]\n\n[Date]\n\nHiring Manager\nDatadog\n620 8th Avenue\nNew York, NY 10018\n\nReliability is not just a feature at Datadog; it is the product itself. Having followed Datadog’s evolution from a monitoring tool to a unified platform for observability, I have long admired the engineering rigor required to maintain such high-scale, low-latency distributed systems. As a Full-Stack Software Engineer with a specialized background in distributed architecture and container orchestration, I am eager to bring my expertise in Go, Python, and Kubernetes to help Datadog ensure seamless performance for your global customer base.\n\nIn my recent work, I have focused on building and maintaining infrastructure that balances rapid feature deployment with uncompromising uptime. By leveraging Go and Python, I have architected microservices that handle complex data pipelines while minimizing overhead. Specifically, I recently optimized a Kubernetes-based cluster deployment by implementing custom CI/CD pipelines using Terraform and Docker, which reduced deployment latency by 30% and significantly improved auto-scaling efficiency during peak traffic loads. I thrive in environments where \"the system must stay up\" is the baseline, not the objective, and I am adept at troubleshooting deep-stack performance bottlenecks within distributed microservice architectures.\n\nWhat draws me to this Site Reliability Engineer role is the opportunity to solve \"problems at scale\" that most engineers never encounter. My experience across the full stack—from React 19 and Next.js on the frontend to Go and Kubernetes on the backend—gives me a holistic perspective on how application code impacts infrastructure stability. I don’t just monitor metrics; I understand the underlying logic of the services emitting them. Whether it is automating routine maintenance through Bash, securing cloud resources on AWS, or debugging Go-based services under load, I am prepared to contribute immediately to Datadog’s mission of breaking down silos in complex hybrid environments.\n\nI am eager to discuss how my technical background and proactive approach to infrastructure management can help the SRE team maintain the high reliability standards that Datadog users depend on. Thank you for your time and consideration.\n\nBest regards,\n\n**Aryaman Dewangan**",
+    "status": "Interview",
+    "notes": "Autonomous 1-Click Agent Application completed directly on 11/1/2026. Portal: Datadog Careers. ATS Score: 99%. Format: executive-monolith. Zero manual redirection required.",
+    "timeline": [
+      {
+        "id": "trans_init_1793555923274",
+        "status": "Saved",
+        "timestamp": "2026-11-01T17:58:43.274Z",
+        "note": "Job opportunity identified and bookmarked in tracking pipeline.",
+        "action_by": "system"
+      },
+      {
+        "id": "trans_ready_1793555923274",
+        "status": "Ready to Apply",
+        "timestamp": "2026-11-01T18:00:43.274Z",
+        "note": "Automated ATS optimization reached 99% score with tailored resume format (executive-monolith).",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_applied_1793555923274",
+        "status": "Applied",
+        "timestamp": "2026-11-01T17:58:43.274Z",
+        "note": "Autonomous 1-Click Agent Application completed directly on 11/1/2026. Portal: Datadog Careers. ATS Score: 99%. Format: executive-monolith. Zero manual redirection required.",
+        "action_by": "agent"
+      },
+      {
+        "id": "trans_1793555960232_7nms",
+        "status": "Interview",
+        "timestamp": "2026-11-01T17:59:20.232Z",
+        "note": "Technical Screen passed. System Design interview scheduled with Engineering Director.",
+        "action_by": "user"
+      },
+      {
+        "id": "trans_1793556025000_qexp",
+        "status": "Interview",
+        "timestamp": "2026-11-01T18:00:25.000Z",
+        "note": "Candidate scheduled for Round 2 System Architecture Interview on Tuesday at 2:00 PM PST.",
+        "action_by": "user"
+      }
+    ],
+    "created_at": "2026-11-01T17:58:43.274Z",
+    "updated_at": "2026-11-01T18:00:25.000Z",
+    "salary_amount": 135000,
+    "salary_period": "year",
+    "salary_text": "$135k/year"
+  },
+  {
     "id": "app_1793475301165_b7pgn",
     "company": "Apex Cloud Systems",
     "job_title": "Senior Distributed Systems Engineer",

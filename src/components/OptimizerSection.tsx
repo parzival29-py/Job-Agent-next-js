@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Zap, Download, Copy, Check, CheckCircle2, RefreshCw, AlertCircle, TrendingUp, FileCheck, FileText, Layout, Code, Sparkles, Layers, Eye } from 'lucide-react';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
+import { ResumePdfPreview } from './ResumePdfPreview.tsx';
 import { RESUME_FORMATS_LIST, detectRecommendedFormat } from '../utils/formatUtils.ts';
 import { exportResumeToPdf, triggerUrlDownload, triggerBlobDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 import { sendResumeTailoredEmail } from '../services/emailNotification.ts';
@@ -17,20 +18,12 @@ export const OptimizerSection: React.FC<OptimizerSectionProps> = ({ jobDescripti
   const [docxResult, setDocxResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<'executive' | 'raw'>('executive');
+  const [previewMode, setPreviewMode] = useState<'pdf' | 'executive' | 'raw'>('pdf');
   const [selectedFormat, setSelectedFormat] = useState<string>('auto');
   const [profile, setProfile] = useState<any>(null);
-
-  React.useEffect(() => {
-    fetch('/resume/profile')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success && d.profile) {
-          setProfile(d.profile);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
+  const [currentPdfFilename, setCurrentPdfFilename] = useState<string>('Tailored_Resume.pdf');
+  const [renderingPdf, setRenderingPdf] = useState(false);
 
   const DEFAULT_JOB_DESCRIPTION = `Apex Cloud Systems is looking for a Software Engineering Intern to join our distributed infrastructure team.
 Requirements:
@@ -46,11 +39,68 @@ Requirements:
   const effectiveFormat = selectedFormat === 'auto' ? recommended.formatId : selectedFormat;
   const currentFormatObj = RESUME_FORMATS_LIST.find((f) => f.id === effectiveFormat) || RESUME_FORMATS_LIST[0];
 
+  const renderPdfPreview = async (formatOverride?: string, customText?: string) => {
+    const fmt = formatOverride || effectiveFormat;
+    const text =
+      customText ||
+      result?.optimized_resume ||
+      profile?.raw_text ||
+      profile?.extracted_text ||
+      '';
+    if (!text.trim()) return;
+
+    setRenderingPdf(true);
+    try {
+      const renderRes = await fetch('/ai/render-resume-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resume_text: text,
+          resume_format: fmt,
+          job_description: effectiveJobDescription,
+          ats_score: result?.final_score?.ats_score || 95,
+          resume_data: profile,
+        }),
+      });
+      const renderData = await renderRes.json();
+      if (renderData.success && renderData.pdf_download_url) {
+        setCurrentPdfUrl(renderData.pdf_download_url);
+        setCurrentPdfFilename(
+          renderData.pdf_filename || renderData.filename || `Tailored_Resume_${fmt}.pdf`
+        );
+      }
+    } catch (err) {
+      console.warn('PDF preview render error:', err);
+    } finally {
+      setRenderingPdf(false);
+    }
+  };
+
+  const handleFormatChange = (newFormat: string) => {
+    setSelectedFormat(newFormat);
+    renderPdfPreview(newFormat);
+  };
+
+  React.useEffect(() => {
+    fetch('/resume/profile')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.profile) {
+          setProfile(d.profile);
+          const initialText = d.profile.raw_text || d.profile.extracted_text || '';
+          if (initialText) {
+            renderPdfPreview(effectiveFormat, initialText);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const rotateToNextFormat = () => {
     const formatIds = RESUME_FORMATS_LIST.map((f) => f.id);
     const currentIndex = formatIds.indexOf(effectiveFormat);
     const next = formatIds[(currentIndex + 1) % formatIds.length];
-    setSelectedFormat(next);
+    handleFormatChange(next);
   };
 
   const handleOptimize = async () => {
@@ -76,6 +126,10 @@ Requirements:
       if (data.success) {
         setResult(data.optimization);
         setError(null);
+        if (data.optimization?.optimized_resume) {
+          renderPdfPreview(effectiveFormat, data.optimization.optimized_resume);
+          setPreviewMode('pdf');
+        }
       } else {
         setError(data.message || 'Optimization failed.');
       }
@@ -139,6 +193,9 @@ Requirements:
           pdf_filename: outFilename,
           format_used: formatToUse,
         }));
+        setCurrentPdfUrl(renderData.pdf_download_url);
+        setCurrentPdfFilename(outFilename);
+        setPreviewMode('pdf');
         // Clean single download
         await triggerUrlDownload(renderData.pdf_download_url, outFilename);
         setGeneratingDocx(false);
@@ -173,6 +230,9 @@ Requirements:
         const targetPdfName = data.resume?.pdf_filename || data.resume?.filename.replace(/\.docx$/i, '.pdf');
         
         if (targetPdfUrl) {
+          setCurrentPdfUrl(targetPdfUrl);
+          setCurrentPdfFilename(targetPdfName);
+          setPreviewMode('pdf');
           await triggerUrlDownload(targetPdfUrl, targetPdfName);
         } else if (data.resume?.download_url) {
           await triggerUrlDownload(data.resume.download_url, data.resume.filename);
@@ -469,6 +529,22 @@ Requirements:
           <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <button
               onClick={() => {
+                setPreviewMode('pdf');
+                if (docxResult.pdf_download_url) {
+                  setCurrentPdfUrl(docxResult.pdf_download_url);
+                  if (docxResult.pdf_filename) {
+                    setCurrentPdfFilename(docxResult.pdf_filename);
+                  }
+                }
+              }}
+              className="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
+              title="Visualize PDF directly in Optimizer preview component"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Inline PDF Preview
+            </button>
+            <button
+              onClick={() => {
                 const targetUrl = docxResult.pdf_download_url || `/download/Tailored_Resume_${effectiveFormat}.pdf`;
                 const targetFilename = docxResult.pdf_filename || `Tailored_Resume_${effectiveFormat}.pdf`;
                 openPdfViewerModal(targetUrl, targetFilename, {
@@ -478,11 +554,11 @@ Requirements:
                   docxUrl: docxResult.download_url,
                 });
               }}
-              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-md transition cursor-pointer"
-              title="Open and view resume directly in browser"
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 border border-slate-700 transition cursor-pointer"
+              title="Open and view resume in full screen modal"
             >
-              <Layout className="w-4 h-4" />
-              Open & View Resume
+              <Layout className="w-4 h-4 text-indigo-400" />
+              Inspector Modal
             </button>
             <button
               onClick={() => {
@@ -604,51 +680,99 @@ Requirements:
           </div>
         )}
 
-        {/* Live Resume Preview (Always mounted for instant 1:1 PDF capture) */}
+        {/* Live Resume Preview & Visual PDF Component */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
+                type="button"
+                onClick={() => setPreviewMode('pdf')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  previewMode === 'pdf'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-950 text-slate-400 hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5 text-indigo-300" />
+                <span>PDF Document Preview</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-200 border border-indigo-700 font-bold ml-1">
+                  1-Page
+                </span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setPreviewMode('executive')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   previewMode === 'executive'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-slate-950 text-slate-400 hover:text-white'
                 }`}
               >
                 <Layout className="w-3.5 h-3.5" />
-                Executive Designer View (Matching Image Template)
+                <span>Executive Designer View</span>
               </button>
               <button
+                type="button"
                 onClick={() => setPreviewMode('raw')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   previewMode === 'raw'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-slate-950 text-slate-400 hover:text-white'
                 }`}
               >
                 <Code className="w-3.5 h-3.5" />
-                Raw ATS Text
+                <span>Raw ATS Text</span>
               </button>
             </div>
 
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition self-start sm:self-auto"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied!' : 'Copy Text'}
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {previewMode === 'pdf' && (
+                <button
+                  type="button"
+                  onClick={() => renderPdfPreview(effectiveFormat)}
+                  disabled={renderingPdf}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
+                  title="Refresh and re-render PDF preview"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${renderingPdf ? 'animate-spin text-amber-400' : ''}`} />
+                  <span className="hidden sm:inline">Refresh PDF</span>
+                </button>
+              )}
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Copied!' : 'Copy Text'}
+              </button>
+            </div>
           </div>
 
-          {previewMode === 'executive' ? (
+          {previewMode === 'pdf' ? (
+            <ResumePdfPreview
+              pdfUrl={currentPdfUrl || docxResult?.pdf_download_url}
+              filename={currentPdfFilename}
+              formatId={effectiveFormat}
+              formatName={currentFormatObj.name}
+              formatTag={currentFormatObj.tag}
+              atsScore={result?.final_score?.ats_score || docxResult?.ats_score || 95}
+              isLoading={renderingPdf}
+              onRefreshPdf={() => renderPdfPreview(effectiveFormat)}
+              onFormatChange={(fmt) => handleFormatChange(fmt)}
+              resumeData={profile}
+              resumeText={result?.optimized_resume || profile?.raw_text}
+              docxUrl={docxResult?.download_url}
+              targetRole={effectiveJobDescription.split('\n')[0]?.slice(0, 40)}
+              targetCompany="Target Employer"
+            />
+          ) : previewMode === 'executive' ? (
             <ExecutiveResumeView
               profile={profile}
               optimizedText={result?.optimized_resume || profile?.raw_text}
               initialFormat={effectiveFormat}
               targetJobTitle={effectiveJobDescription.split('\n')[0]?.slice(0, 40)}
               atsScore={result?.final_score?.ats_score || 95}
-              onFormatChange={(fmt) => setSelectedFormat(fmt)}
+              onFormatChange={(fmt) => handleFormatChange(fmt)}
               onDownloadPdf={async (format) => {
                 await handleGenerateResume(format);
               }}
@@ -666,6 +790,19 @@ Requirements:
               <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs text-slate-200 overflow-y-auto max-h-[500px] whitespace-pre-wrap leading-relaxed">
                 {result?.optimized_resume || profile?.raw_text || 'No resume content available.'}
               </div>
+            </div>
+          )}
+
+          {/* Offscreen mount for ExecutiveResumeView DOM capture when in PDF or Raw mode */}
+          {previewMode !== 'executive' && (
+            <div className="sr-only opacity-0 pointer-events-none -z-50 absolute left-[-9999px]" aria-hidden="true">
+              <ExecutiveResumeView
+                profile={profile}
+                optimizedText={result?.optimized_resume || profile?.raw_text}
+                initialFormat={effectiveFormat}
+                targetJobTitle={effectiveJobDescription.split('\n')[0]?.slice(0, 40)}
+                atsScore={result?.final_score?.ats_score || 95}
+              />
             </div>
           )}
         </div>

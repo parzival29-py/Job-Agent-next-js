@@ -198,6 +198,8 @@ export const TrackerSection: React.FC = () => {
             resumeFormat: targetApp.resume_format,
             pdfUrl: targetApp.custom_pdf_url,
             docxUrl: targetApp.custom_docx_url,
+            salaryText: targetApp.salary_text,
+            recipientEmail: registeredMail,
           }).catch((err) => console.warn('Email notification notice:', err));
         }
       }
@@ -236,6 +238,7 @@ export const TrackerSection: React.FC = () => {
             jobTitle: targetApp.job_title,
             status: status || targetApp.status,
             note,
+            recipientEmail: registeredMail,
           }).catch((err) => console.warn('Milestone notification notice:', err));
         }
       } else {
@@ -334,6 +337,13 @@ export const TrackerSection: React.FC = () => {
 
         // Dispatch application confirmation email to registered email
         sendApplicationActivityEmail({
+          candidateName: profile?.name,
+          candidateEmail: registeredMail,
+          candidatePhone: profile?.phone,
+          location: profile?.location,
+          salaryText: app.salary_text,
+          receiptId: data.receipt?.receipt_id,
+          jobUrl: app.job_url,
           company: app.company,
           jobTitle: app.job_title,
           atsScore: data.final_ats_score || app.ats_score || 95,

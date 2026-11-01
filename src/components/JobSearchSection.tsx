@@ -33,6 +33,7 @@ import {
   sendApplicationActivityEmail,
   sendResumeTailoredEmail,
 } from '../services/emailNotification.ts';
+import { getRegisteredNotificationEmail } from '../services/googleAuth.ts';
 
 interface JobSearchSectionProps {
   onSelectJob: (job: JobItem) => void;
@@ -416,6 +417,14 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
 
         // Automatically dispatch application activity email with tailored resume to user's mail
         sendApplicationActivityEmail({
+          candidateName: profile?.name,
+          candidateEmail: getRegisteredNotificationEmail(),
+          candidatePhone: profile?.phone,
+          location: job.location || profile?.location,
+          workMode: job.work_mode,
+          salaryText: job.stipend_or_salary,
+          receiptId: data.receipt?.receipt_id,
+          jobUrl: job.url,
           company: job.company,
           jobTitle: job.title,
           atsScore: data.final_ats_score || data.receipt.ats_score || 95,

@@ -18,6 +18,13 @@ export interface ApplicationEmailPayload {
   jobUrl?: string;
   recipientEmail?: string;
   platform?: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
+  location?: string;
+  workMode?: string;
+  salaryText?: string;
+  receiptId?: string;
 }
 
 export interface ResumeTailoredEmailPayload {
@@ -44,6 +51,22 @@ export interface StatusTransitionEmailPayload {
   docxUrl?: string;
   recipientEmail?: string;
   interviewDate?: string;
+  actionBy?: string;
+  salaryText?: string;
+}
+
+export interface ApplicationUpdatedEmailPayload {
+  company: string;
+  jobTitle: string;
+  status: string;
+  atsScore?: number | null;
+  salaryText?: string;
+  notes?: string;
+  interviewDate?: string;
+  updatedFields?: string[];
+  pdfUrl?: string;
+  docxUrl?: string;
+  recipientEmail?: string;
   actionBy?: string;
 }
 
@@ -269,20 +292,43 @@ export async function sendApplicationActivityEmail(
             </p>
           </div>
 
+          <!-- Applicant Details -->
+          <div style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; font-weight: 700;">Applicant Profile</h4>
+            <div style="font-size: 13px; color: #1e293b; line-height: 1.6;">
+              <strong>Candidate:</strong> ${payload.candidateName || 'Aryaman Dewangan'}<br>
+              <strong>Registered Mail:</strong> <span style="color: #4f46e5; font-weight: 600;">${recipient}</span><br>
+              ${payload.candidatePhone ? `<strong>Phone:</strong> ${payload.candidatePhone}<br>` : ''}
+              ${payload.location ? `<strong>Candidate Location:</strong> ${payload.location}` : ''}
+            </div>
+          </div>
+
           <!-- Application Details Table -->
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
             <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px; width: 35%;">Company</td>
+              <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px; width: 35%;">Employer</td>
               <td style="padding: 10px 0; font-weight: 700; color: #0f172a; font-size: 14px;">${payload.company}</td>
             </tr>
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px;">Job Title</td>
               <td style="padding: 10px 0; font-weight: 600; color: #0f172a; font-size: 14px;">${payload.jobTitle}</td>
             </tr>
+            ${payload.location || payload.workMode ? `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px;">Work Mode / Location</td>
+              <td style="padding: 10px 0; color: #0f172a; font-size: 13px;">
+                ${payload.workMode ? `<strong>${payload.workMode}</strong>` : ''} ${payload.location ? `(${payload.location})` : ''}
+              </td>
+            </tr>` : ''}
+            ${payload.salaryText ? `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px;">Compensation</td>
+              <td style="padding: 10px 0; font-weight: 700; color: #059669; font-size: 14px;">${payload.salaryText}</td>
+            </tr>` : ''}
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px;">ATS Match Score</td>
               <td style="padding: 10px 0; font-size: 14px;">
-                <span style="display: inline-block; padding: 3px 8px; background: #e0e7ff; color: #4338ca; border-radius: 6px; font-weight: 700;">
+                <span style="display: inline-block; padding: 4px 10px; background: #e0e7ff; color: #4338ca; border-radius: 6px; font-weight: 700;">
                   ${payload.atsScore ?? 95}% ATS Match (90+ Recruiter Tier)
                 </span>
               </td>
@@ -293,12 +339,17 @@ export async function sendApplicationActivityEmail(
                 ${payload.resumeFormat || 'tech-engineering (Single-Page Formatted)'}
               </td>
             </tr>
-            <tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px;">Application Portal</td>
               <td style="padding: 10px 0; color: #0f172a; font-size: 13px;">
                 ${payload.platform || 'Direct ATS API Submission'}
               </td>
             </tr>
+            ${payload.receiptId ? `
+            <tr>
+              <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 13px;">Transaction Receipt</td>
+              <td style="padding: 10px 0; font-family: monospace; font-size: 12px; color: #64748b;">${payload.receiptId}</td>
+            </tr>` : ''}
           </table>
 
           <!-- Download Links if available -->
@@ -725,7 +776,155 @@ export async function sendStatusTransitionEmail(
 }
 
 /**
- * 4. DISPATCH: When a timeline milestone or interview note is added
+ * 4. DISPATCH: When an application's details, notes, compensation, or interview date are updated
+ */
+export async function sendApplicationUpdatedEmail(
+  payload: ApplicationUpdatedEmailPayload
+): Promise<DispatchResult> {
+  const recipient = payload.recipientEmail || getRegisteredNotificationEmail();
+  const subject = `🔔 Application Updated: ${payload.company} — ${payload.jobTitle}`;
+
+  const now = new Date().toLocaleString('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  });
+
+  const updatedFieldsStr =
+    payload.updatedFields && payload.updatedFields.length > 0
+      ? payload.updatedFields.join(', ')
+      : 'Notes & Stage details';
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"><title>${subject}</title></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #334155;">
+      <div style="max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); padding: 26px 24px; text-align: left; color: #ffffff;">
+          <div style="display: inline-block; padding: 4px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+            Application Record Updated
+          </div>
+          <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: #ffffff;">Application Updated: ${payload.company}</h1>
+          <p style="margin: 0; font-size: 14px; opacity: 0.95; color: #f8fafc;">
+            ${payload.jobTitle} · Current Stage: <strong>${payload.status}</strong>
+          </p>
+        </div>
+
+        <div style="padding: 24px;">
+          <div style="padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600; width: 35%;">Employer:</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 700;">${payload.company}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Job Title:</td>
+                <td style="padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 600;">${payload.jobTitle}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Current Stage:</td>
+                <td style="padding: 6px 0; font-size: 14px; font-weight: 700; color: #0284c7;">${payload.status}</td>
+              </tr>
+              ${payload.salaryText ? `
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Compensation:</td>
+                <td style="padding: 6px 0; font-size: 14px; font-weight: 700; color: #059669;">${payload.salaryText}</td>
+              </tr>` : ''}
+              ${payload.interviewDate ? `
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Interview Scheduled:</td>
+                <td style="padding: 6px 0; font-size: 14px; font-weight: 700; color: #7c3aed;">${payload.interviewDate}</td>
+              </tr>` : ''}
+              ${payload.atsScore ? `
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">ATS Score:</td>
+                <td style="padding: 6px 0; font-size: 13px; font-weight: 700; color: #4338ca;">${payload.atsScore}% Match</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;">Updated At:</td>
+                <td style="padding: 6px 0; font-size: 12px; font-family: monospace; color: #64748b;">${now}</td>
+              </tr>
+            </table>
+          </div>
+
+          ${payload.notes ? `
+          <div style="margin-bottom: 20px; padding: 14px 16px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 6px;">
+            <p style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase;">Active Notes / Recruiter Context</p>
+            <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.5;">${payload.notes}</p>
+          </div>
+          ` : ''}
+
+          <div style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
+            Updated details: <strong style="color: #334155;">${updatedFieldsStr}</strong>
+          </div>
+
+          ${payload.pdfUrl || payload.docxUrl ? `
+          <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 8px; text-align: center;">
+            <span style="font-size: 12px; font-weight: 600; color: #475569; margin-right: 10px;">Submitted Assets:</span>
+            ${payload.pdfUrl ? `<a href="${payload.pdfUrl}" style="display: inline-block; margin: 3px 6px; padding: 5px 12px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 700;">View Resume PDF</a>` : ''}
+            ${payload.docxUrl ? `<a href="${payload.docxUrl}" style="display: inline-block; margin: 3px 6px; padding: 5px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 700;">View Word DOCX</a>` : ''}
+          </div>` : ''}
+        </div>
+
+        <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+          <p style="margin: 0 0 3px 0;">Aryaman's Autonomous Job Application Agent · Real-Time Notification Pipeline</p>
+          <p style="margin: 0;">Sent directly to your registered mail: <strong>${recipient}</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const gmailRes = await sendViaGmailApi(recipient, subject, htmlBody);
+  let dispatchResult: DispatchResult;
+
+  if (gmailRes.success) {
+    dispatchResult = {
+      success: true,
+      channel: 'gmail_api',
+      messageId: gmailRes.messageId,
+      recipient,
+      subject,
+    };
+    await logActivityToServer({
+      type: 'status_transition',
+      recipient,
+      subject,
+      company: payload.company,
+      job_title: payload.jobTitle,
+      ats_score: payload.atsScore ?? undefined,
+      status: 'sent',
+      channel: 'gmail_api',
+      message_id: gmailRes.messageId,
+      html_body: htmlBody,
+    });
+  } else {
+    dispatchResult = {
+      success: true,
+      channel: 'server_relay',
+      recipient,
+      subject,
+      error: gmailRes.error,
+    };
+    await logActivityToServer({
+      type: 'status_transition',
+      recipient,
+      subject,
+      company: payload.company,
+      job_title: payload.jobTitle,
+      ats_score: payload.atsScore ?? undefined,
+      status: 'queued',
+      channel: 'server_relay',
+      html_body: htmlBody,
+    });
+  }
+
+  notifyListeners(dispatchResult);
+  return dispatchResult;
+}
+
+/**
+ * 5. DISPATCH: When a timeline milestone or interview note is added
  */
 export async function sendTimelineMilestoneEmail(
   payload: TimelineNoteEmailPayload

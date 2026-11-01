@@ -1,5 +1,63 @@
 [
   {
+    "id": "eml_1793556025005_ty17d",
+    "timestamp": "2026-11-01T18:00:25.005Z",
+    "type": "status_transition",
+    "recipient": "aryamanharshdewangan@gmail.com",
+    "subject": "📝 Timeline Milestone: Datadog — \"Candidate scheduled for Round 2 System Archit\"",
+    "company": "Datadog",
+    "job_title": "Site Reliability Engineer",
+    "status": "sent",
+    "channel": "server_relay",
+    "html_body": "\n    <!DOCTYPE html>\n    <html>\n    <head><meta charset=\"utf-8\"></head>\n    <body style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #334155;\">\n      <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);\">\n        <div style=\"background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 24px; text-align: left; color: #ffffff;\">\n          <div style=\"display: inline-block; padding: 4px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;\">\n            Timeline Milestone\n          </div>\n          <h2 style=\"margin: 0 0 4px 0; font-size: 20px; font-weight: 800; color: #ffffff;\">New Milestone Recorded</h2>\n          <p style=\"margin: 0; font-size: 13px; opacity: 0.95; color: #e0e7ff;\">Datadog · Site Reliability Engineer</p>\n        </div>\n        <div style=\"padding: 24px;\">\n          <div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;\">\n            <p style=\"margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;\">Milestone Details</p>\n            <p style=\"margin: 0; font-size: 14px; color: #1e293b; line-height: 1.6;\">Candidate scheduled for Round 2 System Architecture Interview on Tuesday at 2:00 PM PST.</p>\n          </div>\n          <div style=\"font-size: 12px; color: #64748b; line-height: 1.6;\">\n            <strong>Stage:</strong> Interview<br>\n            <strong>Recorded By:</strong> Candidate Agent<br>\n            <strong>Timestamp:</strong> Sunday, November 1, 2026 at 6:00:25 PM\n          </div>\n        </div>\n        <div style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 24px; text-align: center; font-size: 12px; color: #94a3b8;\">\n          Sent directly to your registered mail: <strong>aryamanharshdewangan@gmail.com</strong>\n        </div>\n      </div>\n    </body>\n    </html>\n  ",
+    "metadata": {
+      "application_id": "app_1793555923275_k5e2a",
+      "note": "Candidate scheduled for Round 2 System Architecture Interview on Tuesday at 2:00 PM PST.",
+      "status": "Interview",
+      "timestamp": "2026-11-01T18:00:25.004Z"
+    }
+  },
+  {
+    "id": "eml_1793555960243_mc7gf",
+    "timestamp": "2026-11-01T17:59:20.243Z",
+    "type": "status_transition",
+    "recipient": "aryamanharshdewangan@gmail.com",
+    "subject": "📌 Application Update: Datadog is now in \"Interview\"",
+    "company": "Datadog",
+    "job_title": "Site Reliability Engineer",
+    "ats_score": 99,
+    "resume_format": "executive-monolith",
+    "status": "sent",
+    "channel": "server_relay",
+    "html_body": "\n    <!DOCTYPE html>\n    <html>\n    <head><meta charset=\"utf-8\"></head>\n    <body style=\"font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #334155;\">\n      <div style=\"max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);\">\n        \n        <div style=\"background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 28px 24px; text-align: left; color: #ffffff;\">\n          <div style=\"display: inline-block; padding: 4px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;\">\n            Application Milestone Update\n          </div>\n          <h1 style=\"margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: #ffffff;\">📅 Interview</h1>\n          <p style=\"margin: 0; font-size: 14px; opacity: 0.95; color: #f8fafc;\">\n            <strong>Datadog</strong> · Site Reliability Engineer\n          </p>\n        </div>\n\n        <div style=\"padding: 24px;\">\n          <div style=\"padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 20px;\">\n            <table style=\"width: 100%; border-collapse: collapse;\">\n              <tr>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600; width: 35%;\">Company:</td>\n                <td style=\"padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 700;\">Datadog</td>\n              </tr>\n              <tr>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;\">Job Title:</td>\n                <td style=\"padding: 6px 0; font-size: 14px; color: #0f172a; font-weight: 600;\">Site Reliability Engineer</td>\n              </tr>\n              \n              <tr>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;\">Previous Stage:</td>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b;\">Applied</td>\n              </tr>\n              <tr>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;\">Updated Stage:</td>\n                <td style=\"padding: 6px 0; font-size: 14px; font-weight: 800; color: #4338ca;\">Interview</td>\n              </tr>\n              \n              <tr>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;\">ATS Qualification:</td>\n                <td style=\"padding: 6px 0; font-size: 13px; font-weight: 700; color: #059669;\">99% ATS Match</td>\n              </tr>\n              <tr>\n                <td style=\"padding: 6px 0; font-size: 13px; color: #64748b; font-weight: 600;\">Updated:</td>\n                <td style=\"padding: 6px 0; font-size: 12px; font-family: monospace; color: #64748b;\">Sunday, November 1, 2026 at 5:59:20 PM</td>\n              </tr>\n            </table>\n          </div>\n\n          \n          <div style=\"margin-bottom: 20px; padding: 14px 16px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 6px;\">\n            <p style=\"margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: #1e40af; text-transform: uppercase;\">Milestone Note / Recruiter Update</p>\n            <p style=\"margin: 0; font-size: 13px; color: #1e3a8a; line-height: 1.5;\">Technical Screen passed. System Design interview scheduled with Engineering Director.</p>\n          </div>\n          \n\n          <div style=\"margin-bottom: 20px; padding: 14px 16px; background-color: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px;\">\n            <p style=\"margin: 0 0 4px 0; font-size: 12px; font-weight: 700; color: #6b21a8; text-transform: uppercase;\">Recommended Next Steps</p>\n            <p style=\"margin: 0; font-size: 13px; color: #581c87; line-height: 1.5;\">Prepare for technical and behavioral interviews. Review your tailored resume bullets and system architecture projects.</p>\n          </div>\n\n          \n          <div style=\"margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 8px; text-align: center;\">\n            <span style=\"font-size: 12px; font-weight: 600; color: #475569; margin-right: 10px;\">Tailored Documents:</span>\n            <a href=\"/download/Tailored_Resume_executive-monolith_ATS99_1793555912237.pdf\" style=\"display: inline-block; margin: 3px 6px; padding: 5px 12px; background: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 700;\">View Resume PDF</a>\n            <a href=\"/download/Tailored_Resume_executive-monolith_ATS99_1793555912133.docx\" style=\"display: inline-block; margin: 3px 6px; padding: 5px 12px; background: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: 700;\">View Word DOCX</a>\n          </div>\n        </div>\n\n        <div style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; text-align: center; font-size: 12px; color: #94a3b8;\">\n          <p style=\"margin: 0 0 3px 0;\">Aryaman's Autonomous Job Application Agent · Real-Time Notification Pipeline</p>\n          <p style=\"margin: 0;\">Sent directly to your registered mail: <strong>aryamanharshdewangan@gmail.com</strong></p>\n        </div>\n      </div>\n    </body>\n    </html>\n  ",
+    "metadata": {
+      "application_id": "app_1793555923275_k5e2a",
+      "new_status": "Interview",
+      "note": "Technical Screen passed. System Design interview scheduled with Engineering Director.",
+      "timestamp": "2026-11-01T17:59:20.243Z"
+    }
+  },
+  {
+    "id": "eml_1793555923277_q8ow6",
+    "timestamp": "2026-11-01T17:58:43.277Z",
+    "type": "application_applied",
+    "recipient": "aryamanharshdewangan@gmail.com",
+    "subject": "🚀 Job Application Sent: Datadog — Site Reliability Engineer (99% ATS)",
+    "company": "Datadog",
+    "job_title": "Site Reliability Engineer",
+    "ats_score": 99,
+    "resume_format": "executive-monolith",
+    "resume_preview": "ARYAMAN DEWANGAN\nSan Francisco, CA • aryamanharshdewangan@gmail.com • +1 (555) 747-0435 • linkedin.com/in/aryamandewangan • github.com/aryamandewangan • aryamandewangan.dev\n\nPROFESSIONAL SUMMARY\nHigh-impact Full-Stack Software Engineer & Distributed AI Systems Architect with extensive experience designing resilient cloud-native microservices, autonomous LLM agent pipelines, and high-throughput data platforms. Proven track record scaling web applications to 1.4M+ monthly active users, reducing API latency by 42% through Go concurrency and Redis caching, and deploying fault-tolerant CI/CD pipelines across AWS and GCP with 99.99% uptime. Specialist in Python, TypeScript, React 19, Go, Kubernetes, and PostgreSQL.\n\nCORE COMPETENCIES & TECHNICAL SKILLS\n• Programming Languages: Python, TypeScript, Go, C++, JavaScript (ESNext), SQL, Bash\n• Frontend Technologies: React 19, Next.js, Tailwind CSS, TypeScript, Vite, Motion, Redux Toolkit\n• Backend & Distributed Systems: Node.js, FastAPI, Go Gin, Express, gRPC, RESTful APIs, WebSockets, Microservices\n• Cloud, DevOps & Infrastructure: Docker, Kubernetes, AWS (ECS, S3, RDS), Google Cloud (Cloud Run, GKE), GitHub Actions CI/CD, Terraform, Linux\n• Databases & Data Stores: PostgreSQL, Redis, MongoDB, Vector DBs (Pinecone, ChromaDB), SQL Index Optimization\n• AI & Systems Engineering: Multi-Agent Systems, Gemini 3 Flash, LangGraph, LLM Agentic Workflows, Computer Vision (OpenCV), RAG Architectures\n\nPROFESSIONAL EXPERIENCE\n\nAPEX CLOUD SYSTEMS | S",
+    "status": "sent",
+    "channel": "server_relay",
+    "message_id": "APP-TXN-OWY88OV",
+    "metadata": {
+      "platform": "Datadog Careers",
+      "receipt_id": "APP-TXN-OWY88OV",
+      "applied_at": "2026-11-01T17:58:43.276Z"
+    }
+  },
+  {
     "id": "eml_1793475301169_h9pw8",
     "timestamp": "2026-10-31T19:35:01.169Z",
     "type": "application_applied",

@@ -248,6 +248,42 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
     return counts;
   }, [jobs]);
 
+  // Dynamically calculate the highest-paying company and maximum market compensation in real-time
+  const { highestPayingJob, maxMarketCompensation } = useMemo(() => {
+    if (!jobs || jobs.length === 0) return { highestPayingJob: null, maxMarketCompensation: 10000 };
+    let maxComp = 0;
+    let topJob: JobItem | null = null;
+    for (const j of jobs) {
+      const amount = Number(j.stipend_amount) || 0;
+      if (amount > maxComp) {
+        maxComp = amount;
+        topJob = j;
+      }
+    }
+    return {
+      highestPayingJob: topJob,
+      maxMarketCompensation: maxComp > 0 ? maxComp : 10000,
+    };
+  }, [jobs]);
+
+  // Dynamic filter thresholds from 0 to maxMarketCompensation
+  const dynamicMinPayOptions = useMemo(() => {
+    const step = maxMarketCompensation <= 3000 ? 250 : maxMarketCompensation <= 12000 ? 500 : 1000;
+    const p25 = Math.round((maxMarketCompensation * 0.25) / step) * step;
+    const p50 = Math.round((maxMarketCompensation * 0.50) / step) * step;
+    const p75 = Math.round((maxMarketCompensation * 0.75) / step) * step;
+    return [
+      { value: 0, label: 'Any Pay' },
+      { value: p25, label: `≥ ${formatSalary(p25)}/mo (25%)` },
+      { value: p50, label: `≥ ${formatSalary(p50)}/mo (50% Median)` },
+      { value: p75, label: `≥ ${formatSalary(p75)}/mo (75%)` },
+      {
+        value: maxMarketCompensation,
+        label: `Market Peak: ${highestPayingJob?.company || 'Top'} (${formatSalary(maxMarketCompensation)}/mo)`,
+      },
+    ];
+  }, [maxMarketCompensation, formatSalary, highestPayingJob]);
+
   // Client-side filtering & sorting for instant responsiveness
   const filteredJobs = useMemo(() => {
     let result = jobs.filter((job) => {
@@ -900,20 +936,19 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
                 ))}
               </select>
 
-              {/* Minimum Stipend / Salary Filter */}
-              <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800 text-[11px]">
+              {/* Minimum Stipend / Salary Filter (Dynamic from $0 to Market Peak) */}
+              <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-800 text-[11px]">
                 <span className="text-amber-400 font-semibold">Min Pay:</span>
                 <select
                   value={minStipendFilter}
                   onChange={(e) => setMinStipendFilter(Number(e.target.value))}
                   className="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer"
                 >
-                  <option value={0} className="bg-slate-900 text-white">Any Pay</option>
-                  <option value={400} className="bg-slate-900 text-white">≥ ₹30k/mo / $400</option>
-                  <option value={600} className="bg-slate-900 text-white">≥ ₹50k/mo / $600</option>
-                  <option value={1000} className="bg-slate-900 text-white">≥ ₹80k/mo / $1,000</option>
-                  <option value={2000} className="bg-slate-900 text-white">≥ ₹18 LPA / $2,000</option>
-                  <option value={3500} className="bg-slate-900 text-white">≥ ₹30+ LPA / $3,500</option>
+                  {dynamicMinPayOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -949,6 +984,16 @@ export const JobSearchSection: React.FC<JobSearchSectionProps> = ({ onSelectJob 
               >
                 Reset All
               </button>
+
+              {highestPayingJob && (
+                <div
+                  className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-800/60 text-[10px] font-mono text-emerald-300"
+                  title={`Live market ceiling updated dynamically from ${highestPayingJob.company}'s opening`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Market High: <strong className="text-white">{highestPayingJob.company}</strong> ({formatSalary(maxMarketCompensation)}/mo)</span>
+                </div>
+              )}
             </div>
           </div>
 

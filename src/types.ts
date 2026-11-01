@@ -119,6 +119,12 @@ export interface JobPreferences {
   platform?: string;
   ppo_only?: boolean;
   experience_level: string;
+  target_companies?: string[];
+  registered_email?: string;
+  full_name?: string;
+  target_role?: string;
+  skills?: string[];
+  summary?: string;
 }
 
 export interface ResumeVersion {

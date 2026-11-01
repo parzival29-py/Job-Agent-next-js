@@ -1,11 +1,35 @@
 {
-  "opportunity_type": "any",
-  "work_mode": "any",
-  "domains": [],
-  "location": "Anywhere",
-  "minimum_stipend": 0,
-  "currency": "INR",
-  "platform": "all",
-  "ppo_only": false,
-  "experience_level": "Fresher"
+    "opportunity_type": "full-time",
+    "work_mode": "remote",
+    "domains": [
+        "Distributed Cloud Systems",
+        "AI & Machine Learning"
+    ],
+    "location": "Anywhere",
+    "minimum_stipend": 6000,
+    "currency": "USD",
+    "experience_level": "Fresher",
+    "registered_email": "aryamanharshdewangan@gmail.com",
+    "full_name": "Aryaman Dewangan",
+    "target_role": "Senior Staff Platform Engineer",
+    "target_companies": [
+        "Stripe",
+        "Anthropic",
+        "OpenAI",
+        "Datadog"
+    ],
+    "skills": [
+        "Python",
+        "TypeScript",
+        "Go",
+        "Kubernetes",
+        "Docker",
+        "AWS",
+        "PostgreSQL",
+        "Redis"
+    ],
+    "summary": "",
+    "ppo_only": false,
+    "platform": "all",
+    "updated_at": "2026-11-01T20:50:07.525Z"
 }

@@ -71,6 +71,32 @@ export const RecommendedJobsWidget: React.FC<RecommendedJobsWidgetProps> = ({
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Dynamically calculate the highest-paying company and maximum market compensation in real-time
+  const { highestPayingJob, maxMarketCompensation } = useMemo(() => {
+    if (!jobs || jobs.length === 0) return { highestPayingJob: null, maxMarketCompensation: 10000 };
+    let maxComp = 0;
+    let topJob: JobItem | null = null;
+    for (const j of jobs) {
+      const amount = Number(j.stipend_amount) || 0;
+      if (amount > maxComp) {
+        maxComp = amount;
+        topJob = j;
+      }
+    }
+    return {
+      highestPayingJob: topJob,
+      maxMarketCompensation: maxComp > 0 ? maxComp : 10000,
+    };
+  }, [jobs]);
+
+  const dynamicSalaryThresholds = useMemo(() => {
+    const step = maxMarketCompensation <= 3000 ? 250 : maxMarketCompensation <= 12000 ? 500 : 1000;
+    const p25 = Math.round((maxMarketCompensation * 0.25) / step) * step;
+    const p50 = Math.round((maxMarketCompensation * 0.50) / step) * step;
+    const p75 = Math.round((maxMarketCompensation * 0.75) / step) * step;
+    return [0, p25, p50, p75, maxMarketCompensation];
+  }, [maxMarketCompensation]);
+
   // Fetch available jobs from the Job Search API
   const fetchJobs = async () => {
     setLoading(true);
@@ -124,7 +150,7 @@ export const RecommendedJobsWidget: React.FC<RecommendedJobsWidgetProps> = ({
 
     if (storedPrefs.minimum_stipend && storedPrefs.minimum_stipend > 0) {
       // Find closest threshold or use exact
-      const threshold = SALARY_THRESHOLDS_USD.reduce((prev, curr) =>
+      const threshold = dynamicSalaryThresholds.reduce((prev, curr) =>
         Math.abs(curr - storedPrefs.minimum_stipend) < Math.abs(prev - storedPrefs.minimum_stipend)
           ? curr
           : prev
@@ -142,7 +168,7 @@ export const RecommendedJobsWidget: React.FC<RecommendedJobsWidgetProps> = ({
     } else {
       setOpportunityTypeFilter('all');
     }
-  }, [storedPrefs]);
+  }, [storedPrefs, dynamicSalaryThresholds]);
 
   // Check if current filter settings match stored profile preferences
   const isAlignedWithProfilePrefs = useMemo(() => {
@@ -492,9 +518,13 @@ export const RecommendedJobsWidget: React.FC<RecommendedJobsWidgetProps> = ({
                 onChange={(e) => setMinSalaryFilter(Number(e.target.value))}
                 className="w-full bg-slate-900 border border-slate-800 text-slate-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500 transition cursor-pointer"
               >
-                {SALARY_THRESHOLDS_USD.map((val) => (
+                {dynamicSalaryThresholds.map((val) => (
                   <option key={val} value={val} className="bg-slate-900 text-slate-200">
-                    {val === 0 ? 'Any Salary' : `${formatSalary(val, 'month')}+ / mo`}
+                    {val === 0
+                      ? 'Any Salary ($0)'
+                      : val === maxMarketCompensation
+                      ? `Market Peak: ${highestPayingJob?.company || 'Top'} (${formatSalary(val, 'month')})`
+                      : `${formatSalary(val, 'month')}+ / mo`}
                   </option>
                 ))}
               </select>

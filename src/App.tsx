@@ -31,6 +31,8 @@ import { JobSearchSection } from './components/JobSearchSection.tsx';
 import { TrackerSection } from './components/TrackerSection.tsx';
 import { TestSuiteSection } from './components/TestSuiteSection.tsx';
 import { EmailActivityDrawer } from './components/EmailActivityDrawer.tsx';
+import { LandingHeroSection } from './components/LandingHeroSection.tsx';
+import { CandidatePreferencesWizard } from './components/CandidatePreferencesWizard.tsx';
 import { useCurrency } from './context/CurrencyContext.tsx';
 import { initAuth, getCurrentUser, DEFAULT_NOTIFICATION_EMAIL } from './services/googleAuth.ts';
 import { onEmailDispatched } from './services/emailNotification.ts';
@@ -43,8 +45,8 @@ export default function App() {
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<
-    'resume' | 'ats' | 'optimizer' | 'cover_letter' | 'jobs' | 'tracker' | 'tests'
-  >('resume');
+    'landing' | 'matcher' | 'resume' | 'ats' | 'optimizer' | 'cover_letter' | 'jobs' | 'tracker' | 'tests'
+  >('landing');
 
   const [aiConnected, setAiConnected] = useState<boolean | null>(null);
   const [testingAi, setTestingAi] = useState(false);
@@ -167,14 +169,62 @@ Requirements:
   };
 
   const navItems = [
+    { id: 'landing', label: 'Quick Tailor (Landing)', icon: Sparkles },
+    { id: 'matcher', label: 'Preferences & Matched Jobs', icon: Target },
     { id: 'resume', label: 'Resume Profile', icon: FileText },
     { id: 'ats', label: 'ATS & JD Scorer', icon: Target },
-    { id: 'optimizer', label: '90+ Optimizer & DOCX', icon: Zap },
+    { id: 'optimizer', label: '90+ Optimizer & PDF', icon: Zap },
     { id: 'cover_letter', label: 'Cover Letter & Q&A', icon: PenTool },
     { id: 'jobs', label: 'Job Search', icon: Search },
     { id: 'tracker', label: 'Application Tracker', icon: Briefcase },
     { id: 'tests', label: 'API & Test Bench', icon: Terminal },
   ] as const;
+
+  if (activeTab === 'landing') {
+    return (
+      <div className="min-h-screen bg-[#0f131d] text-[#dfe2f1] flex flex-col font-sans">
+        <LandingHeroSection
+          onStartTailoring={async (config) => {
+            if (config.uploadedFile) {
+              const formData = new FormData();
+              formData.append('resume', config.uploadedFile);
+              try {
+                await fetch('/resume/upload', {
+                  method: 'POST',
+                  body: formData,
+                });
+              } catch (e) {
+                console.error('File upload error:', e);
+              }
+            }
+            const generatedJd = `${config.role} at ${config.targetEcosystem}\n\nKey Responsibilities & Qualifications:\n- Lead platform and systems engineering for high-reliability distributed services.\n- Architect high-scale cloud platforms with Kubernetes, Docker, and CI/CD pipelines.\n- Build and maintain mission-critical backend services with Go, Python, or TypeScript.\n- Implement robust observability, telemetry, and distributed tracing.\n- Drive automated testing and high-impact engineering solutions.`;
+            setCurrentJobDescription(generatedJd);
+            setActiveTab('optimizer');
+          }}
+          onSelectJobForOptimizer={(job) => {
+            setCurrentJobDescription(
+              `${job.title} at ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`
+            );
+            setActiveTab('optimizer');
+          }}
+          onSelectJobForAts={(job) => {
+            setCurrentJobDescription(
+              `${job.title} at ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`
+            );
+            setActiveTab('ats');
+          }}
+          onNavigateToTemplates={() => setActiveTab('resume')}
+          onOpenWorkspace={() => setActiveTab('matcher')}
+        />
+
+        {/* Email Activity & Notification Center Drawer */}
+        <EmailActivityDrawer
+          isOpen={emailDrawerOpen}
+          onClose={() => setEmailDrawerOpen(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
@@ -397,6 +447,26 @@ Requirements:
 
       {/* Tab Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8">
+        {activeTab === 'matcher' && (
+          <div className="bg-[#0f131d] -mx-4 lg:-mx-8 -my-6 p-4 sm:p-6 min-h-[calc(100vh-140px)] rounded-b-xl">
+            <CandidatePreferencesWizard
+              onSelectJobForOptimizer={(job) => {
+                setCurrentJobDescription(
+                  `${job.title} at ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`
+                );
+                setActiveTab('optimizer');
+              }}
+              onSelectJobForAts={(job) => {
+                setCurrentJobDescription(
+                  `${job.title} at ${job.company}\n\nDescription:\n${job.description}\n\nRequirements:\n${job.requirements.join('\n')}`
+                );
+                setActiveTab('ats');
+              }}
+              onNavigateToTracker={() => setActiveTab('tracker')}
+            />
+          </div>
+        )}
+
         {activeTab === 'resume' && (
           <ResumeSection
             onSelectJob={handleSelectJobFromSearch}

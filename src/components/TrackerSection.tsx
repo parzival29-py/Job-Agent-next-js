@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers, Search, Filter, Mail } from 'lucide-react';
+import { Briefcase, Plus, Trash2, Edit3, CheckCircle2, TrendingUp, Clock, FileText, ChevronRight, X, Download, Zap, Sparkles, RefreshCw, Layers, Search, Filter, Mail, BarChart3 } from 'lucide-react';
 import type { ApplicationRecord, ResumeProfile } from '../types.ts';
 import { RESUME_FORMATS_LIST } from '../utils/formatUtils.ts';
 import { ExecutiveResumeView } from './ExecutiveResumeView.tsx';
 import { triggerUrlDownload, openPdfViewerModal } from '../utils/pdfExport.ts';
 import { ApplicationProgressTimeline, MiniTimelineBar, PIPELINE_STAGES } from './ApplicationProgressTimeline.tsx';
 import { SalaryDistributionChart } from './SalaryDistributionChart.tsx';
+import { ApplicationSalaryBarChart } from './ApplicationSalaryBarChart.tsx';
 import { useCurrency } from '../context/CurrencyContext.tsx';
 import {
   sendStatusTransitionEmail,
@@ -22,6 +23,7 @@ export const TrackerSection: React.FC = () => {
   const [showResumePreview, setShowResumePreview] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ResumeProfile | null>(null);
+  const [activeSalaryChartTab, setActiveSalaryChartTab] = useState<'recharts_bars' | 'market_percentiles'>('recharts_bars');
 
   // Filter & Search states
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -475,14 +477,60 @@ export const TrackerSection: React.FC = () => {
         </div>
       )}
 
-      {/* Interactive D3.js Salary Distribution & Market Trends Chart */}
-      <SalaryDistributionChart
-        applications={applications}
-        onSelectApplication={(app) => {
-          setSelectedApp(app);
-          setShowResumePreview(false);
-        }}
-      />
+      {/* Salary Visualization Section (Recharts Bar Chart & Market Benchmarks) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveSalaryChartTab('recharts_bars')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+                activeSalaryChartTab === 'recharts_bars'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-indigo-200" />
+              <span>Expected Salary Ranges (Recharts Bar Chart)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSalaryChartTab('market_percentiles')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${
+                activeSalaryChartTab === 'market_percentiles'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-indigo-200" />
+              <span>Market Role Benchmarks</span>
+            </button>
+          </div>
+
+          <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Tracking <strong className="text-white">{applications.length}</strong> applications</span>
+          </div>
+        </div>
+
+        {activeSalaryChartTab === 'recharts_bars' ? (
+          <ApplicationSalaryBarChart
+            applications={applications}
+            onSelectApplication={(app) => {
+              setSelectedApp(app);
+              setShowResumePreview(false);
+            }}
+          />
+        ) : (
+          <SalaryDistributionChart
+            applications={applications}
+            onSelectApplication={(app) => {
+              setSelectedApp(app);
+              setShowResumePreview(false);
+            }}
+          />
+        )}
+      </div>
 
       {/* Main Table & Actions */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">

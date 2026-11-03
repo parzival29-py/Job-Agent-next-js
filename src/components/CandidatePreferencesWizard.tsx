@@ -138,7 +138,7 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'remote' | 'hybrid' | 'on-site'>('all');
   const [onlyShowMeetingMinPay, setOnlyShowMeetingMinPay] = useState(false);
-  const [sortBy, setSortBy] = useState<'match' | 'salary' | 'newest'>('match');
+  const [sortBy, setSortBy] = useState<'match' | 'salary' | 'closest' | 'newest'>('match');
   const [selectedModalJob, setSelectedModalJob] = useState<JobItem | null>(null);
 
   // Auto-apply feedback modal/state
@@ -265,33 +265,64 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
     };
   }, [jobs]);
 
-  // Dynamic slider step based on the market maximum
+  // The user can freely change compensation to ANYTHING: no artificial ceiling clamp
+  const effectiveMinComp = Math.max(0, minCompensation);
+
+  // Dynamic slider ceiling that allows sliding up to $30,000+ or expands to user's custom input
+  const sliderCeiling = useMemo(() => {
+    const base = Math.max(30000, maxMarketCompensation * 2);
+    if (minCompensation > base) {
+      return Math.ceil((minCompensation * 1.3) / 1000) * 1000;
+    }
+    return base;
+  }, [maxMarketCompensation, minCompensation]);
+
+  // Dynamic slider step
   const sliderStep = useMemo(() => {
-    if (maxMarketCompensation <= 3000) return 100;
-    if (maxMarketCompensation <= 12000) return 250;
-    if (maxMarketCompensation <= 25000) return 500;
-    return 1000;
-  }, [maxMarketCompensation]);
+    if (sliderCeiling <= 5000) return 50;
+    if (sliderCeiling <= 20000) return 100;
+    if (sliderCeiling <= 50000) return 250;
+    return 500;
+  }, [sliderCeiling]);
 
-  // Current effective minimum compensation strictly bounded within [0, maxMarketCompensation]
-  const effectiveMinComp = Math.min(Math.max(0, minCompensation), maxMarketCompensation);
+  // Find the job/internship whose compensation is closest to the user's selected amount
+  const closestJobMatch = useMemo(() => {
+    if (!jobs || jobs.length === 0) return null;
+    let closest: JobItem | null = null;
+    let minDiff = Infinity;
+    for (const j of jobs) {
+      const amount = Number(j.stipend_amount) || 0;
+      const diff = Math.abs(amount - effectiveMinComp);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = j;
+      }
+    }
+    if (!closest) return null;
+    return {
+      job: closest,
+      diff: minDiff,
+      amount: closest.stipend_amount || 0,
+      isExact: minDiff === 0,
+      isHigher: (closest.stipend_amount || 0) > effectiveMinComp,
+    };
+  }, [jobs, effectiveMinComp]);
 
-  // Dynamic presets based on live market maximum
+  // Dynamic presets based on live market and common targets
   const presetPills = useMemo(() => {
-    const p25 = Math.round((maxMarketCompensation * 0.25) / sliderStep) * sliderStep;
-    const p50 = Math.round((maxMarketCompensation * 0.50) / sliderStep) * sliderStep;
-    const p75 = Math.round((maxMarketCompensation * 0.75) / sliderStep) * sliderStep;
+    const p50 = Math.round((maxMarketCompensation * 0.50) / 100) * 100;
     return [
       { label: 'Any ($0)', value: 0 },
-      { label: `25% (${formatSalary(p25)})`, value: p25 },
       { label: `50% Median (${formatSalary(p50)})`, value: p50 },
-      { label: `75% (${formatSalary(p75)})`, value: p75 },
       {
         label: `Market Peak (${highestPayingJob?.company || 'Leader'}: ${formatSalary(maxMarketCompensation)})`,
         value: maxMarketCompensation,
       },
+      { label: `$12,000/mo`, value: 12000 },
+      { label: `$15,000/mo`, value: 15000 },
+      { label: `$20,000/mo`, value: 20000 },
     ];
-  }, [maxMarketCompensation, sliderStep, formatSalary, highestPayingJob]);
+  }, [maxMarketCompensation, formatSalary, highestPayingJob]);
 
   const toggleSkill = (skill: string) => {
     if (selectedSkills.includes(skill)) {
@@ -555,6 +586,12 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
       result = [...result].sort((a, b) => b.score - a.score);
     } else if (sortBy === 'salary') {
       result = [...result].sort((a, b) => (b.job.stipend_amount || 0) - (a.job.stipend_amount || 0));
+    } else if (sortBy === 'closest') {
+      result = [...result].sort((a, b) => {
+        const diffA = Math.abs((a.job.stipend_amount || 0) - effectiveMinComp);
+        const diffB = Math.abs((b.job.stipend_amount || 0) - effectiveMinComp);
+        return diffA - diffB;
+      });
     } else {
       result = [...result].sort((a, b) => new Date(b.job.posted_date).getTime() - new Date(a.job.posted_date).getTime());
     }
@@ -1088,30 +1125,55 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
             </div>
           </div>
 
-          {/* Dynamic Compensation Threshold with Live Market Ceiling */}
+          {/* Dynamic Compensation Threshold with Live Market Ceiling & Closest Match */}
           <div className="bg-[#1c1f2a] p-4 sm:p-5 rounded-lg border border-[#262a35] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <label className="text-[11px] font-mono uppercase tracking-wider text-[#c7c4d7]">
-                    Minimum Desired Compensation
+                    Desired Compensation
                   </label>
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-pulse" />
-                    Dynamic Market Range
+                    Freely Adjustable & Live Closest Match
                   </span>
                 </div>
                 <p className="text-xs text-[#908fa0] mt-0.5">
-                  Scales dynamically from $0 to the highest active offer in the market ({currencyInfo.name})
+                  Drag the slider or enter any custom amount to instantly find the closest job or internship in the market.
                 </p>
               </div>
 
-              {/* Current Value Display */}
-              <div className="text-left sm:text-right">
-                <div className="text-sm font-mono font-bold text-[#4edea3] bg-[#171b26] px-3.5 py-1.5 rounded-lg border border-[#262a35] inline-flex items-center gap-2">
-                  <span className="text-xs text-[#908fa0] font-normal">Threshold:</span>
-                  <span>{effectiveMinComp === 0 ? 'Any Pay / No Minimum' : `${formatSalary(effectiveMinComp)} / mo`}</span>
+              {/* Free Input & Stepper Controls */}
+              <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setMinCompensation(Math.max(0, effectiveMinComp - sliderStep))}
+                  className="w-8 h-8 rounded-lg bg-[#171b26] border border-[#262a35] hover:border-[#c0c1ff] text-[#dfe2f1] hover:text-white flex items-center justify-center font-mono font-bold text-sm cursor-pointer transition-colors"
+                  title="Decrease amount"
+                >
+                  -
+                </button>
+                <div className="flex items-center gap-1.5 bg-[#171b26] px-3 py-1.5 rounded-lg border border-[#262a35] focus-within:border-[#c0c1ff] shadow-inner">
+                  <span className="text-xs font-mono text-[#908fa0]">{currencyInfo.symbol}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={100}
+                    value={effectiveMinComp === 0 ? '' : effectiveMinComp}
+                    onChange={(e) => setMinCompensation(Math.max(0, Number(e.target.value) || 0))}
+                    placeholder="0 (Any pay)"
+                    className="bg-transparent font-mono text-sm font-bold text-[#4edea3] w-28 focus:outline-none placeholder:text-[#64748b]"
+                  />
+                  <span className="text-[11px] font-mono text-[#908fa0]">/ mo</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setMinCompensation(effectiveMinComp + sliderStep)}
+                  className="w-8 h-8 rounded-lg bg-[#171b26] border border-[#262a35] hover:border-[#c0c1ff] text-[#dfe2f1] hover:text-white flex items-center justify-center font-mono font-bold text-sm cursor-pointer transition-colors"
+                  title="Increase amount"
+                >
+                  +
+                </button>
               </div>
             </div>
 
@@ -1153,16 +1215,16 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
               </div>
             )}
 
-            {/* Dynamic Range Slider */}
+            {/* Dynamic Range Slider with free range */}
             <div className="space-y-2 pt-1">
               <input
                 type="range"
                 min={0}
-                max={maxMarketCompensation}
+                max={sliderCeiling}
                 step={sliderStep}
                 value={effectiveMinComp}
                 onChange={(e) => setMinCompensation(Number(e.target.value))}
-                className="w-full accent-[#c0c1ff] cursor-pointer"
+                className="w-full h-2.5 bg-[#171b26] rounded-lg appearance-none cursor-pointer accent-[#c0c1ff] focus:outline-none focus:ring-2 focus:ring-[#c0c1ff]/50 border border-[#262a35] hover:border-[#c0c1ff]/60 transition-all"
               />
 
               {/* Dynamic 5-point scale */}
@@ -1172,23 +1234,88 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
                   <span className="text-[#c7c4d7]">Any Pay</span>
                 </span>
                 <span className="text-center hidden sm:inline">
-                  {formatSalary(Math.round((maxMarketCompensation * 0.25) / sliderStep) * sliderStep)}<br />
+                  {formatSalary(Math.round(sliderCeiling * 0.25))}<br />
                   <span className="text-[#c7c4d7]">25%</span>
                 </span>
                 <span className="text-center">
-                  {formatSalary(Math.round((maxMarketCompensation * 0.50) / sliderStep) * sliderStep)}<br />
-                  <span className="text-[#c7c4d7]">50% Median</span>
+                  {formatSalary(Math.round(sliderCeiling * 0.50))}<br />
+                  <span className="text-[#c7c4d7]">50%</span>
                 </span>
                 <span className="text-center hidden sm:inline">
-                  {formatSalary(Math.round((maxMarketCompensation * 0.75) / sliderStep) * sliderStep)}<br />
-                  <span className="text-[#c7c4d7]">75%</span>
-                </span>
-                <span className="text-right">
                   {formatSalary(maxMarketCompensation)}/mo<br />
                   <span className="text-[#4edea3] font-semibold">{highestPayingJob?.company || 'Peak'}</span>
                 </span>
+                <span className="text-right">
+                  {formatSalary(sliderCeiling)}/mo<br />
+                  <span className="text-[#c0c1ff]">Scale Max</span>
+                </span>
               </div>
             </div>
+
+            {/* Real-time Closest Matched Job / Internship Callout */}
+            {closestJobMatch?.job && (
+              <div className="p-4 rounded-xl bg-gradient-to-r from-[#171f30] via-[#151c2c] to-[#121622] border border-[#3b4767] shadow-lg animate-fade-in flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#4edea3]/15 border border-[#4edea3]/40 flex items-center justify-center text-[#4edea3] shrink-0 mt-0.5 sm:mt-0">
+                    <Target className="w-5 h-5 text-[#4edea3]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-mono font-bold text-[#4edea3] uppercase tracking-wide">
+                        Closest Opportunity Found
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                          closestJobMatch.isExact
+                            ? 'bg-emerald-950/80 text-[#4edea3] border-emerald-600'
+                            : closestJobMatch.isHigher
+                            ? 'bg-sky-950/80 text-[#38bdf8] border-sky-600'
+                            : 'bg-amber-950/80 text-amber-300 border-amber-600'
+                        }`}
+                      >
+                        {closestJobMatch.isExact
+                          ? '✓ Exact Pay Match!'
+                          : closestJobMatch.isHigher
+                          ? `+${formatSalary(closestJobMatch.diff)} above your target`
+                          : `-${formatSalary(closestJobMatch.diff)} below your target`}
+                      </span>
+                    </div>
+                    <div className="text-sm text-white font-semibold mt-1">
+                      {closestJobMatch.job.title} <span className="text-[#908fa0]">at</span>{' '}
+                      <span className="text-[#c0c1ff]">{closestJobMatch.job.company}</span>
+                    </div>
+                    <div className="text-xs text-[#908fa0] flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="font-mono text-[#4edea3] font-bold text-xs">
+                        {formatSalary(closestJobMatch.amount)}/mo
+                      </span>
+                      <span>&bull;</span>
+                      <span>{closestJobMatch.job.location}</span>
+                      <span>&bull;</span>
+                      <span className="capitalize px-1.5 py-0.2 rounded bg-[#1c1f2a] text-[#4cd7f6] font-mono text-[10px]">
+                        {closestJobMatch.job.opportunity_type} ({closestJobMatch.job.work_mode})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 pt-2 sm:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onSelectJobForOptimizer) {
+                        onSelectJobForOptimizer(closestJobMatch.job!);
+                      } else {
+                        setStep(3);
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-lg bg-[#c0c1ff] hover:bg-[#8083ff] text-[#1000a9] hover:text-white text-xs font-mono font-bold transition shadow-sm cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>Tailor for this Job</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Quick Set Presets */}
             <div className="pt-2 border-t border-[#262a35]/60 flex flex-wrap items-center gap-2">
@@ -1200,7 +1327,7 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
                     key={pill.label}
                     type="button"
                     onClick={() => setMinCompensation(pill.value)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-all flex items-center gap-1 ${
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition-all flex items-center gap-1 cursor-pointer ${
                       isActive
                         ? 'bg-[#c0c1ff] text-[#1000a9] font-bold shadow-sm'
                         : 'bg-[#171b26] text-[#c7c4d7] hover:text-white hover:bg-[#262a35] border border-[#262a35]'
@@ -1304,6 +1431,7 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
                   className="bg-[#1c1f2a] border border-[#262a35] text-xs font-mono text-[#dfe2f1] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#c0c1ff]"
                 >
                   <option value="match">Highest ATS Match %</option>
+                  <option value="closest">Closest to Desired Pay ({formatSalary(effectiveMinComp)}/mo)</option>
                   <option value="salary">Highest Compensation</option>
                   <option value="newest">Recently Posted</option>
                 </select>
@@ -1400,6 +1528,11 @@ export const CandidatePreferencesWizard: React.FC<CandidatePreferencesWizardProp
                           {job.ppo_offered && (
                             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/70 border border-emerald-700 text-[#4edea3]">
                               ★ PPO Included
+                            </span>
+                          )}
+                          {closestJobMatch?.job?.id === job.id && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#4edea3]/20 border border-[#4edea3]/50 text-[#4edea3] font-bold flex items-center gap-1">
+                              🎯 Closest to your target ({formatSalary(effectiveMinComp)}/mo)
                             </span>
                           )}
                         </div>
